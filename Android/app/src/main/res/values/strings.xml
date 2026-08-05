@@ -1,0 +1,776 @@
+<resources>
+    <!-- ==================== App / Widget ==================== -->
+    <string name="app_name">恋爱记</string>
+    <string name="widget_love_days_title">在一起天数</string>
+    <string name="widget_together">在一起</string>
+    <string name="widget_days">天</string>
+    <string name="default_notification_channel_id">love_journal_default</string>
+    <string name="default_notification_channel_name">恋爱记通知</string>
+
+    <!-- ==================== Navigation Tabs ==================== -->
+    <string name="nav_home">首页</string>
+    <string name="nav_events">纪念日</string>
+    <string name="nav_articles">文章</string>
+    <string name="nav_albums">相册</string>
+    <string name="nav_cottage">小屋</string>
+    <string name="nav_messages">互动</string>
+
+    <!-- ==================== Page Titles ==================== -->
+    <string name="title_cottage_hub">我们的小屋</string>
+    <string name="title_chat">悄悄话</string>
+    <string name="title_mood">心情打卡</string>
+    <string name="title_wishlist">心愿单</string>
+    <string name="title_questions">每日一问</string>
+    <string name="title_games">一起玩</string>
+    <string name="title_watch">一起看</string>
+    <string name="title_listen">一起听</string>
+    <string name="title_coupons">甜蜜兑换券</string>
+    <string name="title_reminders">小屋提醒</string>
+    <string name="title_ledger">情侣账本</string>
+    <string name="title_reports">恋爱月报</string>
+    <string name="title_footprints">足迹地图</string>
+    <string name="title_period">生理期关怀</string>
+    <string name="title_plans">约会计划</string>
+    <string name="title_checkins">报备签到</string>
+    <string name="title_canvas">协作画板</string>
+    <string name="title_canvas_gallery">作品集</string>
+    <string name="title_canvas_artwork">作品回放</string>
+    <string name="title_search">搜索</string>
+    <string name="title_notifications">通知中心</string>
+    <string name="title_timeline">时间线</string>
+    <string name="title_capsules">时间胶囊</string>
+    <string name="title_settings">设置</string>
+    <string name="title_licenses">开源许可证</string>
+    <string name="title_security">账号安全</string>
+    <string name="title_recycle_bin">回收站</string>
+    <string name="title_messages_board">留言板</string>
+    <string name="title_in_game">对局中</string>
+
+    <!-- ==================== Top Bar Actions ==================== -->
+    <string name="action_back">返回</string>
+    <string name="action_search">搜索</string>
+    <string name="action_notifications_center">通知中心</string>
+    <string name="action_more">更多</string>
+    <string name="action_next_step">下一步</string>
+
+    <!-- ==================== Common Buttons ==================== -->
+    <string name="btn_cancel">取消</string>
+    <string name="btn_confirm">确定</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_send">发送</string>
+    <string name="btn_publish">发布</string>
+    <string name="btn_add">添加</string>
+    <string name="btn_edit">编辑</string>
+    <string name="btn_restore">恢复</string>
+    <string name="btn_refresh">刷新</string>
+    <string name="btn_clear">清空</string>
+    <string name="btn_close">关闭</string>
+    <string name="btn_done">完成</string>
+    <string name="btn_invite">邀请</string>
+    <string name="btn_redeem">兑换</string>
+
+    <!-- ==================== Common Status ==================== -->
+    <string name="status_loading">加载中…</string>
+    <string name="status_saving">保存中…</string>
+    <string name="status_submitting">提交中…</string>
+    <string name="status_uploading">上传中…</string>
+    <string name="status_deleting">删除中…</string>
+    <string name="status_processing">处理中…</string>
+    <string name="status_locating">定位中…</string>
+
+    <!-- ==================== Common Messages ==================== -->
+    <string name="msg_load_failed">加载失败</string>
+    <string name="msg_save_failed">保存失败</string>
+    <string name="msg_delete_failed">删除失败</string>
+    <string name="msg_publish_failed">发布失败</string>
+    <string name="msg_saved">已保存</string>
+    <string name="msg_deleted">已删除</string>
+    <string name="msg_added">已添加</string>
+    <string name="msg_published">已发布</string>
+    <string name="msg_operation_failed">操作失败，请稍后重试</string>
+    <string name="msg_no_data">暂无数据</string>
+    <string name="msg_load_failed_with_error">加载失败：%1$s</string>
+
+    <!-- ==================== Login ==================== -->
+    <string name="login_tagline">认真记录我们相爱的每一天</string>
+    <string name="login_welcome_back">欢迎回来</string>
+    <string name="login_server_address">服务器地址</string>
+    <string name="login_username">用户名</string>
+    <string name="login_password">密码</string>
+    <string name="login_test_connection">测试连接</string>
+    <string name="btn_login">登录</string>
+    <string name="btn_logout">退出登录</string>
+
+    <!-- ==================== Dashboard ==================== -->
+    <string name="dashboard_today_love">今天也要好好相爱</string>
+    <string name="dashboard_every_day_story">每一个普通日子，都是我们的故事。</string>
+    <string name="dashboard_love_clock_together">我们已经一起走过</string>
+    <string name="dashboard_day">天</string>
+    <string name="dashboard_offline_mode">当前为离线模式，展示最近一次同步的数据</string>
+    <string name="dashboard_upcoming_events">近期纪念日</string>
+    <string name="dashboard_upcoming_events_sub">把值得期待的日子放在心上</string>
+    <string name="dashboard_no_events">还没有纪念日</string>
+    <string name="dashboard_no_events_sub">添加一个重要日期，开始倒数期待</string>
+    <string name="dashboard_today">今天</string>
+    <string name="dashboard_days_left">%1$d 天</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_site_settings">站点设置</string>
+    <string name="settings_site_settings_sub">管理名称、纪念日和注册权限</string>
+    <string name="settings_basic_info">基础信息</string>
+    <string name="settings_site_name">站点名称</string>
+    <string name="settings_love_start_date">恋爱开始日 · %1$s</string>
+    <string name="settings_love_start_date_not_set">未设置</string>
+    <string name="settings_allow_registration">允许新用户注册</string>
+    <string name="settings_allow_registration_sub">关闭后仅现有账号可登录</string>
+    <string name="btn_save_settings">保存设置</string>
+    <string name="settings_account_maintenance">账户与维护</string>
+    <string name="settings_account_security">账号安全（修改密码 / 登录设备）</string>
+    <string name="settings_recycle_bin">回收站</string>
+    <string name="settings_admin_tools">服务器工具（健康 / 审计 / 用户 / 备份）</string>
+    <string name="settings_open_licenses">开源许可证与版权声明</string>
+
+    <!-- ==================== Security ==================== -->
+    <string name="security_change_password">修改密码</string>
+    <string name="security_current_password">当前密码</string>
+    <string name="security_new_password">新密码</string>
+    <string name="security_confirm_password">确认新密码</string>
+    <string name="security_password_hint">新密码至少 8 位，需同时包含字母和数字。</string>
+    <string name="btn_change_password">修改密码</string>
+    <string name="security_login_devices">登录设备</string>
+    <string name="security_logout_all_desc">登出所有设备会立即让全部登录（含当前设备）失效，需要重新登录。怀疑账号异常时可使用。</string>
+    <string name="btn_logout_all_devices">登出所有设备</string>
+    <string name="security_logout_all_confirm_title">登出所有设备</string>
+    <string name="security_logout_all_confirm_msg">将立即让所有登录（含当前设备）失效，需要重新登录。确定继续吗？</string>
+    <string name="security_done_relogin_msg">操作已生效，当前登录已失效，请退出后重新登录。</string>
+
+    <!-- ==================== Network Errors ==================== -->
+    <string name="error_unknown_host">无法解析服务器地址，请检查域名或 IP 是否输入正确</string>
+    <string name="error_connect">无法连接服务器，请检查地址、端口（默认 8000）与 Wi‑Fi/局域网</string>
+    <string name="error_timeout">连接超时，请确认手机与服务器在同一网络且后端已启动</string>
+    <string name="error_ssl_handshake">HTTPS 握手失败。自部署若无 TLS，请改用 http:// 开头</string>
+    <string name="error_ssl">安全连接失败，请确认协议（http/https）与证书配置是否正确</string>
+    <string name="error_401">未授权，请检查用户名与密码</string>
+    <string name="error_403">访问被拒绝</string>
+    <string name="error_404">服务器可达，但未找到接口（请确认地址含端口 :8000）</string>
+    <string name="error_server_code">服务器返回错误 (%1$d)</string>
+    <string name="error_network">网络异常：%1$s</string>
+    <string name="error_network_fallback">请检查网络连接</string>
+
+    <!-- ==================== Auth Errors ==================== -->
+    <string name="auth_error_wrong_credentials">用户名或密码错误</string>
+    <string name="auth_error_frozen">账号被冻结或封禁，请稍后再试</string>
+    <string name="auth_error_too_frequent">尝试过于频繁，请稍后再试</string>
+    <string name="auth_error_login_failed">登录失败 (%1$d)</string>
+    <string name="auth_error_session_not_kept">登录成功但会话未保持。若使用 http 自部署，请确认服务端 COOKIE_SECURE 未强制开启，且反代未误传 X-Forwarded-Proto: https</string>
+    <string name="auth_error_no_server">请先填写服务器地址</string>
+    <string name="auth_health_404">服务器可达，但未找到健康检查接口（请确认端口为 :8000）</string>
+    <string name="auth_health_code">服务器返回 %1$d</string>
+    <string name="auth_connection_ok">连接成功，后端运行正常</string>
+
+    <!-- ==================== Server Config ==================== -->
+    <string name="server_config_empty">请输入服务器地址</string>
+    <string name="server_config_incomplete_https">请填写完整的 https:// 服务器地址</string>
+    <string name="server_config_invalid">服务器地址格式不正确</string>
+    <string name="server_config_https_only">为保护账号和会话，正式版仅允许 HTTPS；本地 HTTP 仅限调试版私有地址</string>
+
+    <!-- ==================== Notification Channels ==================== -->
+    <string name="notification_channel_messages">留言</string>
+    <string name="notification_channel_moods">心情打卡</string>
+    <string name="notification_channel_events">纪念日提醒</string>
+
+    <!-- ==================== Cottage Hub ==================== -->
+    <string name="cottage_hub_title">只属于你们俩的小天地</string>
+    <string name="cottage_hub_subtitle">聊天、陪伴、记录和共同生活，都放在这里。</string>
+    <string name="cottage_feature_chat">悄悄话</string>
+    <string name="cottage_feature_chat_sub">实时陪伴</string>
+    <string name="cottage_feature_mood">心情</string>
+    <string name="cottage_feature_mood_sub">分享此刻</string>
+    <string name="cottage_feature_checkin">报备</string>
+    <string name="cottage_feature_checkin_sub">让 TA 安心</string>
+    <string name="cottage_feature_wishlist">心愿单</string>
+    <string name="cottage_feature_wishlist_sub">一起实现</string>
+    <string name="cottage_feature_questions">每日一问</string>
+    <string name="cottage_feature_questions_sub">更懂彼此</string>
+    <string name="cottage_feature_watch">一起看</string>
+    <string name="cottage_feature_watch_sub">同步追剧</string>
+    <string name="cottage_feature_games">一起玩</string>
+    <string name="cottage_feature_games_sub">双人游戏</string>
+    <string name="cottage_feature_listen">一起听</string>
+    <string name="cottage_feature_listen_sub">同步听歌</string>
+    <string name="cottage_feature_coupons">兑换券</string>
+    <string name="cottage_feature_coupons_sub">兑现甜蜜</string>
+    <string name="cottage_feature_reminders">提醒</string>
+    <string name="cottage_feature_reminders_sub">重要小事</string>
+    <string name="cottage_feature_plans">约会计划</string>
+    <string name="cottage_feature_plans_sub">期待见面</string>
+    <string name="cottage_feature_ledger">情侣账本</string>
+    <string name="cottage_feature_ledger_sub">共同生活</string>
+    <string name="cottage_feature_reports">恋爱月报</string>
+    <string name="cottage_feature_reports_sub">回顾甜蜜</string>
+    <string name="cottage_feature_footprints">足迹地图</string>
+    <string name="cottage_feature_footprints_sub">点亮城市</string>
+    <string name="cottage_feature_period">生理期</string>
+    <string name="cottage_feature_period_sub">贴心关怀</string>
+    <string name="cottage_feature_vault">私密空间</string>
+    <string name="cottage_feature_vault_sub">端到端加密</string>
+
+    <!-- ==================== Chat ==================== -->
+    <string name="chat_partner_default">TA</string>
+    <string name="chat_connecting">连接中…</string>
+    <string name="chat_typing">正在输入…</string>
+    <string name="chat_online">在线</string>
+    <string name="chat_offline">离线</string>
+    <string name="chat_tools">聊天工具</string>
+    <string name="chat_send_whisper">发条悄悄话…</string>
+    <string name="chat_poke">戳一戳</string>
+    <string name="chat_send_to_future">寄给未来</string>
+    <string name="chat_schedule_hint">✉️ 这条悄悄话会在 %1$s 出现</string>
+    <string name="chat_msg_recalled">消息已撤回</string>
+    <string name="chat_msg_image">[图片]</string>
+    <string name="chat_msg_sticker">[贴纸]</string>
+    <string name="chat_msg_voice">[语音]</string>
+    <string name="chat_favorite">收藏</string>
+    <string name="chat_unfavorite">取消收藏</string>
+    <string name="chat_pin_quote">置顶语录</string>
+    <string name="chat_recall">撤回</string>
+    <string name="chat_memories">聊天回忆</string>
+    <string name="chat_pinned">置顶：%1$s</string>
+    <string name="chat_unpin">取消置顶</string>
+    <string name="chat_today_count">今日 %1$d 条 · 我 %2$d · TA %3$d</string>
+    <string name="chat_keywords">关键词：%1$s</string>
+    <string name="chat_favorites">收藏</string>
+    <string name="chat_future_messages">未来消息</string>
+    <string name="chat_media_panel">媒体：图片 %1$d · 贴纸 %2$d · 语音 %3$d</string>
+    <string name="chat_schedule_title">寄给未来</string>
+    <string name="chat_schedule_desc">把此刻的话藏到以后。消息会在你指定的时间准时出现，仅你们两人可见。</string>
+    <string name="chat_1h_later">1 小时后</string>
+    <string name="chat_tomorrow_now">明天现在</string>
+    <string name="chat_tomorrow_midnight">明天 0 点</string>
+    <string name="chat_date_label">日期 (YYYY-MM-DD)</string>
+    <string name="chat_time_label">时间 (HH:mm)</string>
+    <string name="chat_will_appear">将于 %1$s 出现</string>
+    <string name="chat_confirm_schedule">确认</string>
+    <string name="chat_select_future_time">请选未来时间</string>
+    <string name="chat_poked_you">戳了戳你</string>
+    <string name="chat_media_placeholder">[媒体消息]</string>
+
+    <!-- ==================== Mood ==================== -->
+    <string name="mood_how_today">今天心情怎么样？</string>
+    <string name="mood_happy">开心</string>
+    <string name="mood_blessed">幸福</string>
+    <string name="mood_calm">平静</string>
+    <string name="mood_miss_you">想你</string>
+    <string name="mood_sad">难过</string>
+    <string name="mood_angry">生气</string>
+    <string name="mood_note_optional">想说的话（可选）</string>
+    <string name="btn_take_photo">拍照</string>
+    <string name="btn_from_gallery">从相册选择</string>
+    <string name="mood_photo_attached">已附带图片</string>
+    <string name="btn_check_in">打卡</string>
+    <string name="mood_recent">最近心情</string>
+    <string name="mood_image">心情图片</string>
+
+    <!-- ==================== Check-in ==================== -->
+    <string name="checkin_no_checkins">还没有报备</string>
+    <string name="checkin_no_checkins_sub">TA 还没有报备，发一条让 TA 安心吧</string>
+    <string name="checkin_action">发报备</string>
+    <string name="checkin_photo">报备照片</string>
+    <string name="checkin_send_title">发一条报备</string>
+    <string name="checkin_placeholder">此刻想对 TA 说…</string>
+    <string name="btn_add_photo">添加照片</string>
+    <string name="checkin_relocate">重新定位</string>
+    <string name="checkin_share_location">分享位置</string>
+    <string name="checkin_dont_share">不分享</string>
+    <string name="checkin_pending_photo">待发送照片</string>
+    <string name="checkin_remove">移除</string>
+    <string name="btn_checkin_submit">报备</string>
+    <string name="checkin_location">位置：%1$s</string>
+    <string name="checkin_location_denied">位置：未授权</string>
+    <string name="checkin_location_failed">位置：解析失败</string>
+    <string name="checkin_msg_say_something">写点什么，或加一张照片吧</string>
+    <string name="checkin_locating_msg">正在获取位置…</string>
+    <string name="checkin_location_ok">已获取位置</string>
+    <string name="checkin_location_failed_msg">暂时没有拿到位置</string>
+    <string name="checkin_location_failed_hint">暂时没有拿到位置，本次可先提交文字或照片</string>
+    <string name="checkin_location_denied_msg">已记录未授权位置</string>
+    <string name="checkin_msg_checkin_done">已报备</string>
+    <string name="checkin_msg_checkin_failed">报备失败</string>
+    <string name="checkin_upload_failed">图片上传失败</string>
+
+    <!-- ==================== Wishlist ==================== -->
+    <string name="wishlist_no_wishes">还没有心愿，点右下角加一个吧</string>
+    <string name="wishlist_add_wish">添加心愿</string>
+    <string name="wishlist_pending_completed">待实现 %1$d · 已达成 %2$d</string>
+    <string name="wishlist_make_wish">许个心愿</string>
+    <string name="wishlist_edit_wish">编辑心愿</string>
+    <string name="wishlist_title_label">想一起做什么？</string>
+    <string name="wishlist_desc_optional">备注（可选）</string>
+    <string name="wishlist_category_optional">分类，如 旅行 / 美食（可选）</string>
+    <string name="wishlist_completed_by">由 %1$s 达成</string>
+
+    <!-- ==================== Coupons ==================== -->
+    <string name="coupon_no_coupons">还没有兑换券，点右下角送 TA 一张吧</string>
+    <string name="coupon_add">送一张券</string>
+    <string name="coupon_active_redeemed">有效 %1$d · 已兑换 %2$d</string>
+    <string name="coupon_my_sent">我送出的券</string>
+    <string name="coupon_sent_to_you">%1$s 送给你</string>
+    <string name="coupon_redeemed_by">已由 %1$s 兑换</string>
+    <string name="coupon_send_title">送 TA 一张券</string>
+    <string name="coupon_edit_title">编辑兑换券</string>
+    <string name="coupon_name_label">券名，如 一次免做家务券</string>
+    <string name="coupon_usage_optional">使用说明（可选）</string>
+    <string name="coupon_icon">图标</string>
+    <string name="btn_send_coupon">送出</string>
+
+    <!-- ==================== Ledger ==================== -->
+    <string name="ledger_no_entries">还没有账目，点右下角记一笔吧</string>
+    <string name="ledger_add">记一笔</string>
+    <string name="ledger_total_spent">累计支出</string>
+    <string name="ledger_settled">账目已结清 🎉</string>
+    <string name="ledger_owes">%1$s 还欠 %2$s %3$s</string>
+    <string name="ledger_paid_by">%1$s 付</string>
+    <string name="ledger_split_treat">请客</string>
+    <string name="ledger_split_owed_full">全欠</string>
+    <string name="ledger_split_aa">AA</string>
+    <string name="ledger_add_title">记一笔</string>
+    <string name="ledger_what_bought">买了什么</string>
+    <string name="ledger_amount">金额（元）</string>
+    <string name="ledger_category_optional">分类，如 餐饮 / 出行（可选）</string>
+    <string name="ledger_who_paid">谁付的</string>
+    <string name="ledger_i_paid">我付</string>
+    <string name="ledger_partner_paid">TA 付</string>
+    <string name="ledger_how_split">怎么算</string>
+
+    <!-- ==================== Period ==================== -->
+    <string name="period_no_records">还没有记录，点右下角记一次吧</string>
+    <string name="period_add">记录</string>
+    <string name="period_phase_in_period">经期中</string>
+    <string name="period_phase_due_soon">即将到来</string>
+    <string name="period_phase_overdue">已推迟</string>
+    <string name="period_phase_normal">平稳期</string>
+    <string name="period_phase_none">暂无预测</string>
+    <string name="period_days_left">还有 %1$d 天</string>
+    <string name="period_today">就是今天</string>
+    <string name="period_overdue_days">已推迟 %1$d 天</string>
+    <string name="period_current_status">当前状态</string>
+    <string name="period_predicted_next">预计下次 %1$s</string>
+    <string name="period_avg_cycle">平均周期 %1$d 天</string>
+    <string name="period_avg_period">平均经期 %1$d 天</string>
+    <string name="period_ongoing">%1$s 起（进行中）</string>
+    <string name="period_duration">持续 %1$d 天</string>
+    <string name="period_recorded_by">记录人 %1$s</string>
+    <string name="period_add_title">记录生理期</string>
+    <string name="period_start_date">开始日期</string>
+    <string name="period_end_date_optional">结束日期（可选，留空表示进行中）</string>
+    <string name="period_end_date_not_set">未设置</string>
+    <string name="btn_clear">清除</string>
+
+    <!-- ==================== Plans ==================== -->
+    <string name="plan_no_plans">还没有约会计划，点右下角加一个吧</string>
+    <string name="plan_add">添加计划</string>
+    <string name="plan_active_completed">进行中 %1$d · 已完成 %2$d</string>
+    <string name="plan_cancelled_count"> · 已取消 %1$d</string>
+    <string name="plan_show_done">显示已完成</string>
+    <string name="plan_hide_done">隐藏已完成</string>
+    <string name="plan_status_planned">计划中</string>
+    <string name="plan_status_in_progress">进行中</string>
+    <string name="plan_status_done">已完成</string>
+    <string name="plan_status_cancelled">已取消</string>
+    <string name="plan_checklist">清单 %1$d/%2$d</string>
+    <string name="plan_add_title">新建约会计划</string>
+    <string name="plan_title_label">计划标题</string>
+    <string name="plan_desc_optional">详情（可选）</string>
+    <string name="plan_location_optional">地点（可选）</string>
+    <string name="plan_date_label">计划日期</string>
+    <string name="plan_date_undecided">未定（点选日期）</string>
+    <string name="plan_mark_important">标为重要</string>
+
+    <!-- ==================== Reminders ==================== -->
+    <string name="reminder_no_reminders">还没有提醒，点右下角加一个吧</string>
+    <string name="reminder_add">添加提醒</string>
+    <string name="reminder_active_done">未完成 %1$d · 已完成 %2$d</string>
+    <string name="reminder_due_count"> · 到期 %1$d</string>
+    <string name="reminder_show_done">显示已完成</string>
+    <string name="reminder_hide_done">隐藏已完成</string>
+    <string name="reminder_overdue">已到期</string>
+    <string name="reminder_add_title">加一个提醒</string>
+    <string name="reminder_content_label">提醒内容</string>
+    <string name="reminder_time_label">提醒时间</string>
+    <string name="reminder_audience_label">提醒谁</string>
+    <string name="reminder_audience_both">两人</string>
+    <string name="reminder_audience_me">仅我</string>
+    <string name="reminder_audience_partner">仅 TA</string>
+    <string name="reminder_select_time">选择时间</string>
+
+    <!-- ==================== Reports ==================== -->
+    <string name="report_no_data">这个月还没有数据</string>
+    <string name="report_prev_month">上个月</string>
+    <string name="report_next_month">下个月</string>
+    <string name="report_month_format">%1$d 年 %2$d 月</string>
+    <string name="report_stat_checkins">报备打卡</string>
+    <string name="report_stat_moods">心情打卡</string>
+    <string name="report_stat_questions">每日一问</string>
+    <string name="report_stat_answers">问题作答</string>
+    <string name="report_stat_chat_messages">悄悄话</string>
+    <string name="report_stat_wishes_created">新增心愿</string>
+    <string name="report_stat_wishes_completed">达成心愿</string>
+    <string name="report_stat_plans_created">新增计划</string>
+    <string name="report_stat_plans_completed">完成计划</string>
+    <string name="report_stat_reminders_created">新增提醒</string>
+    <string name="report_common_moods">常见心情</string>
+    <string name="report_highlights">高光时刻</string>
+    <string name="report_kind_wish">心愿</string>
+    <string name="report_kind_plan">计划</string>
+    <string name="report_kind_question">每日一问</string>
+    <string name="report_times">%1$d 次</string>
+
+    <!-- ==================== Footprints ==================== -->
+    <string name="footprint_no_data">还没有足迹，去「报备打卡」解锁你们去过的城市吧</string>
+    <string name="footprint_our_footprints">我们的足迹</string>
+    <string name="footprint_cities_checkins">%1$d 座城市 · %2$d 次打卡</string>
+    <string name="footprint_visited_places">去过的地方</string>
+    <string name="footprint_recent_footprints">最近足迹</string>
+    <string name="footprint_last_time">最近 %1$s</string>
+    <string name="footprint_times">%1$d 次</string>
+
+    <!-- ==================== Daily Questions ==================== -->
+    <string name="question_no_question">今天还没有问题</string>
+    <string name="question_create_desc">写下一个想问 TA 的问题，发布后两人各自作答，都答完才会一起揭晓。</string>
+    <string name="question_today_label">今天想问 TA…</string>
+    <string name="question_publish">发布今天的问题</string>
+    <string name="question_write_answer">写下你的回答</string>
+    <string name="question_submit_answer">提交回答</string>
+    <string name="question_waiting_partner">你已作答，等 TA 答完就能一起看啦 💌</string>
+    <string name="question_answered_waiting">已作答 · 待揭晓</string>
+    <string name="question_answered">已作答</string>
+    <string name="question_not_answered">还没有回答</string>
+    <string name="question_me">（我）</string>
+
+    <!-- ==================== Vault ==================== -->
+    <string name="vault_create_title">创建私密空间</string>
+    <string name="vault_create_desc">口令只在本机用于派生密钥，服务器只保存密文。</string>
+    <string name="vault_unlock_title">解锁私密空间</string>
+    <string name="vault_unlock_desc">输入与网页端相同的口令即可读取同一份加密内容。</string>
+    <string name="vault_passphrase">口令</string>
+    <string name="vault_add_entry">新增加密内容</string>
+    <string name="vault_private_space">私密空间</string>
+    <string name="vault_e2e_desc">端到端加密 · 5 分钟自动锁定</string>
+    <string name="vault_lock">锁定</string>
+    <string name="vault_change_passphrase">更换口令</string>
+    <string name="vault_reset">重置</string>
+    <string name="vault_reset_title">永久重置？</string>
+    <string name="vault_reset_desc">所有加密内容将永久删除，无法从回收站恢复。</string>
+    <string name="btn_permanent_delete">永久删除</string>
+    <string name="vault_no_entries">还没有加密内容。</string>
+    <string name="vault_untitled">无标题</string>
+    <string name="vault_add_title">新增加密内容</string>
+    <string name="vault_edit_title">编辑加密内容</string>
+    <string name="vault_title_label">标题</string>
+    <string name="vault_content_label">内容</string>
+    <string name="btn_encrypt_save">加密保存</string>
+    <string name="vault_change_passphrase_title">更换保险箱口令</string>
+    <string name="vault_new_passphrase">新口令</string>
+    <string name="vault_confirm">确认</string>
+
+    <!-- ==================== Watch ==================== -->
+    <string name="watch_connecting">正在连接…</string>
+    <string name="watch_connected_watching">已连接 · 对方在看</string>
+    <string name="watch_connected_offline">已连接 · 对方暂时不在线</string>
+    <string name="watch_pause">暂停</string>
+    <string name="watch_play">播放</string>
+    <string name="watch_pick_video">从下面片库选一部一起看吧</string>
+    <string name="watch_bookmark_count">书签 %1$d</string>
+    <string name="watch_library">片库</string>
+    <string name="watch_upload_video">上传视频</string>
+    <string name="watch_add_direct_link">添加直链</string>
+    <string name="watch_now_playing">播放中</string>
+    <string name="watch_local_upload">本地上传</string>
+    <string name="watch_direct_link">直链</string>
+    <string name="watch_last_position">上次看到 %1$s</string>
+    <string name="watch_bookmarks">书签</string>
+    <string name="watch_add_bookmark">在当前进度添加书签</string>
+    <string name="watch_no_bookmarks">还没有书签。\n看到心动的一幕，点上面按钮存个位置，随时秒跳回来。</string>
+    <string name="watch_unnamed_clip">未命名片段</string>
+    <string name="watch_jump_to">跳到</string>
+    <string name="watch_delete_bookmark">删除书签</string>
+    <string name="watch_add_source_title">添加片源（直链）</string>
+    <string name="watch_title_label">标题</string>
+    <string name="watch_url_label">视频直链 http(s)://</string>
+    <string name="btn_add_source">添加</string>
+
+    <!-- ==================== Listen ==================== -->
+    <string name="listen_unknown_song">未知歌曲</string>
+    <string name="listen_no_playing">还没有正在播放</string>
+    <string name="listen_select_below">从下方选择歌曲</string>
+    <string name="listen_prev">上一首</string>
+    <string name="listen_next">下一首</string>
+    <string name="listen_play">播放</string>
+    <string name="listen_pause">暂停</string>
+    <string name="listen_connected_partners">实时同步 · %1$d 人</string>
+    <string name="listen_connecting">连接中</string>
+    <string name="listen_lyrics_loading">歌词加载中</string>
+    <string name="listen_instrumental">纯音乐</string>
+    <string name="listen_no_lyrics">暂无歌词</string>
+    <string name="listen_tab_search">搜索</string>
+    <string name="listen_tab_discover">推荐</string>
+    <string name="listen_tab_playlists">歌单</string>
+    <string name="listen_tab_charts">榜单</string>
+    <string name="listen_tab_history">历史</string>
+    <string name="listen_tab_local">本地</string>
+    <string name="listen_tab_queue">队列</string>
+    <string name="listen_search_placeholder">搜索歌曲</string>
+    <string name="listen_input_keyword">输入关键词搜索</string>
+    <string name="listen_no_results">没有搜索结果</string>
+    <string name="listen_daily_recommend">每日推荐</string>
+    <string name="listen_no_recommend">暂无推荐歌曲</string>
+    <string name="listen_recommend_playlists">推荐歌单</string>
+    <string name="listen_no_recommend_playlists">暂无推荐歌单</string>
+    <string name="listen_my_playlists">我的歌单</string>
+    <string name="listen_no_playlists">暂无歌单</string>
+    <string name="listen_no_charts">暂无榜单</string>
+    <string name="listen_listen_history">听歌历史</string>
+    <string name="listen_no_history">还没有听歌记录</string>
+    <string name="listen_local_upload">本地上传</string>
+    <string name="listen_no_local">还没有本地歌曲</string>
+    <string name="listen_upload">上传</string>
+    <string name="listen_queue">播放队列</string>
+    <string name="listen_queue_empty">队列为空</string>
+    <string name="listen_remove">移除</string>
+    <string name="listen_add_to_queue">加入队列</string>
+    <string name="listen_tracks_count">%1$d 首</string>
+    <string name="listen_play_failed">播放失败</string>
+    <string name="listen_upload_success">本地歌曲已上传</string>
+    <string name="listen_delete_success">已删除本地歌曲</string>
+    <string name="listen_added_to_queue">已加入队列</string>
+    <string name="listen_song_unavailable">这首歌暂时不能播放</string>
+    <string name="listen_no_play_url">未获取到播放地址</string>
+    <string name="listen_local_song">本地歌曲</string>
+    <string name="listen_error_login_netease">请先登录网易云，或播放本地上传歌曲</string>
+    <string name="listen_error_no_permission">当前账号没有权限访问这个内容</string>
+    <string name="listen_error_not_found">内容不存在或已被删除</string>
+
+    <!-- ==================== Games Lobby ==================== -->
+    <string name="games_lobby_title">一起玩</string>
+    <string name="games_lobby_subtitle">选个游戏，和 TA 来一局</string>
+    <string name="game_gomoku">五子棋</string>
+    <string name="game_gomoku_desc">15×15，先连五子者胜</string>
+    <string name="game_tictactoe">井字棋</string>
+    <string name="game_tictactoe_desc">3×3，连成一线即胜</string>
+    <string name="game_reversi">黑白棋</string>
+    <string name="game_reversi_desc">8×8，翻子多者胜</string>
+    <string name="game_memory">记忆翻牌</string>
+    <string name="game_memory_desc">合作翻出相同图案</string>
+    <string name="game_linklink">连连看</string>
+    <string name="game_linklink_desc">配对相同图案，清空棋盘</string>
+    <string name="game_draw">你画我猜</string>
+    <string name="game_draw_desc">实时作画与猜词</string>
+    <string name="game_canvas">协作画板</string>
+    <string name="game_canvas_desc">同一块画布一起涂鸦</string>
+
+    <!-- ==================== Game Screen ==================== -->
+    <string name="game_connecting">连接中…</string>
+    <string name="game_loading">加载中…</string>
+    <string name="game_waiting">等待开始，点「新对局」</string>
+    <string name="game_your_turn">轮到你落子</string>
+    <string name="game_opponent_thinking">对方思考中…</string>
+    <string name="game_draw_result">平局 🤝</string>
+    <string name="game_you_win">你赢了 🎉</string>
+    <string name="game_opponent_wins">这局对方赢了，再来一局？</string>
+    <string name="btn_new_game">新对局</string>
+    <string name="btn_restart">重开</string>
+    <string name="btn_surrender">认输</string>
+    <string name="btn_undo">悔棋</string>
+    <string name="game_undo_request">对方请求悔棋</string>
+    <string name="btn_agree">同意</string>
+    <string name="btn_reject">拒绝</string>
+    <string name="game_win_count">%1$s %2$d胜</string>
+
+    <!-- ==================== Draw Screen ==================== -->
+    <string name="draw_your_turn">轮到你画</string>
+    <string name="draw_guess">猜一猜：%1$s</string>
+    <string name="draw_title">你画我猜</string>
+    <string name="draw_guess_placeholder">输入猜测</string>
+    <string name="btn_guess">猜</string>
+    <string name="btn_start">开始</string>
+    <string name="btn_next_round">下一回合</string>
+    <string name="draw_round">第 %1$d 回合</string>
+
+    <!-- ==================== Canvas ==================== -->
+    <string name="canvas_partner_online">对方在线</string>
+    <string name="canvas_partner_offline">对方不在线</string>
+    <string name="canvas_desc">和 Ta 一起在同一块画布上涂鸦，落笔实时同步。</string>
+    <string name="canvas_thickness">粗细</string>
+    <string name="canvas_eraser">橡皮</string>
+    <string name="canvas_eraser_on">橡皮(开)</string>
+    <string name="canvas_save_timeline">保存到时间轴</string>
+    <string name="canvas_save_gallery">存入作品集</string>
+    <string name="canvas_gallery_btn">作品集</string>
+
+    <!-- ==================== Canvas Gallery ==================== -->
+    <string name="canvas_gallery_title">协作画板 · 作品集</string>
+    <string name="canvas_no_artworks">还没有作品。在协作画板上画完后，点「存入作品集」就出现在这里。</string>
+    <string name="canvas_untitled_artwork">未命名作品</string>
+    <string name="canvas_strokes_count">%1$d 笔</string>
+    <string name="canvas_collaborators_count">%1$d 位合作者</string>
+    <string name="canvas_thumbnail_unavailable">缩略图不可用</string>
+
+    <!-- ==================== Canvas Artwork Player ==================== -->
+    <string name="artwork_player_title">作品回放</string>
+    <string name="artwork_back_to_gallery">返回作品集</string>
+    <string name="artwork_saved_by">由 %1$s 保存 · %2$s</string>
+    <string name="artwork_collaborators_label">合作者：</string>
+    <string name="artwork_strokes_label">%1$s（%2$d 笔）</string>
+
+    <!-- ==================== Timeline ==================== -->
+    <string name="timeline_visibility_partners_only">仅彼此</string>
+    <string name="timeline_visibility_public">公开</string>
+    <string name="timeline_visibility_encrypted">加密</string>
+    <string name="timeline_no_moments">还没有动态，点右下角发一条吧</string>
+    <string name="timeline_post">发动态</string>
+    <string name="timeline_delete">删除</string>
+    <string name="timeline_voice_msg">🎤 语音 %1$ds（网页端可播放）</string>
+    <string name="timeline_comments_count">评论 %1$d</string>
+    <string name="timeline_post_title">发一条动态</string>
+    <string name="timeline_placeholder">此刻想说的话…</string>
+    <string name="timeline_who_can_see">谁可以看</string>
+    <string name="timeline_msg_say_something">说点什么吧</string>
+
+    <!-- ==================== Messages ==================== -->
+    <string name="messages_public">公开</string>
+    <string name="messages_private">私密</string>
+    <string name="messages_placeholder_public">写一条留言…</string>
+    <string name="messages_placeholder_private">写一条私密留言…</string>
+    <string name="messages_anonymous">匿名</string>
+    <string name="messages_private_msg">私密留言</string>
+    <string name="messages_pending_sync">待同步</string>
+    <string name="messages_msg_sent">已发送</string>
+    <string name="messages_msg_sent_private">私密留言已发送</string>
+    <string name="messages_msg_offline_saved">离线已保存，联网后自动同步</string>
+
+    <!-- ==================== Notifications ==================== -->
+    <string name="notifications_unread">未读 %1$d</string>
+    <string name="notifications_mark_all_read">全部已读</string>
+    <string name="notifications_empty">暂时没有通知</string>
+
+    <!-- ==================== Capsules ==================== -->
+    <string name="capsules_no_capsules">还没有时间胶囊</string>
+    <string name="capsules_no_capsules_sub">写一封给未来的你们吧</string>
+    <string name="capsules_write">写胶囊</string>
+    <string name="capsules_write_one">写一封</string>
+    <string name="capsules_opened">已开启</string>
+    <string name="capsules_not_opened">未开启 🔒</string>
+    <string name="capsules_media_hint">含语音 / 视频附件（请在网页端查看）</string>
+    <string name="capsules_open_at">将于 %1$s 开启</string>
+    <string name="capsules_write_title">写给未来</string>
+    <string name="capsules_content_label">想对未来的你们说的话</string>
+    <string name="capsules_open_date">开启日期</string>
+    <string name="btn_seal">封存</string>
+    <string name="capsules_msg_say_something">写点想对未来说的话吧</string>
+    <string name="capsules_msg_sealed">已封存，到时间才能开启</string>
+    <string name="capsules_msg_seal_failed">封存失败</string>
+
+    <!-- ==================== Search ==================== -->
+    <string name="search_placeholder">搜索文章 / 相册 / 纪念日 / 动态 / 留言</string>
+    <string name="search_failed">搜索失败：%1$s</string>
+    <string name="search_hint">输入关键词，找回你们的点点滴滴</string>
+    <string name="search_no_results">没有找到相关内容</string>
+    <string name="search_total_results">共 %1$d 条结果</string>
+    <string name="search_type_article">文章</string>
+    <string name="search_type_album">相册</string>
+    <string name="search_type_event">纪念日</string>
+    <string name="search_type_moment">动态</string>
+    <string name="search_type_message">留言</string>
+
+    <!-- ==================== Recycle Bin ==================== -->
+    <string name="recycle_bin_total">回收站 · 共 %1$d 项</string>
+    <string name="recycle_bin_empty">回收站是空的</string>
+    <string name="recycle_bin_no_title">(无标题)</string>
+    <string name="recycle_bin_deleted_at">删除于 %1$s</string>
+    <string name="recycle_bin_clear_title">清空回收站</string>
+    <string name="recycle_bin_clear_msg">将永久删除回收站内的全部项目，此操作不可恢复。确定继续吗？</string>
+    <string name="recycle_bin_delete_forever_title">永久删除</string>
+    <string name="recycle_bin_delete_forever_msg">将永久删除「%1$s」，此操作不可恢复。确定继续吗？</string>
+    <string name="btn_delete_forever">永久删除</string>
+
+    <!-- ==================== Admin Tools ==================== -->
+    <string name="admin_title">服务器工具</string>
+    <string name="admin_desc">仅管理员接口会返回完整内容；普通伴侣账号看到无权限提示属于正常行为。</string>
+    <string name="admin_health">系统健康</string>
+    <string name="admin_storage">存储统计</string>
+    <string name="admin_backup">备份计划与历史</string>
+    <string name="admin_run_backup">立即执行自动备份</string>
+    <string name="admin_users">安全用户</string>
+    <string name="admin_audit">审计日志</string>
+
+    <!-- ==================== Licenses ==================== -->
+    <string name="licenses_title">开源许可证</string>
+    <string name="licenses_subtitle">第三方软件、版本、来源与许可证正文</string>
+    <string name="licenses_copyright">版权声明</string>
+    <string name="licenses_full_license">完整许可证</string>
+
+    <!-- ==================== Albums ==================== -->
+    <string name="albums_title">我们的相册</string>
+    <string name="albums_subtitle">收藏每一次见面和共同经历</string>
+    <string name="albums_no_albums">还没有相册</string>
+    <string name="albums_no_albums_sub">选几张照片，创建你们的第一本相册</string>
+    <string name="albums_new_album">新建相册</string>
+    <string name="albums_photos_count">%1$d 张照片</string>
+    <string name="albums_delete_title">删除相册？</string>
+    <string name="albums_delete_msg">删除后可在回收站恢复。</string>
+    <string name="albums_comment">评论</string>
+    <string name="albums_write_comment">写评论</string>
+    <string name="albums_new_title">新建相册</string>
+    <string name="albums_edit_title">编辑相册</string>
+    <string name="albums_title_label">标题</string>
+    <string name="albums_desc_label">描述</string>
+    <string name="albums_tags_label">标签，逗号分隔</string>
+    <string name="albums_pick_image">从相册选择图片</string>
+    <string name="albums_image_picked">已选图片，重新选择</string>
+    <string name="albums_user">用户</string>
+
+    <!-- ==================== Articles ==================== -->
+    <string name="articles_title">我们的文章</string>
+    <string name="articles_subtitle">把想说的话，认真写给未来</string>
+    <string name="articles_no_articles">还没有文章</string>
+    <string name="articles_no_articles_sub">写下你们的第一个故事</string>
+    <string name="articles_write">写文章</string>
+    <string name="articles_published">已发布</string>
+    <string name="articles_draft">草稿</string>
+    <string name="articles_delete_title">删除文章？</string>
+    <string name="articles_delete_msg">删除后可在回收站恢复。</string>
+    <string name="articles_versions">版本</string>
+    <string name="articles_history">历史版本</string>
+    <string name="articles_rollback">回滚到版本 %1$d</string>
+    <string name="articles_comment">评论</string>
+    <string name="articles_write_comment">写评论</string>
+    <string name="articles_new_title">新建文章</string>
+    <string name="articles_edit_title">编辑文章</string>
+    <string name="articles_title_label">标题</string>
+    <string name="articles_excerpt_label">摘要</string>
+    <string name="articles_content_label">正文</string>
+    <string name="articles_tags_label">标签，逗号分隔</string>
+    <string name="articles_publish_checkbox">发布</string>
+
+    <!-- ==================== Events ==================== -->
+    <string name="events_no_events">还没有纪念日，点击右下角添加</string>
+    <string name="events_add">添加纪念日</string>
+    <string name="events_anniversary">纪念日</string>
+    <string name="events_countdown">倒数日</string>
+    <string name="events_today">就在今天</string>
+    <string name="events_days_left">还有 %1$d 天</string>
+    <string name="events_add_title">添加纪念日</string>
+    <string name="events_edit_title">编辑纪念日</string>
+    <string name="events_title_label">标题</string>
+    <string name="events_date_label">日期 (YYYY-MM-DD)</string>
+    <string name="events_mark_important">标记为重要</string>
+    <string name="events_yearly_repeat">每年重复</string>
+
+    <!-- ==================== Common / Shared ==================== -->
+    <string name="common_me">我</string>
+    <string name="common_partner">TA</string>
+    <string name="common_you">你</string>
+    <string name="common_note_optional">备注（可选）</string>
+    <string name="common_date">日期</string>
+</resources>

@@ -1,0 +1,34 @@
+[flake8]
+# Project line-length matches the CodeCheck rule G.FMT.02 (120, not the
+# pycodestyle default of 79).
+max-line-length = 120
+# E203/W503 conflict with black-style formatting; E501 handled by max-line-length.
+extend-ignore = E203, W503
+# One-off debug/diagnostic/maintenance scripts, generated migrations and the
+# local virtualenvs are intentionally excluded from style scanning — they are
+# not shipped application code. Besides the migrations/scripts/tests folders,
+# the standalone helper scripts that live next to the app (server/*.py) and the
+# ad-hoc test scripts at the server/ and repo roots are matched by name below.
+exclude =
+    .git,
+    .venv,
+    .venv_test,
+    **/.venv,
+    **/.venv_test,
+    server/migrations/versions,
+    server/scripts,
+    scripts,
+    server/tests,
+    diagnose_*.py,
+    check_*.py,
+    fix_*.py,
+    inspect_*.py,
+    reset_*.py,
+    seed_*.py,
+    _ssh*.py,
+    _mk*.py,
+    test_*.py,
+    *_backend_test.py
+# __init__.py files re-export names on purpose.
+per-file-ignores =
+    __init__.py: F401

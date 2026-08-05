@@ -1,0 +1,776 @@
+<resources>
+    <!-- ==================== App / Widget ==================== -->
+    <string name="app_name">ラブジャーナル</string>
+    <string name="widget_love_days_title">一緒にいる日数</string>
+    <string name="widget_together">一緒にいて</string>
+    <string name="widget_days">日</string>
+    <string name="default_notification_channel_id">love_journal_default</string>
+    <string name="default_notification_channel_name">ラブジャーナル通知</string>
+
+    <!-- ==================== Navigation Tabs ==================== -->
+    <string name="nav_home">ホーム</string>
+    <string name="nav_events">記念日</string>
+    <string name="nav_articles">記事</string>
+    <string name="nav_albums">アルバム</string>
+    <string name="nav_cottage">コテージ</string>
+    <string name="nav_messages">メッセージ</string>
+
+    <!-- ==================== Page Titles ==================== -->
+    <string name="title_cottage_hub">私たちのコテージ</string>
+    <string name="title_chat">ささやき</string>
+    <string name="title_mood">気分チェック</string>
+    <string name="title_wishlist">ウィッシュリスト</string>
+    <string name="title_questions">毎日の質問</string>
+    <string name="title_games">一緒に遊ぼう</string>
+    <string name="title_watch">一緒に見よう</string>
+    <string name="title_listen">一緒に聞こう</string>
+    <string name="title_coupons">スイートクーポン</string>
+    <string name="title_reminders">コテージリマインダー</string>
+    <string name="title_ledger">カップル家計簿</string>
+    <string name="title_reports">ラブ月報</string>
+    <string name="title_footprints">フットプリントマップ</string>
+    <string name="title_period">生理期ケア</string>
+    <string name="title_plans">デート計画</string>
+    <string name="title_checkins">チェックイン</string>
+    <string name="title_canvas">コラボキャンバス</string>
+    <string name="title_canvas_gallery">ギャラリー</string>
+    <string name="title_canvas_artwork">作品リプレイ</string>
+    <string name="title_search">検索</string>
+    <string name="title_notifications">通知センター</string>
+    <string name="title_timeline">タイムライン</string>
+    <string name="title_capsules">タイムカプセル</string>
+    <string name="title_settings">設定</string>
+    <string name="title_licenses">オープンソースライセンス</string>
+    <string name="title_security">アカウントセキュリティ</string>
+    <string name="title_recycle_bin">ゴミ箱</string>
+    <string name="title_messages_board">メッセージボード</string>
+    <string name="title_in_game">対局中</string>
+
+    <!-- ==================== Top Bar Actions ==================== -->
+    <string name="action_back">戻る</string>
+    <string name="action_search">検索</string>
+    <string name="action_notifications_center">通知センター</string>
+    <string name="action_more">その他</string>
+    <string name="action_next_step">次へ</string>
+
+    <!-- ==================== Common Buttons ==================== -->
+    <string name="btn_cancel">キャンセル</string>
+    <string name="btn_confirm">OK</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_delete">削除</string>
+    <string name="btn_send">送信</string>
+    <string name="btn_publish">公開</string>
+    <string name="btn_add">追加</string>
+    <string name="btn_edit">編集</string>
+    <string name="btn_restore">復元</string>
+    <string name="btn_refresh">更新</string>
+    <string name="btn_clear">クリア</string>
+    <string name="btn_close">閉じる</string>
+    <string name="btn_done">完了</string>
+    <string name="btn_invite">招待</string>
+    <string name="btn_redeem">交換</string>
+
+    <!-- ==================== Common Status ==================== -->
+    <string name="status_loading">読み込み中…</string>
+    <string name="status_saving">保存中…</string>
+    <string name="status_submitting">送信中…</string>
+    <string name="status_uploading">アップロード中…</string>
+    <string name="status_deleting">削除中…</string>
+    <string name="status_processing">処理中…</string>
+    <string name="status_locating">位置取得中…</string>
+
+    <!-- ==================== Common Messages ==================== -->
+    <string name="msg_load_failed">読み込み失敗</string>
+    <string name="msg_save_failed">保存失敗</string>
+    <string name="msg_delete_failed">削除失敗</string>
+    <string name="msg_publish_failed">公開失敗</string>
+    <string name="msg_saved">保存しました</string>
+    <string name="msg_deleted">削除しました</string>
+    <string name="msg_added">追加しました</string>
+    <string name="msg_published">公開しました</string>
+    <string name="msg_operation_failed">操作に失敗しました。後でもう一度お試しください</string>
+    <string name="msg_no_data">データがありません</string>
+    <string name="msg_load_failed_with_error">読み込み失敗：%1$s</string>
+
+    <!-- ==================== Login ==================== -->
+    <string name="login_tagline">愛し合う毎日を真剣に記録しよう</string>
+    <string name="login_welcome_back">おかえりなさい</string>
+    <string name="login_server_address">サーバーアドレス</string>
+    <string name="login_username">ユーザー名</string>
+    <string name="login_password">パスワード</string>
+    <string name="login_test_connection">接続テスト</string>
+    <string name="btn_login">ログイン</string>
+    <string name="btn_logout">ログアウト</string>
+
+    <!-- ==================== Dashboard ==================== -->
+    <string name="dashboard_today_love">今日もしっかり愛し合おう</string>
+    <string name="dashboard_every_day_story">何気ない毎日も、私たちの物語です。</string>
+    <string name="dashboard_love_clock_together">私たちはもう一緒に</string>
+    <string name="dashboard_day">日</string>
+    <string name="dashboard_offline_mode">オフラインモードです。前回同期したデータを表示しています</string>
+    <string name="dashboard_upcoming_events">今後の記念日</string>
+    <string name="dashboard_upcoming_events_sub">楽しみな日を心に留めておこう</string>
+    <string name="dashboard_no_events">まだ記念日がありません</string>
+    <string name="dashboard_no_events_sub">大切な日を追加して、カウントダウンを始めよう</string>
+    <string name="dashboard_today">今日</string>
+    <string name="dashboard_days_left">%1$d 日</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_site_settings">サイト設定</string>
+    <string name="settings_site_settings_sub">名称、記念日、登録権限を管理</string>
+    <string name="settings_basic_info">基本情報</string>
+    <string name="settings_site_name">サイト名</string>
+    <string name="settings_love_start_date">恋愛開始日 · %1$s</string>
+    <string name="settings_love_start_date_not_set">未設定</string>
+    <string name="settings_allow_registration">新規ユーザー登録を許可</string>
+    <string name="settings_allow_registration_sub">オフにすると既存アカウントのみログインできます</string>
+    <string name="btn_save_settings">設定を保存</string>
+    <string name="settings_account_maintenance">アカウントとメンテナンス</string>
+    <string name="settings_account_security">アカウントセキュリティ（パスワード変更 / ログインデバイス）</string>
+    <string name="settings_recycle_bin">ゴミ箱</string>
+    <string name="settings_admin_tools">サーバーツール（ヘルス / 監査 / ユーザー / バックアップ）</string>
+    <string name="settings_open_licenses">オープンソースライセンスと著作権表示</string>
+
+    <!-- ==================== Security ==================== -->
+    <string name="security_change_password">パスワード変更</string>
+    <string name="security_current_password">現在のパスワード</string>
+    <string name="security_new_password">新しいパスワード</string>
+    <string name="security_confirm_password">新しいパスワード（確認）</string>
+    <string name="security_password_hint">新しいパスワードは8文字以上で、英字と数字を両方含めてください。</string>
+    <string name="btn_change_password">パスワード変更</string>
+    <string name="security_login_devices">ログインデバイス</string>
+    <string name="security_logout_all_desc">すべてのデバイスからログアウトすると、すべてのログイン（このデバイスを含む）が即座に無効になり、再ログインが必要になります。アカウント異常が疑われる場合にご利用ください。</string>
+    <string name="btn_logout_all_devices">すべてのデバイスからログアウト</string>
+    <string name="security_logout_all_confirm_title">すべてのデバイスからログアウト</string>
+    <string name="security_logout_all_confirm_msg">すべてのログイン（このデバイスを含む）を即座に無効化し、再ログインが必要になります。続行しますか？</string>
+    <string name="security_done_relogin_msg">操作が完了しました。現在のログインは無効になりました。ログアウトして再度ログインしてください。</string>
+
+    <!-- ==================== Network Errors ==================== -->
+    <string name="error_unknown_host">サーバーアドレスを解決できません。ドメインまたはIPを確認してください</string>
+    <string name="error_connect">サーバーに接続できません。アドレス、ポート（デフォルト8000）、Wi-Fi/ LANを確認してください</string>
+    <string name="error_timeout">接続がタイムアウトしました。スマホとサーバーが同じネットワークにあり、バックエンドが起動していることを確認してください</string>
+    <string name="error_ssl_handshake">HTTPSハンドシェイクに失敗しました。TLSなしの自己ホストの場合は http:// を使用してください</string>
+    <string name="error_ssl">安全な接続に失敗しました。プロトコル（http/https）と証明書設定を確認してください</string>
+    <string name="error_401">認証されていません。ユーザー名とパスワードを確認してください</string>
+    <string name="error_403">アクセスが拒否されました</string>
+    <string name="error_404">サーバーに到達しましたが、エンドポイントが見つかりません（アドレスにポート :8000 が含まれているか確認してください）</string>
+    <string name="error_server_code">サーバーエラーが返されました (%1$d)</string>
+    <string name="error_network">ネットワークエラー：%1$s</string>
+    <string name="error_network_fallback">ネットワーク接続を確認してください</string>
+
+    <!-- ==================== Auth Errors ==================== -->
+    <string name="auth_error_wrong_credentials">ユーザー名またはパスワードが間違っています</string>
+    <string name="auth_error_frozen">アカウントが凍結またはBANされています。後でもう一度お試しください</string>
+    <string name="auth_error_too_frequent">試行回数が多すぎます。後でもう一度お試しください</string>
+    <string name="auth_error_login_failed">ログイン失敗 (%1$d)</string>
+    <string name="auth_error_session_not_kept">ログイン成功しましたがセッションが維持されませんでした。httpで自己ホストの場合、COOKIE_SECUREが強制されておらず、リバースプロキシが誤って X-Forwarded-Proto: https を送っていないか確認してください</string>
+    <string name="auth_error_no_server">サーバーアドレスを先に入力してください</string>
+    <string name="auth_health_404">サーバーに到達しましたが、ヘルスチェックエンドポイントが見つかりません（ポートが :8000 か確認してください）</string>
+    <string name="auth_health_code">サーバーが %1$d を返しました</string>
+    <string name="auth_connection_ok">接続成功、バックエンドは正常に動作しています</string>
+
+    <!-- ==================== Server Config ==================== -->
+    <string name="server_config_empty">サーバーアドレスを入力してください</string>
+    <string name="server_config_incomplete_https">完全な https:// サーバーアドレスを入力してください</string>
+    <string name="server_config_invalid">サーバーアドレスの形式が正しくありません</string>
+    <string name="server_config_https_only">アカウントとセッションを保護するため、本番版ではHTTPSのみ許可されます。ローカルHTTPはデバッグ版のプライベートアドレスに限定されます</string>
+
+    <!-- ==================== Notification Channels ==================== -->
+    <string name="notification_channel_messages">メッセージ</string>
+    <string name="notification_channel_moods">気分チェック</string>
+    <string name="notification_channel_events">記念日リマインダー</string>
+
+    <!-- ==================== Cottage Hub ==================== -->
+    <string name="cottage_hub_title">二人だけの小さな世界</string>
+    <string name="cottage_hub_subtitle">チャット、寄り添い、記録、共同生活をここに。</string>
+    <string name="cottage_feature_chat">ささやき</string>
+    <string name="cottage_feature_chat_sub">リアルタイムで寄り添う</string>
+    <string name="cottage_feature_mood">気分</string>
+    <string name="cottage_feature_mood_sub">今の気持ちをシェア</string>
+    <string name="cottage_feature_checkin">チェックイン</string>
+    <string name="cottage_feature_checkin_sub">相手を安心させる</string>
+    <string name="cottage_feature_wishlist">ウィッシュリスト</string>
+    <string name="cottage_feature_wishlist_sub">一緒に叶える</string>
+    <string name="cottage_feature_questions">毎日の質問</string>
+    <string name="cottage_feature_questions_sub">もっと理解し合う</string>
+    <string name="cottage_feature_watch">一緒に見よう</string>
+    <string name="cottage_feature_watch_sub">同期視聴</string>
+    <string name="cottage_feature_games">一緒に遊ぼう</string>
+    <string name="cottage_feature_games_sub">二人用ゲーム</string>
+    <string name="cottage_feature_listen">一緒に聞こう</string>
+    <string name="cottage_feature_listen_sub">同期再生</string>
+    <string name="cottage_feature_coupons">クーポン</string>
+    <string name="cottage_feature_coupons_sub">スイートなご褒美</string>
+    <string name="cottage_feature_reminders">リマインダー</string>
+    <string name="cottage_feature_reminders_sub">大事な小さなこと</string>
+    <string name="cottage_feature_plans">デート計画</string>
+    <string name="cottage_feature_plans_sub">会うのを楽しみに</string>
+    <string name="cottage_feature_ledger">カップル家計簿</string>
+    <string name="cottage_feature_ledger_sub">共同生活</string>
+    <string name="cottage_feature_reports">ラブ月報</string>
+    <string name="cottage_feature_reports_sub">甘い思い出を振り返る</string>
+    <string name="cottage_feature_footprints">フットプリントマップ</string>
+    <string name="cottage_feature_footprints_sub">都市を灯す</string>
+    <string name="cottage_feature_period">生理期</string>
+    <string name="cottage_feature_period_sub">思いやりケア</string>
+    <string name="cottage_feature_vault">プライベート空間</string>
+    <string name="cottage_feature_vault_sub">エンドツーエンド暗号化</string>
+
+    <!-- ==================== Chat ==================== -->
+    <string name="chat_partner_default">相手</string>
+    <string name="chat_connecting">接続中…</string>
+    <string name="chat_typing">入力中…</string>
+    <string name="chat_online">オンライン</string>
+    <string name="chat_offline">オフライン</string>
+    <string name="chat_tools">チャットツール</string>
+    <string name="chat_send_whisper">ささやきを送る…</string>
+    <string name="chat_poke">つつく</string>
+    <string name="chat_send_to_future">未来へ送る</string>
+    <string name="chat_schedule_hint">✉️ このささやきは %1$s に現れます</string>
+    <string name="chat_msg_recalled">メッセージが取り消されました</string>
+    <string name="chat_msg_image">[画像]</string>
+    <string name="chat_msg_sticker">[スタンプ]</string>
+    <string name="chat_msg_voice">[音声]</string>
+    <string name="chat_favorite">お気に入り</string>
+    <string name="chat_unfavorite">お気に入り解除</string>
+    <string name="chat_pin_quote">ピン留め</string>
+    <string name="chat_recall">取り消し</string>
+    <string name="chat_memories">チャットの思い出</string>
+    <string name="chat_pinned">ピン留め：%1$s</string>
+    <string name="chat_unpin">ピン解除</string>
+    <string name="chat_today_count">今日 %1$d 件 · 自分 %2$d · 相手 %3$d</string>
+    <string name="chat_keywords">キーワード：%1$s</string>
+    <string name="chat_favorites">お気に入り</string>
+    <string name="chat_future_messages">未来のメッセージ</string>
+    <string name="chat_media_panel">メディア：画像 %1$d · スタンプ %2$d · 音声 %3$d</string>
+    <string name="chat_schedule_title">未来へ送る</string>
+    <string name="chat_schedule_desc">今の言葉を後まで隠しておきましょう。指定した時間にメッセージが現れ、二人だけが見られます。</string>
+    <string name="chat_1h_later">1時間後</string>
+    <string name="chat_tomorrow_now">明日の今の時間</string>
+    <string name="chat_tomorrow_midnight">明日の0時</string>
+    <string name="chat_date_label">日付 (YYYY-MM-DD)</string>
+    <string name="chat_time_label">時間 (HH:mm)</string>
+    <string name="chat_will_appear">%1$s に現れます</string>
+    <string name="chat_confirm_schedule">確認</string>
+    <string name="chat_select_future_time">未来の時間を選んでください</string>
+    <string name="chat_poked_you">つつきました</string>
+    <string name="chat_media_placeholder">[メディアメッセージ]</string>
+
+    <!-- ==================== Mood ==================== -->
+    <string name="mood_how_today">今日の気分はどう？</string>
+    <string name="mood_happy">嬉しい</string>
+    <string name="mood_blessed">幸せ</string>
+    <string name="mood_calm">穏やか</string>
+    <string name="mood_miss_you">恋しい</string>
+    <string name="mood_sad">悲しい</string>
+    <string name="mood_angry">怒り</string>
+    <string name="mood_note_optional">言いたいこと（任意）</string>
+    <string name="btn_take_photo">撮影</string>
+    <string name="btn_from_gallery">ギャラリーから選択</string>
+    <string name="mood_photo_attached">写真を添付しました</string>
+    <string name="btn_check_in">チェックイン</string>
+    <string name="mood_recent">最近の気分</string>
+    <string name="mood_image">気分の写真</string>
+
+    <!-- ==================== Check-in ==================== -->
+    <string name="checkin_no_checkins">まだチェックインがありません</string>
+    <string name="checkin_no_checkins_sub">相手がまだチェックインしていません。送って安心させましょう</string>
+    <string name="checkin_action">チェックイン</string>
+    <string name="checkin_photo">チェックイン写真</string>
+    <string name="checkin_send_title">チェックインを送る</string>
+    <string name="checkin_placeholder">今、相手に伝えたいこと…</string>
+    <string name="btn_add_photo">写真を追加</string>
+    <string name="checkin_relocate">再取得</string>
+    <string name="checkin_share_location">位置を共有</string>
+    <string name="checkin_dont_share">共有しない</string>
+    <string name="checkin_pending_photo">送信待ちの写真</string>
+    <string name="checkin_remove">削除</string>
+    <string name="btn_checkin_submit">チェックイン</string>
+    <string name="checkin_location">位置：%1$s</string>
+    <string name="checkin_location_denied">位置：権限なし</string>
+    <string name="checkin_location_failed">位置：取得失敗</string>
+    <string name="checkin_msg_say_something">何か書くか、写真を追加しましょう</string>
+    <string name="checkin_locating_msg">位置を取得中…</string>
+    <string name="checkin_location_ok">位置を取得しました</string>
+    <string name="checkin_location_failed_msg">位置を取得できませんでした</string>
+    <string name="checkin_location_failed_hint">位置を取得できませんでした。テキストや写真だけで先に送信できます</string>
+    <string name="checkin_location_denied_msg">位置権限なしで記録しました</string>
+    <string name="checkin_msg_checkin_done">チェックインしました</string>
+    <string name="checkin_msg_checkin_failed">チェックイン失敗</string>
+    <string name="checkin_upload_failed">写真のアップロードに失敗しました</string>
+
+    <!-- ==================== Wishlist ==================== -->
+    <string name="wishlist_no_wishes">まだウィッシュがありません。右下のボタンで追加しましょう</string>
+    <string name="wishlist_add_wish">ウィッシュを追加</string>
+    <string name="wishlist_pending_completed">未達成 %1$d · 達成済み %2$d</string>
+    <string name="wishlist_make_wish">ウィッシュを作る</string>
+    <string name="wishlist_edit_wish">ウィッシュを編集</string>
+    <string name="wishlist_title_label">一緒に何をしたい？</string>
+    <string name="wishlist_desc_optional">メモ（任意）</string>
+    <string name="wishlist_category_optional">カテゴリ（例：旅行 / グルメ）（任意）</string>
+    <string name="wishlist_completed_by">%1$s が達成</string>
+
+    <!-- ==================== Coupons ==================== -->
+    <string name="coupon_no_coupons">まだクーポンがありません。右下のボタンで送りましょう</string>
+    <string name="coupon_add">クーポンを送る</string>
+    <string name="coupon_active_redeemed">有効 %1$d · 交換済み %2$d</string>
+    <string name="coupon_my_sent">私が送ったクーポン</string>
+    <string name="coupon_sent_to_you">%1$s からあなたへ</string>
+    <string name="coupon_redeemed_by">%1$s が交換しました</string>
+    <string name="coupon_send_title">クーポンを送る</string>
+    <string name="coupon_edit_title">クーポンを編集</string>
+    <string name="coupon_name_label">クーポン名（例：家事免除券）</string>
+    <string name="coupon_usage_optional">使い方（任意）</string>
+    <string name="coupon_icon">アイコン</string>
+    <string name="btn_send_coupon">送る</string>
+
+    <!-- ==================== Ledger ==================== -->
+    <string name="ledger_no_entries">まだ記録がありません。右下のボタンで記録しましょう</string>
+    <string name="ledger_add">記録する</string>
+    <string name="ledger_total_spent">累計支出</string>
+    <string name="ledger_settled">精算完了 🎉</string>
+    <string name="ledger_owes">%1$s は %2$s に %3$s の貸し</string>
+    <string name="ledger_paid_by">%1$s が支払い</string>
+    <string name="ledger_split_treat">奢り</string>
+    <string name="ledger_split_owed_full">全額借り</string>
+    <string name="ledger_split_aa">割り勘</string>
+    <string name="ledger_add_title">記録する</string>
+    <string name="ledger_what_bought">何を買った</string>
+    <string name="ledger_amount">金額（元）</string>
+    <string name="ledger_category_optional">カテゴリ（例：食事 / 移動）（任意）</string>
+    <string name="ledger_who_paid">誰が払った</string>
+    <string name="ledger_i_paid">私が払った</string>
+    <string name="ledger_partner_paid">相手が払った</string>
+    <string name="ledger_how_split">どう分ける</string>
+
+    <!-- ==================== Period ==================== -->
+    <string name="period_no_records">まだ記録がありません。右下のボタンで記録しましょう</string>
+    <string name="period_add">記録</string>
+    <string name="period_phase_in_period">生理中</string>
+    <string name="period_phase_due_soon">もうすぐ</string>
+    <string name="period_phase_overdue">遅延</string>
+    <string name="period_phase_normal">安定</string>
+    <string name="period_phase_none">予測なし</string>
+    <string name="period_days_left">あと %1$d 日</string>
+    <string name="period_today">今日です</string>
+    <string name="period_overdue_days">%1$d 日遅延</string>
+    <string name="period_current_status">現在の状態</string>
+    <string name="period_predicted_next">次回予測：%1$s</string>
+    <string name="period_avg_cycle">平均周期 %1$d 日</string>
+    <string name="period_avg_period">平均生理日 %1$d 日</string>
+    <string name="period_ongoing">%1$s から（進行中）</string>
+    <string name="period_duration">%1$d 日間</string>
+    <string name="period_recorded_by">記録者 %1$s</string>
+    <string name="period_add_title">生理期を記録</string>
+    <string name="period_start_date">開始日</string>
+    <string name="period_end_date_optional">終了日（任意、空欄で進行中）</string>
+    <string name="period_end_date_not_set">未設定</string>
+    <string name="btn_clear">クリア</string>
+
+    <!-- ==================== Plans ==================== -->
+    <string name="plan_no_plans">まだデート計画がありません。右下のボタンで追加しましょう</string>
+    <string name="plan_add">計画を追加</string>
+    <string name="plan_active_completed">進行中 %1$d · 完了 %2$d</string>
+    <string name="plan_cancelled_count"> · キャンセル %1$d</string>
+    <string name="plan_show_done">完了を表示</string>
+    <string name="plan_hide_done">完了を非表示</string>
+    <string name="plan_status_planned">計画中</string>
+    <string name="plan_status_in_progress">進行中</string>
+    <string name="plan_status_done">完了</string>
+    <string name="plan_status_cancelled">キャンセル</string>
+    <string name="plan_checklist">チェックリスト %1$d/%2$d</string>
+    <string name="plan_add_title">新しいデート計画</string>
+    <string name="plan_title_label">計画タイトル</string>
+    <string name="plan_desc_optional">詳細（任意）</string>
+    <string name="plan_location_optional">場所（任意）</string>
+    <string name="plan_date_label">計画日</string>
+    <string name="plan_date_undecided">未定（日付を選択）</string>
+    <string name="plan_mark_important">重要としてマーク</string>
+
+    <!-- ==================== Reminders ==================== -->
+    <string name="reminder_no_reminders">まだリマインダーがありません。右下のボタンで追加しましょう</string>
+    <string name="reminder_add">リマインダーを追加</string>
+    <string name="reminder_active_done">未完了 %1$d · 完了 %2$d</string>
+    <string name="reminder_due_count"> · 期限切れ %1$d</string>
+    <string name="reminder_show_done">完了を表示</string>
+    <string name="reminder_hide_done">完了を非表示</string>
+    <string name="reminder_overdue">期限切れ</string>
+    <string name="reminder_add_title">リマインダーを追加</string>
+    <string name="reminder_content_label">リマインダー内容</string>
+    <string name="reminder_time_label">リマインダー時間</string>
+    <string name="reminder_audience_label">誰に通知</string>
+    <string name="reminder_audience_both">二人</string>
+    <string name="reminder_audience_me">自分のみ</string>
+    <string name="reminder_audience_partner">相手のみ</string>
+    <string name="reminder_select_time">時間を選択</string>
+
+    <!-- ==================== Reports ==================== -->
+    <string name="report_no_data">今月はまだデータがありません</string>
+    <string name="report_prev_month">前月</string>
+    <string name="report_next_month">翌月</string>
+    <string name="report_month_format">%1$d 年 %2$d 月</string>
+    <string name="report_stat_checkins">チェックイン</string>
+    <string name="report_stat_moods">気分チェック</string>
+    <string name="report_stat_questions">毎日の質問</string>
+    <string name="report_stat_answers">回答</string>
+    <string name="report_stat_chat_messages">ささやき</string>
+    <string name="report_stat_wishes_created">ウィッシュ作成</string>
+    <string name="report_stat_wishes_completed">ウィッシュ達成</string>
+    <string name="report_stat_plans_created">計画作成</string>
+    <string name="report_stat_plans_completed">計画完了</string>
+    <string name="report_stat_reminders_created">リマインダー作成</string>
+    <string name="report_common_moods">よくある気分</string>
+    <string name="report_highlights">ハイライト</string>
+    <string name="report_kind_wish">ウィッシュ</string>
+    <string name="report_kind_plan">計画</string>
+    <string name="report_kind_question">毎日の質問</string>
+    <string name="report_times">%1$d 回</string>
+
+    <!-- ==================== Footprints ==================== -->
+    <string name="footprint_no_data">まだ足跡がありません。「チェックイン」で訪れた都市を解放しましょう</string>
+    <string name="footprint_our_footprints">私たちの足跡</string>
+    <string name="footprint_cities_checkins">%1$d 都市 · %2$d 回チェックイン</string>
+    <string name="footprint_visited_places">行った場所</string>
+    <string name="footprint_recent_footprints">最近の足跡</string>
+    <string name="footprint_last_time">最後：%1$s</string>
+    <string name="footprint_times">%1$d 回</string>
+
+    <!-- ==================== Daily Questions ==================== -->
+    <string name="question_no_question">今日はまだ質問がありません</string>
+    <string name="question_create_desc">相手に聞きたい質問を書きましょう。公開後、各自が非公開で回答し、両方の回答が終わると一緒に公開されます。</string>
+    <string name="question_today_label">今日相手に聞きたいこと…</string>
+    <string name="question_publish">今日の質問を公開</string>
+    <string name="question_write_answer">回答を書く</string>
+    <string name="question_submit_answer">回答を送信</string>
+    <string name="question_waiting_partner">回答済みです。相手の回答待ち 💌</string>
+    <string name="question_answered_waiting">回答済み · 公開待ち</string>
+    <string name="question_answered">回答済み</string>
+    <string name="question_not_answered">まだ回答していません</string>
+    <string name="question_me">（私）</string>
+
+    <!-- ==================== Vault ==================== -->
+    <string name="vault_create_title">プライベート空間を作成</string>
+    <string name="vault_create_desc">パスフレーズはこの端末でのみ鍵を派生するために使われ、サーバーには暗号文のみ保存されます。</string>
+    <string name="vault_unlock_title">プライベート空間をロック解除</string>
+    <string name="vault_unlock_desc">Web版と同じパスフレーズを入力すれば、同じ暗号化コンテンツを読めます。</string>
+    <string name="vault_passphrase">パスフレーズ</string>
+    <string name="vault_add_entry">暗号化エントリを追加</string>
+    <string name="vault_private_space">プライベート空間</string>
+    <string name="vault_e2e_desc">エンドツーエンド暗号化 · 5分で自動ロック</string>
+    <string name="vault_lock">ロック</string>
+    <string name="vault_change_passphrase">パスフレーズ変更</string>
+    <string name="vault_reset">リセット</string>
+    <string name="vault_reset_title">完全にリセットしますか？</string>
+    <string name="vault_reset_desc">すべての暗号化コンテンツが完全に削除され、ゴミ箱から復元できません。</string>
+    <string name="btn_permanent_delete">完全に削除</string>
+    <string name="vault_no_entries">暗号化エントリがまだありません。</string>
+    <string name="vault_untitled">無題</string>
+    <string name="vault_add_title">暗号化エントリを追加</string>
+    <string name="vault_edit_title">暗号化エントリを編集</string>
+    <string name="vault_title_label">タイトル</string>
+    <string name="vault_content_label">内容</string>
+    <string name="btn_encrypt_save">暗号化して保存</string>
+    <string name="vault_change_passphrase_title">金庫のパスフレーズを変更</string>
+    <string name="vault_new_passphrase">新しいパスフレーズ</string>
+    <string name="vault_confirm">確認</string>
+
+    <!-- ==================== Watch ==================== -->
+    <string name="watch_connecting">接続中…</string>
+    <string name="watch_connected_watching">接続済み · 相手が視聴中</string>
+    <string name="watch_connected_offline">接続済み · 相手はオフライン</string>
+    <string name="watch_pause">一時停止</string>
+    <string name="watch_play">再生</string>
+    <string name="watch_pick_video">下のライブラリから一緒に見る動画を選びましょう</string>
+    <string name="watch_bookmark_count">ブックマーク %1$d</string>
+    <string name="watch_library">ライブラリ</string>
+    <string name="watch_upload_video">動画をアップロード</string>
+    <string name="watch_add_direct_link">直リンクを追加</string>
+    <string name="watch_now_playing">再生中</string>
+    <string name="watch_local_upload">ローカルアップロード</string>
+    <string name="watch_direct_link">直リンク</string>
+    <string name="watch_last_position">前回の視聴位置：%1$s</string>
+    <string name="watch_bookmarks">ブックマーク</string>
+    <string name="watch_add_bookmark">現在の位置にブックマークを追加</string>
+    <string name="watch_no_bookmarks">まだブックマークがありません。\nいいシーンを見たら、上のボタンで位置を保存して、いつでも飛べます。</string>
+    <string name="watch_unnamed_clip">無題のクリップ</string>
+    <string name="watch_jump_to">ジャンプ</string>
+    <string name="watch_delete_bookmark">ブックマークを削除</string>
+    <string name="watch_add_source_title">動画ソースを追加（直リンク）</string>
+    <string name="watch_title_label">タイトル</string>
+    <string name="watch_url_label">動画URL http(s)://</string>
+    <string name="btn_add_source">追加</string>
+
+    <!-- ==================== Listen ==================== -->
+    <string name="listen_unknown_song">不明な曲</string>
+    <string name="listen_no_playing">再生中の曲はありません</string>
+    <string name="listen_select_below">下から曲を選んでください</string>
+    <string name="listen_prev">前の曲</string>
+    <string name="listen_next">次の曲</string>
+    <string name="listen_play">再生</string>
+    <string name="listen_pause">一時停止</string>
+    <string name="listen_connected_partners">リアルタイム同期 · %1$d 人</string>
+    <string name="listen_connecting">接続中</string>
+    <string name="listen_lyrics_loading">歌詞を読み込み中</string>
+    <string name="listen_instrumental">インストゥルメンタル</string>
+    <string name="listen_no_lyrics">歌詞がありません</string>
+    <string name="listen_tab_search">検索</string>
+    <string name="listen_tab_discover">おすすめ</string>
+    <string name="listen_tab_playlists">プレイリスト</string>
+    <string name="listen_tab_charts">ランキング</string>
+    <string name="listen_tab_history">履歴</string>
+    <string name="listen_tab_local">ローカル</string>
+    <string name="listen_tab_queue">キュー</string>
+    <string name="listen_search_placeholder">曲を検索</string>
+    <string name="listen_input_keyword">キーワードを入力して検索</string>
+    <string name="listen_no_results">検索結果がありません</string>
+    <string name="listen_daily_recommend">デイリーランキング</string>
+    <string name="listen_no_recommend">おすすめの曲がありません</string>
+    <string name="listen_recommend_playlists">おすすめプレイリスト</string>
+    <string name="listen_no_recommend_playlists">おすすめプレイリストがありません</string>
+    <string name="listen_my_playlists">マイプレイリスト</string>
+    <string name="listen_no_playlists">プレイリストがありません</string>
+    <string name="listen_no_charts">ランキングがありません</string>
+    <string name="listen_listen_history">視聴履歴</string>
+    <string name="listen_no_history">まだ視聴履歴がありません</string>
+    <string name="listen_local_upload">ローカルアップロード</string>
+    <string name="listen_no_local">ローカル曲がまだありません</string>
+    <string name="listen_upload">アップロード</string>
+    <string name="listen_queue">再生キュー</string>
+    <string name="listen_queue_empty">キューは空です</string>
+    <string name="listen_remove">削除</string>
+    <string name="listen_add_to_queue">キューに追加</string>
+    <string name="listen_tracks_count">%1$d 曲</string>
+    <string name="listen_play_failed">再生失敗</string>
+    <string name="listen_upload_success">ローカル曲をアップロードしました</string>
+    <string name="listen_delete_success">ローカル曲を削除しました</string>
+    <string name="listen_added_to_queue">キューに追加しました</string>
+    <string name="listen_song_unavailable">この曲は一時的に再生できません</string>
+    <string name="listen_no_play_url">再生URLを取得できませんでした</string>
+    <string name="listen_local_song">ローカル曲</string>
+    <string name="listen_error_login_netease">NetEase Cloud Musicにログインするか、ローカルアップロード曲を再生してください</string>
+    <string name="listen_error_no_permission">現在のアカウントにはこのコンテンツへのアクセス権限がありません</string>
+    <string name="listen_error_not_found">コンテンツが存在しないか、削除されています</string>
+
+    <!-- ==================== Games Lobby ==================== -->
+    <string name="games_lobby_title">一緒に遊ぼう</string>
+    <string name="games_lobby_subtitle">ゲームを選んで、相手と対戦しよう</string>
+    <string name="game_gomoku">五目並べ</string>
+    <string name="game_gomoku_desc">15×15、先に五つ並べた方が勝ち</string>
+    <string name="game_tictactoe">マルバツゲーム</string>
+    <string name="game_tictactoe_desc">3×3、一列揃えたら勝ち</string>
+    <string name="game_reversi">オセロ</string>
+    <string name="game_reversi_desc">8×8、石が多い方が勝ち</string>
+    <string name="game_memory">メモリーマッチ</string>
+    <string name="game_memory_desc">協力して同じ絵をめくる</string>
+    <string name="game_linklink">連連看</string>
+    <string name="game_linklink_desc">同じ絵をペアにして盤面をクリア</string>
+    <string name="game_draw">お絵かきクイズ</string>
+    <string name="game_draw_desc">リアルタイムでお絵かきして当てる</string>
+    <string name="game_canvas">コラボキャンバス</string>
+    <string name="game_canvas_desc">同じキャンバスで一緒にお絵かき</string>
+
+    <!-- ==================== Game Screen ==================== -->
+    <string name="game_connecting">接続中…</string>
+    <string name="game_loading">読み込み中…</string>
+    <string name="game_waiting">開始待ち、「新規対局」をタップ</string>
+    <string name="game_your_turn">あなたの番です</string>
+    <string name="game_opponent_thinking">相手が考えています…</string>
+    <string name="game_draw_result">引き分け 🤝</string>
+    <string name="game_you_win">あなたの勝ち！🎉</string>
+    <string name="game_opponent_wins">相手の勝ちです。もう一局？</string>
+    <string name="btn_new_game">新規対局</string>
+    <string name="btn_restart">やり直し</string>
+    <string name="btn_surrender">降参</string>
+    <string name="btn_undo">待った</string>
+    <string name="game_undo_request">相手が待ったを要求しています</string>
+    <string name="btn_agree">同意</string>
+    <string name="btn_reject">拒否</string>
+    <string name="game_win_count">%1$s %2$d 勝</string>
+
+    <!-- ==================== Draw Screen ==================== -->
+    <string name="draw_your_turn">あなたが描く番</string>
+    <string name="draw_guess">当てて：%1$s</string>
+    <string name="draw_title">お絵かきクイズ</string>
+    <string name="draw_guess_placeholder">推測を入力</string>
+    <string name="btn_guess">推測</string>
+    <string name="btn_start">開始</string>
+    <string name="btn_next_round">次のラウンド</string>
+    <string name="draw_round">第 %1$d ラウンド</string>
+
+    <!-- ==================== Canvas ==================== -->
+    <string name="canvas_partner_online">相手オンライン</string>
+    <string name="canvas_partner_offline">相手オフライン</string>
+    <string name="canvas_desc">同じキャンバスで一緒にお絵かき。筆跡がリアルタイムに同期します。</string>
+    <string name="canvas_thickness">太さ</string>
+    <string name="canvas_eraser">消しゴム</string>
+    <string name="canvas_eraser_on">消しゴム（オン）</string>
+    <string name="canvas_save_timeline">タイムラインに保存</string>
+    <string name="canvas_save_gallery">ギャラリーに保存</string>
+    <string name="canvas_gallery_btn">ギャラリー</string>
+
+    <!-- ==================== Canvas Gallery ==================== -->
+    <string name="canvas_gallery_title">コラボキャンバス · ギャラリー</string>
+    <string name="canvas_no_artworks">まだ作品がありません。キャンバスで描き終えたら「ギャラリーに保存」をタップするとここに表示されます。</string>
+    <string name="canvas_untitled_artwork">無題の作品</string>
+    <string name="canvas_strokes_count">%1$d 筆</string>
+    <string name="canvas_collaborators_count">%1$d 人のコラボレーター</string>
+    <string name="canvas_thumbnail_unavailable">サムネイル利用不可</string>
+
+    <!-- ==================== Canvas Artwork Player ==================== -->
+    <string name="artwork_player_title">作品リプレイ</string>
+    <string name="artwork_back_to_gallery">ギャラリーに戻る</string>
+    <string name="artwork_saved_by">%1$s が保存 · %2$s</string>
+    <string name="artwork_collaborators_label">コラボレーター：</string>
+    <string name="artwork_strokes_label">%1$s（%2$d 筆）</string>
+
+    <!-- ==================== Timeline ==================== -->
+    <string name="timeline_visibility_partners_only">二人のみ</string>
+    <string name="timeline_visibility_public">公開</string>
+    <string name="timeline_visibility_encrypted">暗号化</string>
+    <string name="timeline_no_moments">まだ投稿がありません。右下から投稿しましょう</string>
+    <string name="timeline_post">投稿</string>
+    <string name="timeline_delete">削除</string>
+    <string name="timeline_voice_msg">🎤 音声 %1$d 秒（Web版で再生可能）</string>
+    <string name="timeline_comments_count">コメント %1$d</string>
+    <string name="timeline_post_title">投稿する</string>
+    <string name="timeline_placeholder">今思っていること…</string>
+    <string name="timeline_who_can_see">閲覧範囲</string>
+    <string name="timeline_msg_say_something">何か書いてください</string>
+
+    <!-- ==================== Messages ==================== -->
+    <string name="messages_public">公開</string>
+    <string name="messages_private">プライベート</string>
+    <string name="messages_placeholder_public">メッセージを書く…</string>
+    <string name="messages_placeholder_private">プライベートメッセージを書く…</string>
+    <string name="messages_anonymous">匿名</string>
+    <string name="messages_private_msg">プライベートメッセージ</string>
+    <string name="messages_pending_sync">同期待ち</string>
+    <string name="messages_msg_sent">送信しました</string>
+    <string name="messages_msg_sent_private">プライベートメッセージを送信しました</string>
+    <string name="messages_msg_offline_saved">オフラインで保存済み。オンラインになったら自動同期します</string>
+
+    <!-- ==================== Notifications ==================== -->
+    <string name="notifications_unread">未読 %1$d</string>
+    <string name="notifications_mark_all_read">すべて既読</string>
+    <string name="notifications_empty">通知はありません</string>
+
+    <!-- ==================== Capsules ==================== -->
+    <string name="capsules_no_capsules">まだタイムカプセルがありません</string>
+    <string name="capsules_no_capsules_sub">未来の自分たちに手紙を書きましょう</string>
+    <string name="capsules_write">カプセルを書く</string>
+    <string name="capsules_write_one">書く</string>
+    <string name="capsules_opened">開封済み</string>
+    <string name="capsules_not_opened">未開封 🔒</string>
+    <string name="capsules_media_hint">音声 / 動画の添付あり（Web版でご覧ください）</string>
+    <string name="capsules_open_at">%1$s に開封可能</string>
+    <string name="capsules_write_title">未来へ</string>
+    <string name="capsules_content_label">未来の自分たちへの言葉</string>
+    <string name="capsules_open_date">開封日</string>
+    <string name="btn_seal">封印</string>
+    <string name="capsules_msg_say_something">未来に向けて何か書きましょう</string>
+    <string name="capsules_msg_sealed">封印しました。時間が来たら開けられます</string>
+    <string name="capsules_msg_seal_failed">封印失敗</string>
+
+    <!-- ==================== Search ==================== -->
+    <string name="search_placeholder">記事 / アルバム / 記念日 / 投稿 / メッセージを検索</string>
+    <string name="search_failed">検索失敗：%1$s</string>
+    <string name="search_hint">キーワードを入力して思い出を探す</string>
+    <string name="search_no_results">関連する内容が見つかりませんでした</string>
+    <string name="search_total_results">全 %1$d 件</string>
+    <string name="search_type_article">記事</string>
+    <string name="search_type_album">アルバム</string>
+    <string name="search_type_event">記念日</string>
+    <string name="search_type_moment">投稿</string>
+    <string name="search_type_message">メッセージ</string>
+
+    <!-- ==================== Recycle Bin ==================== -->
+    <string name="recycle_bin_total">ゴミ箱 · 全 %1$d 件</string>
+    <string name="recycle_bin_empty">ゴミ箱は空です</string>
+    <string name="recycle_bin_no_title">(無題)</string>
+    <string name="recycle_bin_deleted_at">削除日時：%1$s</string>
+    <string name="recycle_bin_clear_title">ゴミ箱を空にする</string>
+    <string name="recycle_bin_clear_msg">ゴミ箱内のすべての項目を完全に削除します。この操作は取り消せません。続行しますか？</string>
+    <string name="recycle_bin_delete_forever_title">完全に削除</string>
+    <string name="recycle_bin_delete_forever_msg">「%1$s」を完全に削除します。この操作は取り消せません。続行しますか？</string>
+    <string name="btn_delete_forever">完全に削除</string>
+
+    <!-- ==================== Admin Tools ==================== -->
+    <string name="admin_title">サーバーツール</string>
+    <string name="admin_desc">管理者エンドポイントのみ完全な内容を返します。パートナーアカウントに権限なしの表示が出るのは正常です。</string>
+    <string name="admin_health">システムヘルス</string>
+    <string name="admin_storage">ストレージ統計</string>
+    <string name="admin_backup">バックアップ計画と履歴</string>
+    <string name="admin_run_backup">今すぐ自動バックアップを実行</string>
+    <string name="admin_users">セキュリティユーザー</string>
+    <string name="admin_audit">監査ログ</string>
+
+    <!-- ==================== Licenses ==================== -->
+    <string name="licenses_title">オープンソースライセンス</string>
+    <string name="licenses_subtitle">サードパーティソフトウェア、バージョン、出典、ライセンス正文</string>
+    <string name="licenses_copyright">著作権表示</string>
+    <string name="licenses_full_license">完全なライセンス</string>
+
+    <!-- ==================== Albums ==================== -->
+    <string name="albums_title">私たちのアルバム</string>
+    <string name="albums_subtitle">每一次会うたび、共有した体験を集めよう</string>
+    <string name="albums_no_albums">まだアルバムがありません</string>
+    <string name="albums_no_albums_sub">写真を選んで、最初のアルバムを作りましょう</string>
+    <string name="albums_new_album">新規アルバム</string>
+    <string name="albums_photos_count">%1$d 枚の写真</string>
+    <string name="albums_delete_title">アルバムを削除？</string>
+    <string name="albums_delete_msg">削除後、ゴミ箱から復元できます。</string>
+    <string name="albums_comment">コメント</string>
+    <string name="albums_write_comment">コメントを書く</string>
+    <string name="albums_new_title">新規アルバム</string>
+    <string name="albums_edit_title">アルバムを編集</string>
+    <string name="albums_title_label">タイトル</string>
+    <string name="albums_desc_label">説明</string>
+    <string name="albums_tags_label">タグ（カンマ区切り）</string>
+    <string name="albums_pick_image">ギャラリーから画像を選択</string>
+    <string name="albums_image_picked">画像を選択済み・再選択</string>
+    <string name="albums_user">ユーザー</string>
+
+    <!-- ==================== Articles ==================== -->
+    <string name="articles_title">私たちの記事</string>
+    <string name="articles_subtitle">伝えたい言葉を、未来のために真剣に書こう</string>
+    <string name="articles_no_articles">まだ記事がありません</string>
+    <string name="articles_no_articles_sub">最初の物語を書きましょう</string>
+    <string name="articles_write">記事を書く</string>
+    <string name="articles_published">公開済み</string>
+    <string name="articles_draft">下書き</string>
+    <string name="articles_delete_title">記事を削除？</string>
+    <string name="articles_delete_msg">削除後、ゴミ箱から復元できます。</string>
+    <string name="articles_versions">バージョン</string>
+    <string name="articles_history">バージョン履歴</string>
+    <string name="articles_rollback">バージョン %1$d にロールバック</string>
+    <string name="articles_comment">コメント</string>
+    <string name="articles_write_comment">コメントを書く</string>
+    <string name="articles_new_title">新規記事</string>
+    <string name="articles_edit_title">記事を編集</string>
+    <string name="articles_title_label">タイトル</string>
+    <string name="articles_excerpt_label">要約</string>
+    <string name="articles_content_label">本文</string>
+    <string name="articles_tags_label">タグ（カンマ区切り）</string>
+    <string name="articles_publish_checkbox">公開</string>
+
+    <!-- ==================== Events ==================== -->
+    <string name="events_no_events">まだ記念日がありません。右下をタップして追加</string>
+    <string name="events_add">記念日を追加</string>
+    <string name="events_anniversary">記念日</string>
+    <string name="events_countdown">カウントダウン</string>
+    <string name="events_today">今日です</string>
+    <string name="events_days_left">あと %1$d 日</string>
+    <string name="events_add_title">記念日を追加</string>
+    <string name="events_edit_title">記念日を編集</string>
+    <string name="events_title_label">タイトル</string>
+    <string name="events_date_label">日付 (YYYY-MM-DD)</string>
+    <string name="events_mark_important">重要としてマーク</string>
+    <string name="events_yearly_repeat">毎年繰り返し</string>
+
+    <!-- ==================== Common / Shared ==================== -->
+    <string name="common_me">私</string>
+    <string name="common_partner">相手</string>
+    <string name="common_you">あなた</string>
+    <string name="common_note_optional">メモ（任意）</string>
+    <string name="common_date">日付</string>
+</resources>

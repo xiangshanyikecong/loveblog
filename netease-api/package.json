@@ -1,0 +1,29 @@
+{
+  "name": "netease-api",
+  "version": "1.0.0",
+  "description": "Love Journal 一起听 upstream: NeteaseCloudMusicApiEnhanced (maintained fork of the archived Binaryify NeteaseCloudMusicApi)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "netease-cloud-music",
+    "love-journal",
+    "listen-together"
+  ],
+  "author": "Love Journal Contributors",
+  "license": "AGPL-3.0-only",
+  "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/love-node/love-node.git",
+    "directory": "netease-api"
+  },
+  "bugs": {
+    "url": "https://github.com/love-node/love-node/issues"
+  },
+  "dependencies": {
+    "@neteasecloudmusicapienhanced/api": "^4.35.0"
+  }
+}

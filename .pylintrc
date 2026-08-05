@@ -1,0 +1,33 @@
+[MASTER]
+# Skip generated Alembic migrations, one-off debug/diagnostic/maintenance
+# scripts, the test suites and local virtualenvs — these are not shipped
+# application code and their style findings are noise (snake_case migration
+# filenames, print() in diagnostics, ad-hoc test scripts, etc.).
+#
+# Besides the migrations/scripts/tests folders, several standalone helper
+# scripts live directly next to the app (server/*.py) or at the repo root, so
+# we also match them by their conventional name prefixes: diagnose_/check_/
+# fix_/inspect_/reset_/seed_, the _ssh*/_mk* one-off entrypoints, any test_*.py
+# and *_backend_test.py. (No shipped module under server/app/ uses these names.)
+ignore-paths=
+    ^(.*/)?(migrations|scripts|tests|\.venv|\.venv_test)/.*$,
+    ^(.*/)?(diagnose|check|fix|inspect|reset|seed)_[^/]*\.py$,
+    ^(.*/)?(_ssh|_mk)[^/]*\.py$,
+    ^(.*/)?test_[^/]*\.py$,
+    ^(.*/)?[^/]*_backend_test\.py$
+
+[MESSAGES CONTROL]
+# redefined-builtin: FastAPI route params named `type` / `id` map 1:1 to the
+#   URL path/query contract; renaming them would change the public API.
+# too-many-arguments / too-many-locals (and the huawei-* variant the cloud
+#   CodeCheck plugin emits): list/search/visitor endpoints take many independent
+#   query filters by design; bundling them into a dataclass would not improve
+#   clarity here.
+disable=
+    redefined-builtin,
+    too-many-arguments,
+    too-many-locals,
+    huawei-too-many-arguments
+
+[FORMAT]
+max-line-length=120

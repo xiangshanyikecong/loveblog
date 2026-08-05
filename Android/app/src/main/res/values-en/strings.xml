@@ -1,0 +1,776 @@
+<resources>
+    <!-- ==================== App / Widget ==================== -->
+    <string name="app_name">Love Journal</string>
+    <string name="widget_love_days_title">Days Together</string>
+    <string name="widget_together">Together</string>
+    <string name="widget_days">days</string>
+    <string name="default_notification_channel_id">love_journal_default</string>
+    <string name="default_notification_channel_name">Love Journal Notifications</string>
+
+    <!-- ==================== Navigation Tabs ==================== -->
+    <string name="nav_home">Home</string>
+    <string name="nav_events">Anniversaries</string>
+    <string name="nav_articles">Articles</string>
+    <string name="nav_albums">Albums</string>
+    <string name="nav_cottage">Cottage</string>
+    <string name="nav_messages">Messages</string>
+
+    <!-- ==================== Page Titles ==================== -->
+    <string name="title_cottage_hub">Our Cottage</string>
+    <string name="title_chat">Whispers</string>
+    <string name="title_mood">Mood Check-in</string>
+    <string name="title_wishlist">Wishlist</string>
+    <string name="title_questions">Daily Question</string>
+    <string name="title_games">Play Together</string>
+    <string name="title_watch">Watch Together</string>
+    <string name="title_listen">Listen Together</string>
+    <string name="title_coupons">Sweet Coupons</string>
+    <string name="title_reminders">Cottage Reminders</string>
+    <string name="title_ledger">Couple Ledger</string>
+    <string name="title_reports">Love Monthly Report</string>
+    <string name="title_footprints">Footprint Map</string>
+    <string name="title_period">Period Care</string>
+    <string name="title_plans">Date Plans</string>
+    <string name="title_checkins">Check-ins</string>
+    <string name="title_canvas">Collaborative Canvas</string>
+    <string name="title_canvas_gallery">Gallery</string>
+    <string name="title_canvas_artwork">Artwork Replay</string>
+    <string name="title_search">Search</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_timeline">Timeline</string>
+    <string name="title_capsules">Time Capsule</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_licenses">Open Source Licenses</string>
+    <string name="title_security">Account Security</string>
+    <string name="title_recycle_bin">Recycle Bin</string>
+    <string name="title_messages_board">Message Board</string>
+    <string name="title_in_game">In Game</string>
+
+    <!-- ==================== Top Bar Actions ==================== -->
+    <string name="action_back">Back</string>
+    <string name="action_search">Search</string>
+    <string name="action_notifications_center">Notifications</string>
+    <string name="action_more">More</string>
+    <string name="action_next_step">Next</string>
+
+    <!-- ==================== Common Buttons ==================== -->
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_confirm">OK</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_send">Send</string>
+    <string name="btn_publish">Publish</string>
+    <string name="btn_add">Add</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_restore">Restore</string>
+    <string name="btn_refresh">Refresh</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_done">Done</string>
+    <string name="btn_invite">Invite</string>
+    <string name="btn_redeem">Redeem</string>
+
+    <!-- ==================== Common Status ==================== -->
+    <string name="status_loading">Loading…</string>
+    <string name="status_saving">Saving…</string>
+    <string name="status_submitting">Submitting…</string>
+    <string name="status_uploading">Uploading…</string>
+    <string name="status_deleting">Deleting…</string>
+    <string name="status_processing">Processing…</string>
+    <string name="status_locating">Locating…</string>
+
+    <!-- ==================== Common Messages ==================== -->
+    <string name="msg_load_failed">Load failed</string>
+    <string name="msg_save_failed">Save failed</string>
+    <string name="msg_delete_failed">Delete failed</string>
+    <string name="msg_publish_failed">Publish failed</string>
+    <string name="msg_saved">Saved</string>
+    <string name="msg_deleted">Deleted</string>
+    <string name="msg_added">Added</string>
+    <string name="msg_published">Published</string>
+    <string name="msg_operation_failed">Operation failed, please try again later</string>
+    <string name="msg_no_data">No data available</string>
+    <string name="msg_load_failed_with_error">Load failed: %1$s</string>
+
+    <!-- ==================== Login ==================== -->
+    <string name="login_tagline">Earnestly recording every day we love each other</string>
+    <string name="login_welcome_back">Welcome back</string>
+    <string name="login_server_address">Server address</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_test_connection">Test connection</string>
+    <string name="btn_login">Log in</string>
+    <string name="btn_logout">Log out</string>
+
+    <!-- ==================== Dashboard ==================== -->
+    <string name="dashboard_today_love">Let\'s love each other well today</string>
+    <string name="dashboard_every_day_story">Every ordinary day is part of our story.</string>
+    <string name="dashboard_love_clock_together">We\'ve been together for</string>
+    <string name="dashboard_day">days</string>
+    <string name="dashboard_offline_mode">Offline mode — showing data from the last sync</string>
+    <string name="dashboard_upcoming_events">Upcoming Anniversaries</string>
+    <string name="dashboard_upcoming_events_sub">Keep the days worth looking forward to in your heart</string>
+    <string name="dashboard_no_events">No anniversaries yet</string>
+    <string name="dashboard_no_events_sub">Add an important date and start the countdown</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_days_left">%1$d days</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_site_settings">Site Settings</string>
+    <string name="settings_site_settings_sub">Manage name, anniversary, and registration</string>
+    <string name="settings_basic_info">Basic info</string>
+    <string name="settings_site_name">Site name</string>
+    <string name="settings_love_start_date">Love start date · %1$s</string>
+    <string name="settings_love_start_date_not_set">Not set</string>
+    <string name="settings_allow_registration">Allow new user registration</string>
+    <string name="settings_allow_registration_sub">When off, only existing accounts can log in</string>
+    <string name="btn_save_settings">Save settings</string>
+    <string name="settings_account_maintenance">Account &amp; Maintenance</string>
+    <string name="settings_account_security">Account security (change password / login devices)</string>
+    <string name="settings_recycle_bin">Recycle bin</string>
+    <string name="settings_admin_tools">Server tools (health / audit / users / backup)</string>
+    <string name="settings_open_licenses">Open source licenses &amp; copyright notice</string>
+
+    <!-- ==================== Security ==================== -->
+    <string name="security_change_password">Change password</string>
+    <string name="security_current_password">Current password</string>
+    <string name="security_new_password">New password</string>
+    <string name="security_confirm_password">Confirm new password</string>
+    <string name="security_password_hint">New password must be at least 8 characters with both letters and numbers.</string>
+    <string name="btn_change_password">Change password</string>
+    <string name="security_login_devices">Login devices</string>
+    <string name="security_logout_all_desc">Logging out all devices will immediately invalidate all sessions (including this device), requiring re-login. Use when you suspect account issues.</string>
+    <string name="btn_logout_all_devices">Log out all devices</string>
+    <string name="security_logout_all_confirm_title">Log out all devices</string>
+    <string name="security_logout_all_confirm_msg">This will immediately invalidate all logins (including this device), requiring re-login. Are you sure?</string>
+    <string name="security_done_relogin_msg">Action completed. Your current session is no longer valid — please log out and sign in again.</string>
+
+    <!-- ==================== Network Errors ==================== -->
+    <string name="error_unknown_host">Unable to resolve server address. Please check the domain or IP.</string>
+    <string name="error_connect">Unable to connect to server. Check address, port (default 8000), and Wi-Fi/LAN.</string>
+    <string name="error_timeout">Connection timed out. Make sure your phone and server are on the same network and the backend is running.</string>
+    <string name="error_ssl_handshake">HTTPS handshake failed. If self-hosted without TLS, try using http:// instead.</string>
+    <string name="error_ssl">Secure connection failed. Check the protocol (http/https) and certificate configuration.</string>
+    <string name="error_401">Unauthorized. Please check your username and password.</string>
+    <string name="error_403">Access denied</string>
+    <string name="error_404">Server reachable, but endpoint not found (make sure the address includes port :8000).</string>
+    <string name="error_server_code">Server returned an error (%1$d)</string>
+    <string name="error_network">Network error: %1$s</string>
+    <string name="error_network_fallback">Please check your network connection</string>
+
+    <!-- ==================== Auth Errors ==================== -->
+    <string name="auth_error_wrong_credentials">Wrong username or password</string>
+    <string name="auth_error_frozen">Account is frozen or banned. Please try again later.</string>
+    <string name="auth_error_too_frequent">Too many attempts. Please try again later.</string>
+    <string name="auth_error_login_failed">Login failed (%1$d)</string>
+    <string name="auth_error_session_not_kept">Login succeeded but the session was not maintained. If using http self-hosting, make sure COOKIE_SECURE is not forced on, and the reverse proxy is not incorrectly sending X-Forwarded-Proto: https</string>
+    <string name="auth_error_no_server">Please enter the server address first</string>
+    <string name="auth_health_404">Server reachable, but health check endpoint not found (make sure port is :8000)</string>
+    <string name="auth_health_code">Server returned %1$d</string>
+    <string name="auth_connection_ok">Connection successful, backend is running normally</string>
+
+    <!-- ==================== Server Config ==================== -->
+    <string name="server_config_empty">Please enter the server address</string>
+    <string name="server_config_incomplete_https">Please enter a complete https:// server address</string>
+    <string name="server_config_invalid">Invalid server address format</string>
+    <string name="server_config_https_only">To protect accounts and sessions, production builds only allow HTTPS. Local HTTP is restricted to debug builds with private addresses.</string>
+
+    <!-- ==================== Notification Channels ==================== -->
+    <string name="notification_channel_messages">Messages</string>
+    <string name="notification_channel_moods">Mood Check-ins</string>
+    <string name="notification_channel_events">Anniversary Reminders</string>
+
+    <!-- ==================== Cottage Hub ==================== -->
+    <string name="cottage_hub_title">A little world just for the two of you</string>
+    <string name="cottage_hub_subtitle">Chatting, companionship, recording, and shared life — all right here.</string>
+    <string name="cottage_feature_chat">Whispers</string>
+    <string name="cottage_feature_chat_sub">Real-time companionship</string>
+    <string name="cottage_feature_mood">Mood</string>
+    <string name="cottage_feature_mood_sub">Share the moment</string>
+    <string name="cottage_feature_checkin">Check-in</string>
+    <string name="cottage_feature_checkin_sub">Reassure your partner</string>
+    <string name="cottage_feature_wishlist">Wishlist</string>
+    <string name="cottage_feature_wishlist_sub">Achieve together</string>
+    <string name="cottage_feature_questions">Daily Question</string>
+    <string name="cottage_feature_questions_sub">Understand each other</string>
+    <string name="cottage_feature_watch">Watch Together</string>
+    <string name="cottage_feature_watch_sub">Sync watching</string>
+    <string name="cottage_feature_games">Play Together</string>
+    <string name="cottage_feature_games_sub">Two-player games</string>
+    <string name="cottage_feature_listen">Listen Together</string>
+    <string name="cottage_feature_listen_sub">Sync listening</string>
+    <string name="cottage_feature_coupons">Coupons</string>
+    <string name="cottage_feature_coupons_sub">Sweet rewards</string>
+    <string name="cottage_feature_reminders">Reminders</string>
+    <string name="cottage_feature_reminders_sub">Little important things</string>
+    <string name="cottage_feature_plans">Date Plans</string>
+    <string name="cottage_feature_plans_sub">Look forward to meeting</string>
+    <string name="cottage_feature_ledger">Couple Ledger</string>
+    <string name="cottage_feature_ledger_sub">Shared life</string>
+    <string name="cottage_feature_reports">Monthly Report</string>
+    <string name="cottage_feature_reports_sub">Review the sweetness</string>
+    <string name="cottage_feature_footprints">Footprint Map</string>
+    <string name="cottage_feature_footprints_sub">Light up cities</string>
+    <string name="cottage_feature_period">Period</string>
+    <string name="cottage_feature_period_sub">Thoughtful care</string>
+    <string name="cottage_feature_vault">Private Vault</string>
+    <string name="cottage_feature_vault_sub">End-to-end encrypted</string>
+
+    <!-- ==================== Chat ==================== -->
+    <string name="chat_partner_default">Partner</string>
+    <string name="chat_connecting">Connecting…</string>
+    <string name="chat_typing">Typing…</string>
+    <string name="chat_online">Online</string>
+    <string name="chat_offline">Offline</string>
+    <string name="chat_tools">Chat tools</string>
+    <string name="chat_send_whisper">Send a whisper…</string>
+    <string name="chat_poke">Poke</string>
+    <string name="chat_send_to_future">Send to future</string>
+    <string name="chat_schedule_hint">✉️ This whisper will appear on %1$s</string>
+    <string name="chat_msg_recalled">Message recalled</string>
+    <string name="chat_msg_image">[Image]</string>
+    <string name="chat_msg_sticker">[Sticker]</string>
+    <string name="chat_msg_voice">[Voice]</string>
+    <string name="chat_favorite">Favorite</string>
+    <string name="chat_unfavorite">Unfavorite</string>
+    <string name="chat_pin_quote">Pin quote</string>
+    <string name="chat_recall">Recall</string>
+    <string name="chat_memories">Chat memories</string>
+    <string name="chat_pinned">Pinned: %1$s</string>
+    <string name="chat_unpin">Unpin</string>
+    <string name="chat_today_count">Today %1$d msgs · Me %2$d · Partner %3$d</string>
+    <string name="chat_keywords">Keywords: %1$s</string>
+    <string name="chat_favorites">Favorites</string>
+    <string name="chat_future_messages">Future messages</string>
+    <string name="chat_media_panel">Media: images %1$d · stickers %2$d · voices %3$d</string>
+    <string name="chat_schedule_title">Send to future</string>
+    <string name="chat_schedule_desc">Hide these words until later. The message will appear at the time you choose, visible only to the two of you.</string>
+    <string name="chat_1h_later">In 1 hour</string>
+    <string name="chat_tomorrow_now">Tomorrow, same time</string>
+    <string name="chat_tomorrow_midnight">Tomorrow at 00:00</string>
+    <string name="chat_date_label">Date (YYYY-MM-DD)</string>
+    <string name="chat_time_label">Time (HH:mm)</string>
+    <string name="chat_will_appear">Will appear on %1$s</string>
+    <string name="chat_confirm_schedule">Confirm</string>
+    <string name="chat_select_future_time">Please select a future time</string>
+    <string name="chat_poked_you">Poked you</string>
+    <string name="chat_media_placeholder">[Media message]</string>
+
+    <!-- ==================== Mood ==================== -->
+    <string name="mood_how_today">How\'s your mood today?</string>
+    <string name="mood_happy">Happy</string>
+    <string name="mood_blessed">Blessed</string>
+    <string name="mood_calm">Calm</string>
+    <string name="mood_miss_you">Miss you</string>
+    <string name="mood_sad">Sad</string>
+    <string name="mood_angry">Angry</string>
+    <string name="mood_note_optional">Something to say (optional)</string>
+    <string name="btn_take_photo">Take photo</string>
+    <string name="btn_from_gallery">From gallery</string>
+    <string name="mood_photo_attached">Photo attached</string>
+    <string name="btn_check_in">Check in</string>
+    <string name="mood_recent">Recent moods</string>
+    <string name="mood_image">Mood photo</string>
+
+    <!-- ==================== Check-in ==================== -->
+    <string name="checkin_no_checkins">No check-ins yet</string>
+    <string name="checkin_no_checkins_sub">Your partner hasn\'t checked in — send one to reassure them</string>
+    <string name="checkin_action">Check in</string>
+    <string name="checkin_photo">Check-in photo</string>
+    <string name="checkin_send_title">Send a check-in</string>
+    <string name="checkin_placeholder">Something to say to your partner…</string>
+    <string name="btn_add_photo">Add photo</string>
+    <string name="checkin_relocate">Relocate</string>
+    <string name="checkin_share_location">Share location</string>
+    <string name="checkin_dont_share">Don\'t share</string>
+    <string name="checkin_pending_photo">Pending photo</string>
+    <string name="checkin_remove">Remove</string>
+    <string name="btn_checkin_submit">Check in</string>
+    <string name="checkin_location">Location: %1$s</string>
+    <string name="checkin_location_denied">Location: permission denied</string>
+    <string name="checkin_location_failed">Location: lookup failed</string>
+    <string name="checkin_msg_say_something">Write something, or add a photo</string>
+    <string name="checkin_locating_msg">Getting location…</string>
+    <string name="checkin_location_ok">Location acquired</string>
+    <string name="checkin_location_failed_msg">Couldn\'t get location</string>
+    <string name="checkin_location_failed_hint">Couldn\'t get location — you can submit text or photo for now</string>
+    <string name="checkin_location_denied_msg">Recorded without location permission</string>
+    <string name="checkin_msg_checkin_done">Checked in</string>
+    <string name="checkin_msg_checkin_failed">Check-in failed</string>
+    <string name="checkin_upload_failed">Photo upload failed</string>
+
+    <!-- ==================== Wishlist ==================== -->
+    <string name="wishlist_no_wishes">No wishes yet — tap the button to add one</string>
+    <string name="wishlist_add_wish">Add wish</string>
+    <string name="wishlist_pending_completed">Pending %1$d · Completed %2$d</string>
+    <string name="wishlist_make_wish">Make a wish</string>
+    <string name="wishlist_edit_wish">Edit wish</string>
+    <string name="wishlist_title_label">What do you want to do together?</string>
+    <string name="wishlist_desc_optional">Note (optional)</string>
+    <string name="wishlist_category_optional">Category, e.g. Travel / Food (optional)</string>
+    <string name="wishlist_completed_by">Completed by %1$s</string>
+
+    <!-- ==================== Coupons ==================== -->
+    <string name="coupon_no_coupons">No coupons yet — tap the button to send one</string>
+    <string name="coupon_add">Send coupon</string>
+    <string name="coupon_active_redeemed">Active %1$d · Redeemed %2$d</string>
+    <string name="coupon_my_sent">Coupon I sent</string>
+    <string name="coupon_sent_to_you">%1$s sent you</string>
+    <string name="coupon_redeemed_by">Redeemed by %1$s</string>
+    <string name="coupon_send_title">Send a coupon</string>
+    <string name="coupon_edit_title">Edit coupon</string>
+    <string name="coupon_name_label">Coupon name, e.g. One chore-free pass</string>
+    <string name="coupon_usage_optional">Usage instructions (optional)</string>
+    <string name="coupon_icon">Icon</string>
+    <string name="btn_send_coupon">Send</string>
+
+    <!-- ==================== Ledger ==================== -->
+    <string name="ledger_no_entries">No entries yet — tap the button to add one</string>
+    <string name="ledger_add">Add entry</string>
+    <string name="ledger_total_spent">Total spent</string>
+    <string name="ledger_settled">All settled 🎉</string>
+    <string name="ledger_owes">%1$s owes %2$s %3$s</string>
+    <string name="ledger_paid_by">%1$s paid</string>
+    <string name="ledger_split_treat">Treat</string>
+    <string name="ledger_split_owed_full">Owed in full</string>
+    <string name="ledger_split_aa">Split</string>
+    <string name="ledger_add_title">Add entry</string>
+    <string name="ledger_what_bought">What did you buy</string>
+    <string name="ledger_amount">Amount (yuan)</string>
+    <string name="ledger_category_optional">Category, e.g. Food / Transport (optional)</string>
+    <string name="ledger_who_paid">Who paid</string>
+    <string name="ledger_i_paid">I paid</string>
+    <string name="ledger_partner_paid">Partner paid</string>
+    <string name="ledger_how_split">How to split</string>
+
+    <!-- ==================== Period ==================== -->
+    <string name="period_no_records">No records yet — tap the button to log one</string>
+    <string name="period_add">Record</string>
+    <string name="period_phase_in_period">In period</string>
+    <string name="period_phase_due_soon">Due soon</string>
+    <string name="period_phase_overdue">Overdue</string>
+    <string name="period_phase_normal">Stable</string>
+    <string name="period_phase_none">No prediction</string>
+    <string name="period_days_left">%1$d days left</string>
+    <string name="period_today">Today</string>
+    <string name="period_overdue_days">Overdue by %1$d days</string>
+    <string name="period_current_status">Current status</string>
+    <string name="period_predicted_next">Predicted next: %1$s</string>
+    <string name="period_avg_cycle">Avg cycle %1$d days</string>
+    <string name="period_avg_period">Avg period %1$d days</string>
+    <string name="period_ongoing">From %1$s (ongoing)</string>
+    <string name="period_duration">Lasted %1$d days</string>
+    <string name="period_recorded_by">Recorded by %1$s</string>
+    <string name="period_add_title">Log period</string>
+    <string name="period_start_date">Start date</string>
+    <string name="period_end_date_optional">End date (optional, leave blank if ongoing)</string>
+    <string name="period_end_date_not_set">Not set</string>
+    <string name="btn_clear">Clear</string>
+
+    <!-- ==================== Plans ==================== -->
+    <string name="plan_no_plans">No date plans yet — tap the button to add one</string>
+    <string name="plan_add">Add plan</string>
+    <string name="plan_active_completed">Active %1$d · Done %2$d</string>
+    <string name="plan_cancelled_count"> · Cancelled %1$d</string>
+    <string name="plan_show_done">Show completed</string>
+    <string name="plan_hide_done">Hide completed</string>
+    <string name="plan_status_planned">Planned</string>
+    <string name="plan_status_in_progress">In progress</string>
+    <string name="plan_status_done">Done</string>
+    <string name="plan_status_cancelled">Cancelled</string>
+    <string name="plan_checklist">Checklist %1$d/%2$d</string>
+    <string name="plan_add_title">New date plan</string>
+    <string name="plan_title_label">Plan title</string>
+    <string name="plan_desc_optional">Details (optional)</string>
+    <string name="plan_location_optional">Location (optional)</string>
+    <string name="plan_date_label">Plan date</string>
+    <string name="plan_date_undecided">Undecided (pick a date)</string>
+    <string name="plan_mark_important">Mark as important</string>
+
+    <!-- ==================== Reminders ==================== -->
+    <string name="reminder_no_reminders">No reminders yet — tap the button to add one</string>
+    <string name="reminder_add">Add reminder</string>
+    <string name="reminder_active_done">Active %1$d · Done %2$d</string>
+    <string name="reminder_due_count"> · Due %1$d</string>
+    <string name="reminder_show_done">Show completed</string>
+    <string name="reminder_hide_done">Hide completed</string>
+    <string name="reminder_overdue">Overdue</string>
+    <string name="reminder_add_title">Add a reminder</string>
+    <string name="reminder_content_label">Reminder content</string>
+    <string name="reminder_time_label">Reminder time</string>
+    <string name="reminder_audience_label">Remind who</string>
+    <string name="reminder_audience_both">Both</string>
+    <string name="reminder_audience_me">Only me</string>
+    <string name="reminder_audience_partner">Only partner</string>
+    <string name="reminder_select_time">Select time</string>
+
+    <!-- ==================== Reports ==================== -->
+    <string name="report_no_data">No data for this month</string>
+    <string name="report_prev_month">Previous month</string>
+    <string name="report_next_month">Next month</string>
+    <string name="report_month_format">%1$d / %2$d</string>
+    <string name="report_stat_checkins">Check-ins</string>
+    <string name="report_stat_moods">Mood check-ins</string>
+    <string name="report_stat_questions">Daily questions</string>
+    <string name="report_stat_answers">Answers</string>
+    <string name="report_stat_chat_messages">Whispers</string>
+    <string name="report_stat_wishes_created">Wishes created</string>
+    <string name="report_stat_wishes_completed">Wishes completed</string>
+    <string name="report_stat_plans_created">Plans created</string>
+    <string name="report_stat_plans_completed">Plans completed</string>
+    <string name="report_stat_reminders_created">Reminders created</string>
+    <string name="report_common_moods">Common moods</string>
+    <string name="report_highlights">Highlights</string>
+    <string name="report_kind_wish">Wish</string>
+    <string name="report_kind_plan">Plan</string>
+    <string name="report_kind_question">Daily question</string>
+    <string name="report_times">%1$d times</string>
+
+    <!-- ==================== Footprints ==================== -->
+    <string name="footprint_no_data">No footprints yet — check in to unlock cities you\'ve visited</string>
+    <string name="footprint_our_footprints">Our footprints</string>
+    <string name="footprint_cities_checkins">%1$d cities · %2$d check-ins</string>
+    <string name="footprint_visited_places">Places visited</string>
+    <string name="footprint_recent_footprints">Recent footprints</string>
+    <string name="footprint_last_time">Last: %1$s</string>
+    <string name="footprint_times">%1$d times</string>
+
+    <!-- ==================== Daily Questions ==================== -->
+    <string name="question_no_question">No question today yet</string>
+    <string name="question_create_desc">Write a question to ask your partner. After publishing, both answer privately — revealed only when both are done.</string>
+    <string name="question_today_label">What do you want to ask today…</string>
+    <string name="question_publish">Publish today\'s question</string>
+    <string name="question_write_answer">Write your answer</string>
+    <string name="question_submit_answer">Submit answer</string>
+    <string name="question_waiting_partner">You\'ve answered — waiting for your partner to finish 💌</string>
+    <string name="question_answered_waiting">Answered · pending reveal</string>
+    <string name="question_answered">Answered</string>
+    <string name="question_not_answered">Not answered yet</string>
+    <string name="question_me">(me)</string>
+
+    <!-- ==================== Vault ==================== -->
+    <string name="vault_create_title">Create private vault</string>
+    <string name="vault_create_desc">The passphrase is only used on this device to derive a key. The server stores only ciphertext.</string>
+    <string name="vault_unlock_title">Unlock private vault</string>
+    <string name="vault_unlock_desc">Enter the same passphrase as the web app to read the same encrypted content.</string>
+    <string name="vault_passphrase">Passphrase</string>
+    <string name="vault_add_entry">Add encrypted entry</string>
+    <string name="vault_private_space">Private vault</string>
+    <string name="vault_e2e_desc">End-to-end encrypted · auto-lock after 5 min</string>
+    <string name="vault_lock">Lock</string>
+    <string name="vault_change_passphrase">Change passphrase</string>
+    <string name="vault_reset">Reset</string>
+    <string name="vault_reset_title">Permanently reset?</string>
+    <string name="vault_reset_desc">All encrypted content will be permanently deleted and cannot be recovered from the recycle bin.</string>
+    <string name="btn_permanent_delete">Permanently delete</string>
+    <string name="vault_no_entries">No encrypted entries yet.</string>
+    <string name="vault_untitled">Untitled</string>
+    <string name="vault_add_title">Add encrypted entry</string>
+    <string name="vault_edit_title">Edit encrypted entry</string>
+    <string name="vault_title_label">Title</string>
+    <string name="vault_content_label">Content</string>
+    <string name="btn_encrypt_save">Encrypt &amp; save</string>
+    <string name="vault_change_passphrase_title">Change vault passphrase</string>
+    <string name="vault_new_passphrase">New passphrase</string>
+    <string name="vault_confirm">Confirm</string>
+
+    <!-- ==================== Watch ==================== -->
+    <string name="watch_connecting">Connecting…</string>
+    <string name="watch_connected_watching">Connected · partner watching</string>
+    <string name="watch_connected_offline">Connected · partner offline</string>
+    <string name="watch_pause">Pause</string>
+    <string name="watch_play">Play</string>
+    <string name="watch_pick_video">Pick a video from the library below to watch together</string>
+    <string name="watch_bookmark_count">Bookmarks %1$d</string>
+    <string name="watch_library">Library</string>
+    <string name="watch_upload_video">Upload video</string>
+    <string name="watch_add_direct_link">Add direct link</string>
+    <string name="watch_now_playing">Now playing</string>
+    <string name="watch_local_upload">Local upload</string>
+    <string name="watch_direct_link">Direct link</string>
+    <string name="watch_last_position">Last watched: %1$s</string>
+    <string name="watch_bookmarks">Bookmarks</string>
+    <string name="watch_add_bookmark">Add bookmark at current position</string>
+    <string name="watch_no_bookmarks">No bookmarks yet.\nWhen you see a moment you love, tap above to save the spot and jump back anytime.</string>
+    <string name="watch_unnamed_clip">Unnamed clip</string>
+    <string name="watch_jump_to">Jump to</string>
+    <string name="watch_delete_bookmark">Delete bookmark</string>
+    <string name="watch_add_source_title">Add video source (direct link)</string>
+    <string name="watch_title_label">Title</string>
+    <string name="watch_url_label">Video URL http(s)://</string>
+    <string name="btn_add_source">Add</string>
+
+    <!-- ==================== Listen ==================== -->
+    <string name="listen_unknown_song">Unknown song</string>
+    <string name="listen_no_playing">Nothing playing</string>
+    <string name="listen_select_below">Select a song below</string>
+    <string name="listen_prev">Previous</string>
+    <string name="listen_next">Next</string>
+    <string name="listen_play">Play</string>
+    <string name="listen_pause">Pause</string>
+    <string name="listen_connected_partners">Live sync · %1$d listening</string>
+    <string name="listen_connecting">Connecting</string>
+    <string name="listen_lyrics_loading">Loading lyrics</string>
+    <string name="listen_instrumental">Instrumental</string>
+    <string name="listen_no_lyrics">No lyrics available</string>
+    <string name="listen_tab_search">Search</string>
+    <string name="listen_tab_discover">Discover</string>
+    <string name="listen_tab_playlists">Playlists</string>
+    <string name="listen_tab_charts">Charts</string>
+    <string name="listen_tab_history">History</string>
+    <string name="listen_tab_local">Local</string>
+    <string name="listen_tab_queue">Queue</string>
+    <string name="listen_search_placeholder">Search songs</string>
+    <string name="listen_input_keyword">Enter a keyword to search</string>
+    <string name="listen_no_results">No search results</string>
+    <string name="listen_daily_recommend">Daily picks</string>
+    <string name="listen_no_recommend">No recommended songs</string>
+    <string name="listen_recommend_playlists">Recommended playlists</string>
+    <string name="listen_no_recommend_playlists">No recommended playlists</string>
+    <string name="listen_my_playlists">My playlists</string>
+    <string name="listen_no_playlists">No playlists</string>
+    <string name="listen_no_charts">No charts</string>
+    <string name="listen_listen_history">Listening history</string>
+    <string name="listen_no_history">No listening history yet</string>
+    <string name="listen_local_upload">Local upload</string>
+    <string name="listen_no_local">No local songs yet</string>
+    <string name="listen_upload">Upload</string>
+    <string name="listen_queue">Play queue</string>
+    <string name="listen_queue_empty">Queue is empty</string>
+    <string name="listen_remove">Remove</string>
+    <string name="listen_add_to_queue">Add to queue</string>
+    <string name="listen_tracks_count">%1$d tracks</string>
+    <string name="listen_play_failed">Playback failed</string>
+    <string name="listen_upload_success">Local song uploaded</string>
+    <string name="listen_delete_success">Local song deleted</string>
+    <string name="listen_added_to_queue">Added to queue</string>
+    <string name="listen_song_unavailable">This song is temporarily unavailable</string>
+    <string name="listen_no_play_url">No playback URL obtained</string>
+    <string name="listen_local_song">Local song</string>
+    <string name="listen_error_login_netease">Please log in to NetEase Cloud Music, or play locally uploaded songs</string>
+    <string name="listen_error_no_permission">Your account doesn\'t have permission to access this content</string>
+    <string name="listen_error_not_found">Content doesn\'t exist or has been removed</string>
+
+    <!-- ==================== Games Lobby ==================== -->
+    <string name="games_lobby_title">Play together</string>
+    <string name="games_lobby_subtitle">Pick a game and play with your partner</string>
+    <string name="game_gomoku">Gomoku</string>
+    <string name="game_gomoku_desc">15×15, first to connect five wins</string>
+    <string name="game_tictactoe">Tic-Tac-Toe</string>
+    <string name="game_tictactoe_desc">3×3, connect three in a line to win</string>
+    <string name="game_reversi">Reversi</string>
+    <string name="game_reversi_desc">8×8, most discs wins</string>
+    <string name="game_memory">Memory Match</string>
+    <string name="game_memory_desc">Cooperatively flip matching pairs</string>
+    <string name="game_linklink">Link Link</string>
+    <string name="game_linklink_desc">Match identical tiles to clear the board</string>
+    <string name="game_draw">Draw &amp; Guess</string>
+    <string name="game_draw_desc">Draw in real time and guess words</string>
+    <string name="game_canvas">Collaborative Canvas</string>
+    <string name="game_canvas_desc">Doodle together on the same canvas</string>
+
+    <!-- ==================== Game Screen ==================== -->
+    <string name="game_connecting">Connecting…</string>
+    <string name="game_loading">Loading…</string>
+    <string name="game_waiting">Waiting to start — tap \"New game\"</string>
+    <string name="game_your_turn">Your turn</string>
+    <string name="game_opponent_thinking">Opponent is thinking…</string>
+    <string name="game_draw_result">Draw 🤝</string>
+    <string name="game_you_win">You won! 🎉</string>
+    <string name="game_opponent_wins">Opponent won this round — play again?</string>
+    <string name="btn_new_game">New game</string>
+    <string name="btn_restart">Restart</string>
+    <string name="btn_surrender">Surrender</string>
+    <string name="btn_undo">Undo</string>
+    <string name="game_undo_request">Opponent requests undo</string>
+    <string name="btn_agree">Agree</string>
+    <string name="btn_reject">Reject</string>
+    <string name="game_win_count">%1$s %2$d wins</string>
+
+    <!-- ==================== Draw Screen ==================== -->
+    <string name="draw_your_turn">Your turn to draw</string>
+    <string name="draw_guess">Guess: %1$s</string>
+    <string name="draw_title">Draw &amp; Guess</string>
+    <string name="draw_guess_placeholder">Enter your guess</string>
+    <string name="btn_guess">Guess</string>
+    <string name="btn_start">Start</string>
+    <string name="btn_next_round">Next round</string>
+    <string name="draw_round">Round %1$d</string>
+
+    <!-- ==================== Canvas ==================== -->
+    <string name="canvas_partner_online">Partner online</string>
+    <string name="canvas_partner_offline">Partner offline</string>
+    <string name="canvas_desc">Doodle together on the same canvas — strokes sync in real time.</string>
+    <string name="canvas_thickness">Thickness</string>
+    <string name="canvas_eraser">Eraser</string>
+    <string name="canvas_eraser_on">Eraser (on)</string>
+    <string name="canvas_save_timeline">Save to timeline</string>
+    <string name="canvas_save_gallery">Save to gallery</string>
+    <string name="canvas_gallery_btn">Gallery</string>
+
+    <!-- ==================== Canvas Gallery ==================== -->
+    <string name="canvas_gallery_title">Collaborative Canvas · Gallery</string>
+    <string name="canvas_no_artworks">No artworks yet. After drawing on the canvas, tap \"Save to gallery\" to see them here.</string>
+    <string name="canvas_untitled_artwork">Untitled artwork</string>
+    <string name="canvas_strokes_count">%1$d strokes</string>
+    <string name="canvas_collaborators_count">%1$d collaborators</string>
+    <string name="canvas_thumbnail_unavailable">Thumbnail unavailable</string>
+
+    <!-- ==================== Canvas Artwork Player ==================== -->
+    <string name="artwork_player_title">Artwork replay</string>
+    <string name="artwork_back_to_gallery">Back to gallery</string>
+    <string name="artwork_saved_by">Saved by %1$s · %2$s</string>
+    <string name="artwork_collaborators_label">Collaborators:</string>
+    <string name="artwork_strokes_label">%1$s (%2$d strokes)</string>
+
+    <!-- ==================== Timeline ==================== -->
+    <string name="timeline_visibility_partners_only">Partners only</string>
+    <string name="timeline_visibility_public">Public</string>
+    <string name="timeline_visibility_encrypted">Encrypted</string>
+    <string name="timeline_no_moments">No moments yet — post one below</string>
+    <string name="timeline_post">Post moment</string>
+    <string name="timeline_delete">Delete</string>
+    <string name="timeline_voice_msg">🎤 Voice %1$ds (playable on web)</string>
+    <string name="timeline_comments_count">Comments %1$d</string>
+    <string name="timeline_post_title">Post a moment</string>
+    <string name="timeline_placeholder">What\'s on your mind…</string>
+    <string name="timeline_who_can_see">Who can see</string>
+    <string name="timeline_msg_say_something">Say something</string>
+
+    <!-- ==================== Messages ==================== -->
+    <string name="messages_public">Public</string>
+    <string name="messages_private">Private</string>
+    <string name="messages_placeholder_public">Write a message…</string>
+    <string name="messages_placeholder_private">Write a private message…</string>
+    <string name="messages_anonymous">Anonymous</string>
+    <string name="messages_private_msg">Private message</string>
+    <string name="messages_pending_sync">Pending sync</string>
+    <string name="messages_msg_sent">Sent</string>
+    <string name="messages_msg_sent_private">Private message sent</string>
+    <string name="messages_msg_offline_saved">Saved offline — will sync automatically when online</string>
+
+    <!-- ==================== Notifications ==================== -->
+    <string name="notifications_unread">Unread %1$d</string>
+    <string name="notifications_mark_all_read">Mark all read</string>
+    <string name="notifications_empty">No notifications</string>
+
+    <!-- ==================== Capsules ==================== -->
+    <string name="capsules_no_capsules">No time capsules yet</string>
+    <string name="capsules_no_capsules_sub">Write a letter to your future selves</string>
+    <string name="capsules_write">Write capsule</string>
+    <string name="capsules_write_one">Write one</string>
+    <string name="capsules_opened">Opened</string>
+    <string name="capsules_not_opened">Locked 🔒</string>
+    <string name="capsules_media_hint">Contains voice / video attachments (view on web)</string>
+    <string name="capsules_open_at">Opens on %1$s</string>
+    <string name="capsules_write_title">To the future</string>
+    <string name="capsules_content_label">Words for your future selves</string>
+    <string name="capsules_open_date">Open date</string>
+    <string name="btn_seal">Seal</string>
+    <string name="capsules_msg_say_something">Write something for the future</string>
+    <string name="capsules_msg_sealed">Sealed — opens when the time comes</string>
+    <string name="capsules_msg_seal_failed">Seal failed</string>
+
+    <!-- ==================== Search ==================== -->
+    <string name="search_placeholder">Search articles / albums / events / moments / messages</string>
+    <string name="search_failed">Search failed: %1$s</string>
+    <string name="search_hint">Enter a keyword to find your memories</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_total_results">%1$d results</string>
+    <string name="search_type_article">Article</string>
+    <string name="search_type_album">Album</string>
+    <string name="search_type_event">Event</string>
+    <string name="search_type_moment">Moment</string>
+    <string name="search_type_message">Message</string>
+
+    <!-- ==================== Recycle Bin ==================== -->
+    <string name="recycle_bin_total">Recycle bin · %1$d items</string>
+    <string name="recycle_bin_empty">Recycle bin is empty</string>
+    <string name="recycle_bin_no_title">(Untitled)</string>
+    <string name="recycle_bin_deleted_at">Deleted %1$s</string>
+    <string name="recycle_bin_clear_title">Empty recycle bin</string>
+    <string name="recycle_bin_clear_msg">This will permanently delete all items in the recycle bin. This action cannot be undone. Are you sure?</string>
+    <string name="recycle_bin_delete_forever_title">Permanently delete</string>
+    <string name="recycle_bin_delete_forever_msg">This will permanently delete \"%1$s\". This action cannot be undone. Are you sure?</string>
+    <string name="btn_delete_forever">Permanently delete</string>
+
+    <!-- ==================== Admin Tools ==================== -->
+    <string name="admin_title">Server tools</string>
+    <string name="admin_desc">Only admin endpoints return full content; partner accounts seeing a permission notice is normal.</string>
+    <string name="admin_health">System health</string>
+    <string name="admin_storage">Storage stats</string>
+    <string name="admin_backup">Backup plan &amp; history</string>
+    <string name="admin_run_backup">Run auto-backup now</string>
+    <string name="admin_users">Security users</string>
+    <string name="admin_audit">Audit log</string>
+
+    <!-- ==================== Licenses ==================== -->
+    <string name="licenses_title">Open source licenses</string>
+    <string name="licenses_subtitle">Third-party software, versions, sources, and license text</string>
+    <string name="licenses_copyright">Copyright notice</string>
+    <string name="licenses_full_license">Full license</string>
+
+    <!-- ==================== Albums ==================== -->
+    <string name="albums_title">Our albums</string>
+    <string name="albums_subtitle">Collect every meeting and shared experience</string>
+    <string name="albums_no_albums">No albums yet</string>
+    <string name="albums_no_albums_sub">Pick some photos and create your first album</string>
+    <string name="albums_new_album">New album</string>
+    <string name="albums_photos_count">%1$d photos</string>
+    <string name="albums_delete_title">Delete album?</string>
+    <string name="albums_delete_msg">You can restore it from the recycle bin after deletion.</string>
+    <string name="albums_comment">Comments</string>
+    <string name="albums_write_comment">Write a comment</string>
+    <string name="albums_new_title">New album</string>
+    <string name="albums_edit_title">Edit album</string>
+    <string name="albums_title_label">Title</string>
+    <string name="albums_desc_label">Description</string>
+    <string name="albums_tags_label">Tags, comma-separated</string>
+    <string name="albums_pick_image">Pick image from gallery</string>
+    <string name="albums_image_picked">Image selected — re-pick</string>
+    <string name="albums_user">User</string>
+
+    <!-- ==================== Articles ==================== -->
+    <string name="articles_title">Our articles</string>
+    <string name="articles_subtitle">Write what you want to say, earnestly, for the future</string>
+    <string name="articles_no_articles">No articles yet</string>
+    <string name="articles_no_articles_sub">Write your first story</string>
+    <string name="articles_write">Write article</string>
+    <string name="articles_published">Published</string>
+    <string name="articles_draft">Draft</string>
+    <string name="articles_delete_title">Delete article?</string>
+    <string name="articles_delete_msg">You can restore it from the recycle bin after deletion.</string>
+    <string name="articles_versions">Versions</string>
+    <string name="articles_history">Version history</string>
+    <string name="articles_rollback">Roll back to version %1$d</string>
+    <string name="articles_comment">Comments</string>
+    <string name="articles_write_comment">Write a comment</string>
+    <string name="articles_new_title">New article</string>
+    <string name="articles_edit_title">Edit article</string>
+    <string name="articles_title_label">Title</string>
+    <string name="articles_excerpt_label">Excerpt</string>
+    <string name="articles_content_label">Content</string>
+    <string name="articles_tags_label">Tags, comma-separated</string>
+    <string name="articles_publish_checkbox">Publish</string>
+
+    <!-- ==================== Events ==================== -->
+    <string name="events_no_events">No anniversaries yet — tap the button to add one</string>
+    <string name="events_add">Add anniversary</string>
+    <string name="events_anniversary">Anniversary</string>
+    <string name="events_countdown">Countdown</string>
+    <string name="events_today">Today</string>
+    <string name="events_days_left">%1$d days left</string>
+    <string name="events_add_title">Add anniversary</string>
+    <string name="events_edit_title">Edit anniversary</string>
+    <string name="events_title_label">Title</string>
+    <string name="events_date_label">Date (YYYY-MM-DD)</string>
+    <string name="events_mark_important">Mark as important</string>
+    <string name="events_yearly_repeat">Repeat yearly</string>
+
+    <!-- ==================== Common / Shared ==================== -->
+    <string name="common_me">Me</string>
+    <string name="common_partner">Partner</string>
+    <string name="common_you">You</string>
+    <string name="common_note_optional">Note (optional)</string>
+    <string name="common_date">Date</string>
+</resources>

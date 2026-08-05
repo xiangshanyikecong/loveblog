@@ -1,0 +1,117 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Node / Vite
+node_modules/
+dist/
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.production.example
+.quickstart/
+
+# Uploads & Backups
+backups/
+server/uploads/*
+!server/uploads/.gitkeep
+server/backups/*
+!server/backups/.gitkeep
+
+# SSL Certificates
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local databases (may contain real user/partner data — never commit)
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
+
+# CodeArts assistant local cache
+.codeartsdoer/
+.cursor/
+.kiro/
+
+# SSH deploy daemon runtime artifacts
+server/_ssh_jobs/
+server/_ssh_daemon.status
+
+# Runtime state
+server/backup_history.json
+server/backup_schedule.json
+
+# IDE configs (personal, not shared team settings)
+.idea/
+.vscode/
+.arts/
+*.iml
+
+# AI assistant local configs
+.agents/
+.cc-config.json
+
+# Build logs
+build_output*.txt
+build_exit.txt
+
+# Test evidence screenshots
+a1-evidence/
+
+# One-off diagnostic/maintenance scripts (also excluded by flake8/pylint)
+# Root-level temp scripts
+_check_syntax*.py
+diagnose_*.sh
+diagnose_*.bat
+reset_database.bat
+test_listen_api.*
+test_queue_fix.py
+test-report.md
+TEST_PLAN_*.md
+hello.txt
+快速启动指南.txt
+私_backend_test.py
+
+# Server-level one-off scripts
+server/_mk_*.py
+server/_ssh*.py
+server/check_*.py
+server/diagnose_*.py
+server/fix_*.py
+server/inspect_*.py
+server/reset_*.py
+server/seed_*.py
+server/test_cottage_listen.py
+server/test_couple_avatars.py
+server/test_pydantic.py
+
+# Archived dev logs (contain local paths/credentials, not for public repo)
+docs/archive/
+
+# Misc local/temp artifacts
+netstat.txt
+temp-upload.png
+upload-response.json
+tmp_zip_test/
+
+# Local archival clone from a previously embedded Git repository.
+# The root project owns server/ and web/ directly; never track this copy.
+/web-sever/
+
+# Non-web-server components (this repo = web-sever 前后端 only)
+ios/
+ios客户端/
+安卓客户端/
+中心服务器端/

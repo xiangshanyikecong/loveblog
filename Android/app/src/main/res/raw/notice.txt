@@ -1,0 +1,13 @@
+Love Journal Android Client
+
+This distribution includes third-party software. Copyright notices, license declarations,
+license sources, project sources, and available license texts are provided in THIRD_PARTY_LICENSES.md.
+
+AI-assisted compilation and review limitation: These notices were assembled with artificial intelligence assistance and have not received a complete legal or manual completeness review. Some license identifiers, copyright notices, versions, sources, or texts may be incorrect or incomplete. Verify the upstream license materials before redistribution or legal reliance.
+人工智能整合与完整性限制：由于使用了人工智能技术进行整合，且由于部分原因没有彻底审查完整性，部分许可证可能存在错误或不完整。在发布、再分发或作出法律判断前，请以上游项目的正式许可文件为准。
+
+Included resolved dependency inventories:
+- Android client release runtime: 160 packages
+
+The Love Journal project's original code is separate from these third-party works.
+This notice does not grant a license to that original code.

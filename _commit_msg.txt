@@ -1,0 +1,12 @@
+chore: add open-source governance files and CI
+
+- Add SECURITY.md (GitHub Private Advisory disclosure policy)
+- Add CONTRIBUTING.md (Conventional Commits, dev setup, lint/test guide)
+- Add CODE_OF_CONDUCT.md (Contributor Covenant 2.1)
+- Add CHANGELOG.md (Keep a Changelog format, v1.0.0 release notes)
+- Add .github/workflows/ci.yml (server pytest + web vitest + lint)
+- Add web/eslint.config.js and web/.prettierrc.json (JS/Vue lint+format)
+- Update web/package.json (metadata + eslint/prettier devDeps + lint scripts)
+- Update netease-api/package.json (repository/author/keywords metadata)
+- Fix README.md (English summary, iOS section accuracy, License TBD section)
+- Fix docs/README.md (remove stale .kiro/specs/ reference)

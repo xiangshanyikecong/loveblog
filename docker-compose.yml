@@ -1,0 +1,122 @@
+services:
+  postgres:
+    image: postgres:16.8-alpine3.21
+    container_name: love-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: love
+      POSTGRES_PASSWORD: love
+      POSTGRES_DB: love_node
+    # 仅绑定到回环地址：本机工具（psql / GUI）可经 localhost:5432 连接，但绝不
+    # 暴露到宿主机的对外网卡。dev 用弱口令(love)，绝不能让它直接面向公网 —— 改成
+    # 127.0.0.1 后，即使误用本 dev compose 部署，库也不会从外网直连。
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U love -d love_node"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.4.2-alpine3.21
+    container_name: love-redis
+    restart: unless-stopped
+    # 启用口令并仅绑回环：无认证的 Redis 一旦暴露即可被 dump（含加密的网易云
+    # cookie 密文）。dev 用固定弱口令 love，仅供本机；生产见 prod compose 的
+    # ${REDIS_PASSWORD}。
+    command: ["redis-server", "--requirepass", "love"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "love", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  netease:
+    # NeteaseCloudMusicApiEnhanced — the MAINTAINED fork of the archived
+    # (2024-04) Binaryify NeteaseCloudMusicApi. Self-built from ./netease-api
+    # (same image as prod) for the startup guest-token refresh that fixes
+    # NetEase's "需要验证"/301 login-loss (see netease-api/server.js). Used
+    # exclusively by cottage-listen-together. Intentionally NOT exposed to the
+    # host: only the `backend` service can reach it via the default
+    # docker-compose network at http://netease:3000.
+    build:
+      context: ./netease-api
+      dockerfile: Dockerfile
+    image: love-netease-enhanced:local
+    container_name: love-netease-api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      # ~10s to register the anonymous token before it listens — don't flap.
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./server
+    container_name: love-node-api
+    restart: unless-stopped
+    environment:
+      APP_NAME: Love Node API
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg2://love:love@postgres:5432/love_node
+      REDIS_URL: redis://:love@redis:6379/0
+      # 本地开发用密钥（仅供 dev compose，切勿用于生产）。启动自检会无条件
+      # 拒绝默认值 "change-this-secret-before-production"，故这里必须填一个非默认值，
+      # 否则后端会启动即崩溃。生产请在 .env.production 设置强随机密钥。
+      JWT_SECRET_KEY: love-journal-local-dev-secret-not-for-production
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 10080
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      NETEASE_API_BASE_URL: http://netease:3000
+    volumes:
+      - ./server/uploads:/app/uploads  # 持久化上传文件（相册、文章图片、头像等）
+      - ./server/backups:/app/backups  # 持久化备份文件
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      netease:
+        # service_started rather than service_healthy: NetEase upstream
+        # availability is a soft dependency and must not block backend boot
+        # (R1.6).
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+            "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./web
+    container_name: love-web
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: /api
+      BACKEND_PROXY_TARGET: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
+
+volumes:
+  postgres_data:
