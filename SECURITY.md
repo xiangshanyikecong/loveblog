@@ -9,12 +9,11 @@ security researchers and users who responsibly disclose vulnerabilities.
 
 ### How to Report
 
-Use **GitHub Private Security Advisories** to report a vulnerability privately:
+Send an email to **ad001@hmcsz.top** to report a vulnerability privately:
 
-1. Go to <https://github.com/love-node/love-node/security/advisories/new>
-2. Fill in the advisory form with a description, reproduction steps, and impact
+1. Email `ad001@hmcsz.top` with a description, reproduction steps, and impact
    assessment.
-3. The maintainers will be notified privately and respond as soon as possible.
+2. The maintainers will be notified privately and respond as soon as possible.
 
 This ensures the report is visible only to repository maintainers and the
 reporter until a fix is coordinated and published.
@@ -49,5 +48,5 @@ The following are **out of scope**:
 ### Disclosure
 
 We follow **coordinated disclosure**. Once a fix is released we will publish a
-GitHub Security Advisory with credit to the reporter (unless they prefer to
+security advisory with credit to the reporter (unless they prefer to
 remain anonymous).
