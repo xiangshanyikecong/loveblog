@@ -16,7 +16,7 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 
 - **后端**：FastAPI + SQLAlchemy 2.0 + Alembic 迁移
 - **数据库**：PostgreSQL（默认/生产）+ Redis（缓存/状态）；测试与轻量本地可用 SQLite
-- **前端**：Vue 3 + Vite + Tailwind CSS + Vue Router + Pinia
+- **前端**：Vue 3 + Vite + Tailwind CSS + Vue Router
 - **实时**：WebSocket（「一起听」同步播放）
 - **富文本**：Vditor 编辑器
 - **第三方**：内置 `netease` 服务（NeteaseCloudMusicApi 维护分支，供「一起听」检索/取流）

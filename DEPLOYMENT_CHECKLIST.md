@@ -48,7 +48,7 @@ chmod +x deploy.sh
 ### 2. 验证部署
 - [ ] 所有容器都在运行：`docker-compose -f docker-compose.prod.yml ps`
 - [ ] 后端就绪检查通过：`curl https://yourdomain.com/health/ready`
-- [ ] 前端可以访问：`curl http://localhost`
+- [ ] 前端可以访问：`curl -k https://localhost`
 - [ ] 数据库连接正常
 - [ ] Redis 连接正常
 
@@ -80,7 +80,7 @@ sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/
 sudo chown $USER:$USER nginx/ssl/*.pem
 
 # 配置默认启用 HTTPS，证书就位后重启服务
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 ### 验证 HTTPS
@@ -289,7 +289,7 @@ cat backup.sql | docker-compose -f docker-compose.prod.yml exec -T postgres psql
 tar -xzf uploads_backup.tar.gz -C server/
 
 # 4. 重启服务
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 ### 磁盘空间不足

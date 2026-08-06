@@ -10,13 +10,56 @@ set -e  # 遇到错误立即退出
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd -- "$SCRIPT_DIR"
 
-echo "🚀 开始部署 Love Journal..."
-
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# 默认 Git 仓库地址
+GIT_REPO_URL="https://github.com/xiangshanyikecong/loveblog.git"
+
+# 解析命令行参数
+AUTO_UPDATE=false
+for arg in "$@"; do
+    case "$arg" in
+        --update|-u)
+            AUTO_UPDATE=true
+            ;;
+        --help|-h)
+            echo "用法: ./deploy.sh [选项]"
+            echo ""
+            echo "选项："
+            echo "  --update, -u  从 GitHub 拉取最新代码后再部署"
+            echo "  --help, -h    显示帮助信息"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}❌ 未知参数: $arg${NC}"
+            echo "用法: ./deploy.sh [--update|-u]"
+            exit 1
+            ;;
+    esac
+done
+
+echo "🚀 开始部署 Love Journal..."
+
+# 如果指定了 --update，从 GitHub 拉取最新代码
+if [ "$AUTO_UPDATE" = true ]; then
+    echo "📥 从 GitHub 拉取最新代码..."
+    if [ -d ".git" ]; then
+        if ! command -v git &> /dev/null; then
+            echo -e "${RED}❌ 错误：未安装 git，无法拉取更新${NC}"
+            exit 1
+        fi
+        git pull
+        echo -e "${GREEN}✅ 代码已更新到最新版本${NC}"
+    else
+        echo -e "${RED}❌ 错误：当前目录不是 Git 仓库，无法拉取更新${NC}"
+        echo "  请先克隆项目：git clone ${GIT_REPO_URL}"
+        exit 1
+    fi
+fi
 
 # 检查必需文件
 echo "📋 检查配置文件..."
@@ -30,6 +73,14 @@ fi
 echo "🔍 检查 Docker 环境..."
 if ! command -v docker &> /dev/null; then
     echo -e "${RED}❌ 错误：未安装 Docker${NC}"
+    exit 1
+fi
+
+# 验证当前用户是否有 Docker 权限（避免 usermod 后未重新登录导致后续全部失败）
+if ! docker info &> /dev/null; then
+    echo -e "${RED}❌ 错误：无法访问 Docker 守护进程（权限不足）${NC}"
+    echo "  请确认当前用户在 docker 组中：sudo usermod -aG docker \$USER"
+    echo "  添加后需重新登录或执行 newgrp docker 生效"
     exit 1
 fi
 
@@ -185,12 +236,47 @@ PUBLIC_ORIGIN="https://${DOMAIN}"
 if [ "${HTTPS_PORT:-443}" != "443" ]; then
     PUBLIC_ORIGIN="${PUBLIC_ORIGIN}:${HTTPS_PORT}"
 fi
+# 公网验证：检查 DNS、证书和 HTTPS 路由。允许一次重试以应对网络波动。
+PUB_VERIFY_OK=false
 if command -v curl &> /dev/null; then
-    curl --fail --silent --show-error --max-time 15 "${PUBLIC_ORIGIN}/health/ready" >/dev/null
+    PUB_CMD="curl"
 elif command -v wget &> /dev/null; then
-    wget --quiet --tries=1 --timeout=15 --spider "${PUBLIC_ORIGIN}/health/ready"
+    PUB_CMD="wget"
 else
-    echo -e "${RED}❌ 错误：需要 curl 或 wget 验证公网 TLS 证书${NC}"
+    echo -e "${YELLOW}⚠️  未找到 curl 或 wget，跳过公网 TLS 证书校验${NC}"
+    PUB_VERIFY_OK=true
+fi
+
+if [ "$PUB_VERIFY_OK" != "true" ]; then
+    for attempt in 1 2; do
+        if [ "$PUB_CMD" = "curl" ]; then
+            if curl --fail --silent --show-error --max-time 15 "${PUBLIC_ORIGIN}/health/ready" >/dev/null 2>&1; then
+                PUB_VERIFY_OK=true
+                break
+            fi
+        else
+            if wget --quiet --tries=1 --timeout=15 --spider "${PUBLIC_ORIGIN}/health/ready" 2>/dev/null; then
+                PUB_VERIFY_OK=true
+                break
+            fi
+        fi
+        if [ $attempt -eq 1 ]; then
+            echo -e "${YELLOW}⏳ 公网验证未通过，5 秒后重试...${NC}"
+            sleep 5
+        fi
+    done
+fi
+
+if [ "$PUB_VERIFY_OK" != "true" ]; then
+    echo -e "${RED}❌ 公网 HTTPS 验证失败${NC}"
+    echo "  可能原因："
+    echo "    1. DNS 未生效（检查域名是否已解析到本机 IP）"
+    echo "    2. TLS 证书不匹配或未受信任"
+    echo "    3. 防火墙/安全组未开放 443 端口"
+    echo "    4. 网络波动"
+    echo ""
+    echo "  内部服务日志（供排查）："
+    $COMPOSE -f docker-compose.prod.yml logs --tail=30 nginx backend
     exit 1
 fi
 echo -e "${GREEN}✅ 公网 HTTPS、DNS 与证书校验通过${NC}"
@@ -218,6 +304,7 @@ echo "   查看日志: $COMPOSE -f docker-compose.prod.yml logs -f"
 echo "   重启服务: $COMPOSE -f docker-compose.prod.yml restart"
 echo "   停止服务: $COMPOSE -f docker-compose.prod.yml down"
 echo "   进入后端: $COMPOSE -f docker-compose.prod.yml exec backend bash"
+echo "   更新并部署: ./deploy.sh --update"
 echo ""
 echo -e "${YELLOW}⚠️  提醒：${NC}"
 echo "   1. 请定期验证自动备份可以实际恢复"

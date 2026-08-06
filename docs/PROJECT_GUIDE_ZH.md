@@ -436,7 +436,7 @@ curl -fsS https://your-domain.example/health/ready
 管理后台还可以查看系统健康评分、组件状态、最近 24 小时趋势和自动修复入口。后端提供以下系统检查接口：
 
 - GET /health/system
-- GET /health/system/history?hours=24&limit=288
+- GET /health/system/history?hours=24&limit=48
 - POST /health/system/remediate
 
 自动修复会清理自动备份临时目录和临时文件，并记录新的健康快照。执行前应先查看日志和磁盘状态。
@@ -535,7 +535,6 @@ f-Match 值。
 - 部署检查清单：[DEPLOYMENT_CHECKLIST.md](../DEPLOYMENT_CHECKLIST.md)
 - Android 说明：[Android/README.md](../Android/README.md)
 - 使用指南目录：[docs/guides/](./guides/)
-- 安全审计目录：[docs/security/](./security/)
 - 贡献规范：[CONTRIBUTING.md](../CONTRIBUTING.md)
 - 安全问题报告：[SECURITY.md](../SECURITY.md)
 - 许可证：[LICENSE](../LICENSE)

@@ -431,21 +431,19 @@ async function checkAndAlert() {
 
 ### 1. 权限控制
 
-建议在后端添加权限检查：
+后端已实现权限检查，要求登录且为伴侣角色（PartnerA / PartnerB）：
 
 ```python
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, ensure_partner
 
 @router.get("/health/system")
 def system_health_check(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user),  # 需要登录
+    current_user: User = Depends(get_current_user),  # 需要登录
     components: str | None = None,
     # ...
 ):
-    # 只有管理员可以访问
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="需要管理员权限")
+    ensure_partner(current_user)  # 仅伴侣角色可访问
     # ...
 ```
 
