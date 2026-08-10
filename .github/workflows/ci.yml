@@ -102,7 +102,78 @@ jobs:
         run: docker build --file server/Dockerfile server
 
       - name: Build web image
-        run: docker build --file web/Dockerfile.prod --build-arg VITE_API_BASE_URL=/api web
+        run: >-
+          docker build --file web/Dockerfile.prod
+          --build-arg VITE_API_BASE_URL=/api
+          --build-arg VITE_SOURCE_CODE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}"
+          web
 
       - name: Build NetEase helper image
         run: docker build --file netease-api/Dockerfile netease-api
+
+  release-compliance:
+    name: Android and release-license compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            netease-api/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-36" "build-tools;36.1.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install notice-generation inputs
+        run: |
+          python -m pip install packaging
+          python -m pip wheel --wheel-dir .license-wheels -r server/requirements.lock
+          npm ci --prefix web
+          npm ci --prefix netease-api
+
+      - name: Audit NetEase production dependencies
+        run: npm audit --omit=dev --prefix netease-api
+
+      - name: Test legal tooling and project-license copies
+        run: |
+          python -m unittest tools/test_generate_third_party_notices.py
+          python tools/sync_project_license.py --check
+
+      - name: Test and build Android release inventory
+        working-directory: Android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest :app:assembleRelease :app:exportReleaseLicenseInventory \
+            -PSOURCE_CODE_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}"
+
+      - name: Regenerate legal artifacts
+        run: |
+          python tools/generate_third_party_notices.py --python-wheel-directory .license-wheels --refresh-android-lock
+          python tools/sync_project_license.py --check
+
+      - name: Reject stale generated files
+        run: git diff --exit-code

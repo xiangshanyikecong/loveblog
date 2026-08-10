@@ -24,6 +24,7 @@ import com.lovejournal.app.data.remote.dto.WatchBookmark
 import com.lovejournal.app.data.remote.dto.WatchSourceCreateRequest
 import com.lovejournal.app.data.remote.dto.WatchSourceListResponse
 import com.lovejournal.app.data.remote.dto.WatchSourcePatchRequest
+import com.lovejournal.app.data.remote.dto.WatchSourceResponse
 import com.lovejournal.app.data.remote.dto.WatchStateResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

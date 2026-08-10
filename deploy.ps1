@@ -99,10 +99,6 @@ if ($env:POSTGRES_PASSWORD.Length -lt 16 -or $env:REDIS_PASSWORD.Length -lt 16 -
     Write-Host "❌ 错误：数据库/Redis 密码至少 16 位，JWT 与 Cookie Vault 密钥至少 64 位" -ForegroundColor Red
     exit 1
 }
-if ($env:JWT_SECRET_KEY -ceq $env:COOKIE_VAULT_KEY) {
-    Write-Host "❌ 错误：COOKIE_VAULT_KEY 必须与 JWT_SECRET_KEY 不同" -ForegroundColor Red
-    exit 1
-}
 if ($env:COOKIE_SECURE.ToLowerInvariant() -ne "true") {
     Write-Host "❌ 错误：生产 nginx 强制 HTTPS，COOKIE_SECURE 必须为 true" -ForegroundColor Red
     exit 1
@@ -113,10 +109,6 @@ foreach ($cert in @("nginx/ssl/fullchain.pem", "nginx/ssl/privkey.pem")) {
         exit 1
     }
 }
-
-# 在停止任何现有服务前完成 Compose 配置校验，避免配置错误造成停机。
-Write-Host "🔎 校验生产 Compose 配置..."
-Invoke-Compose config --quiet
 
 # -------------------- 创建必需的目录 --------------------
 Write-Host "📁 创建必需的目录..."
@@ -157,7 +149,11 @@ if ((Test-Path "server/uploads") -and (Get-ChildItem "server/uploads" -Force | S
     Copy-Item -Path "server/uploads/*" -Destination $BackupDir -Recurse -Force
 }
 
-# 先拉取和构建新版本。旧容器保持运行，构建失败时不会主动制造停机。
+# -------------------- 停止旧容器 --------------------
+Write-Host "🛑 停止旧容器..."
+try { Invoke-Compose down } catch { }
+
+# -------------------- 拉取基础镜像 --------------------
 Write-Host "📥 拉取基础镜像..."
 Invoke-Compose pull postgres redis nginx
 
@@ -167,7 +163,7 @@ Invoke-Compose build --no-cache
 
 # -------------------- 启动服务 --------------------
 Write-Host "🚀 启动服务..."
-Invoke-Compose up -d --remove-orphans
+Invoke-Compose up -d
 
 # -------------------- 等待服务启动 --------------------
 Write-Host "⏳ 等待服务启动..."
@@ -181,7 +177,7 @@ $Healthy = $false
 while ($RetryCount -lt $MaxRetries) {
     try {
         # Traverse TLS termination and nginx routing, not only backend HTTP.
-        Invoke-Compose exec -T nginx wget --no-check-certificate --quiet --tries=1 --spider https://127.0.0.1/health/ready *> $null
+        Invoke-Compose exec -T nginx wget --no-check-certificate --quiet --tries=1 --spider https://127.0.0.1/health *> $null
         Write-Host "✅ Nginx HTTPS 路由与后端服务健康" -ForegroundColor Green
         $Healthy = $true
         break
@@ -205,7 +201,7 @@ if ($env:HTTPS_PORT -and $env:HTTPS_PORT -ne "443") {
     $PublicOrigin = "${PublicOrigin}:$($env:HTTPS_PORT)"
 }
 try {
-    Invoke-WebRequest -UseBasicParsing -Uri "$PublicOrigin/health/ready" -TimeoutSec 15 | Out-Null
+    Invoke-WebRequest -UseBasicParsing -Uri "$PublicOrigin/health" -TimeoutSec 15 | Out-Null
     Write-Host "✅ 公网 HTTPS、DNS 与证书校验通过" -ForegroundColor Green
 } catch {
     Write-Host "❌ 公网 HTTPS 或证书校验失败：$($_.Exception.Message)" -ForegroundColor Red
@@ -228,7 +224,7 @@ Write-Host ""
 Write-Host "🌐 访问地址："
 Write-Host "   前端: $PublicOrigin"
 Write-Host "   API:  $PublicOrigin/api"
-Write-Host "   API 文档: 生产环境默认不公开（本地开发访问 /docs）"
+Write-Host "   文档: $PublicOrigin/docs"
 Write-Host ""
 Write-Host "📋 常用命令（PowerShell）："
 if ($ComposeArgs.Count -gt 0) { $cc = "docker compose" } else { $cc = "docker-compose" }

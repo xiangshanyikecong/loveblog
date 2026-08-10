@@ -12,7 +12,7 @@ COPY app /app/app
 COPY alembic.ini /app/alembic.ini
 COPY migrations /app/migrations
 COPY .env.example /app/.env
-COPY NOTICE THIRD_PARTY_LICENSES.md /app/
+COPY LICENSE NOTICE THIRD_PARTY_LICENSES.md /app/
 
 EXPOSE 8000
 

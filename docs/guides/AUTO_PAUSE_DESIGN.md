@@ -32,7 +32,7 @@
 
 #### 2.1 前端改动
 
-**文件：`web/src/stores/listenPlayer.js`**
+**文件：`网页/src/views/cottage/listen/CottageListenView.vue`**
 
 1. 添加心跳定时器
 ```javascript
@@ -86,7 +86,7 @@ case "AUTO_PAUSED":
 
 #### 2.2 后端改动
 
-**文件：`server/app/api/v1/cottage_listen_ws.py`**
+**文件：`私有服务器端/app/api/v1/cottage_listen_ws.py`**
 
 1. 处理心跳消息
 ```python
@@ -98,7 +98,7 @@ if type_ == "HEARTBEAT":
     continue
 ```
 
-**新文件：`server/app/services/listen_together/presence.py`**
+**新文件：`私有服务器端/app/services/listen_together/presence.py`**
 
 ```python
 """用户在线状态管理"""
@@ -139,7 +139,7 @@ def are_both_inactive(redis_client: Redis, partner_a_uid: str, partner_b_uid: st
     return inactive_a and inactive_b
 ```
 
-**新文件：`server/app/services/listen_together/auto_pause.py`**
+**新文件：`私有服务器端/app/services/listen_together/auto_pause.py`**
 
 ```python
 """自动暂停检查任务"""
@@ -234,23 +234,16 @@ async def auto_pause_loop() -> None:
         await asyncio.sleep(60)
 ```
 
-**文件：`server/app/main.py`**
+**文件：`私有服务器端/app/main.py`**
 
-在应用 lifespan 中启动自动暂停检查任务：
+在应用启动时启动自动暂停检查任务：
 
 ```python
-from contextlib import asynccontextmanager
-
-@asynccontextmanager
-async def _app_lifespan(_app: FastAPI):
-    # ... 其他启动逻辑 ...
+@app.on_event("startup")
+async def startup_event():
+    # 启动自动暂停检查任务
     from app.services.listen_together.auto_pause import auto_pause_loop
     asyncio.create_task(auto_pause_loop())
-    try:
-        yield
-    finally:
-        # 取消任务
-        pass
 ```
 
 ### 3. 用户体验优化

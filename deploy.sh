@@ -6,60 +6,13 @@
 
 set -e  # 遇到错误立即退出
 
-# 无论从哪里调用，都以脚本所在目录作为 Compose 项目根目录。
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd -- "$SCRIPT_DIR"
+echo "🚀 开始部署 Love Journal..."
 
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
-
-# 默认 Git 仓库地址
-GIT_REPO_URL="https://github.com/xiangshanyikecong/loveblog.git"
-
-# 解析命令行参数
-AUTO_UPDATE=false
-for arg in "$@"; do
-    case "$arg" in
-        --update|-u)
-            AUTO_UPDATE=true
-            ;;
-        --help|-h)
-            echo "用法: ./deploy.sh [选项]"
-            echo ""
-            echo "选项："
-            echo "  --update, -u  从 GitHub 拉取最新代码后再部署"
-            echo "  --help, -h    显示帮助信息"
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}❌ 未知参数: $arg${NC}"
-            echo "用法: ./deploy.sh [--update|-u]"
-            exit 1
-            ;;
-    esac
-done
-
-echo "🚀 开始部署 Love Journal..."
-
-# 如果指定了 --update，从 GitHub 拉取最新代码
-if [ "$AUTO_UPDATE" = true ]; then
-    echo "📥 从 GitHub 拉取最新代码..."
-    if [ -d ".git" ]; then
-        if ! command -v git &> /dev/null; then
-            echo -e "${RED}❌ 错误：未安装 git，无法拉取更新${NC}"
-            exit 1
-        fi
-        git pull
-        echo -e "${GREEN}✅ 代码已更新到最新版本${NC}"
-    else
-        echo -e "${RED}❌ 错误：当前目录不是 Git 仓库，无法拉取更新${NC}"
-        echo "  请先克隆项目：git clone ${GIT_REPO_URL}"
-        exit 1
-    fi
-fi
 
 # 检查必需文件
 echo "📋 检查配置文件..."
@@ -73,14 +26,6 @@ fi
 echo "🔍 检查 Docker 环境..."
 if ! command -v docker &> /dev/null; then
     echo -e "${RED}❌ 错误：未安装 Docker${NC}"
-    exit 1
-fi
-
-# 验证当前用户是否有 Docker 权限（避免 usermod 后未重新登录导致后续全部失败）
-if ! docker info &> /dev/null; then
-    echo -e "${RED}❌ 错误：无法访问 Docker 守护进程（权限不足）${NC}"
-    echo "  请确认当前用户在 docker 组中：sudo usermod -aG docker \$USER"
-    echo "  添加后需重新登录或执行 newgrp docker 生效"
     exit 1
 fi
 
@@ -134,10 +79,6 @@ if [ "${#POSTGRES_PASSWORD}" -lt 16 ] || [ "${#REDIS_PASSWORD}" -lt 16 ] || [ "$
     echo -e "${RED}❌ 错误：数据库/Redis 密码至少 16 位，JWT 与 Cookie Vault 密钥至少 64 位${NC}"
     exit 1
 fi
-if [ "$JWT_SECRET_KEY" = "$COOKIE_VAULT_KEY" ]; then
-    echo -e "${RED}❌ 错误：COOKIE_VAULT_KEY 必须与 JWT_SECRET_KEY 不同${NC}"
-    exit 1
-fi
 if [ "${COOKIE_SECURE,,}" != "true" ]; then
     echo -e "${RED}❌ 错误：生产 nginx 强制 HTTPS，COOKIE_SECURE 必须为 true${NC}"
     exit 1
@@ -148,10 +89,6 @@ for cert in nginx/ssl/fullchain.pem nginx/ssl/privkey.pem; do
         exit 1
     fi
 done
-
-# 在停止任何现有服务前完成 Compose 配置校验，避免配置错误造成停机。
-echo "🔎 校验生产 Compose 配置..."
-$COMPOSE -f docker-compose.prod.yml config --quiet
 
 # 创建必需的目录
 echo "📁 创建必需的目录..."
@@ -188,7 +125,11 @@ if [ -d "server/uploads" ] && [ "$(ls -A server/uploads)" ]; then
     cp -r server/uploads/* "$BACKUP_DIR/"
 fi
 
-# 先拉取和构建新版本。旧容器保持运行，构建失败时不会主动制造停机。
+# 停止旧容器
+echo "🛑 停止旧容器..."
+$COMPOSE -f docker-compose.prod.yml down || true
+
+# 拉取最新镜像
 echo "📥 拉取基础镜像..."
 $COMPOSE -f docker-compose.prod.yml pull postgres redis nginx
 
@@ -198,7 +139,7 @@ $COMPOSE -f docker-compose.prod.yml build --no-cache
 
 # 启动服务
 echo "🚀 启动服务..."
-$COMPOSE -f docker-compose.prod.yml up -d --remove-orphans
+$COMPOSE -f docker-compose.prod.yml up -d
 
 # 等待服务启动
 echo "⏳ 等待服务启动..."
@@ -210,10 +151,10 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    # Traverse TLS termination and the nginx /health/ready route. A direct backend
+    # Traverse TLS termination and the nginx /health route. A direct backend
     # probe can pass while the certificate mount or reverse proxy is broken.
     if $COMPOSE -f docker-compose.prod.yml exec -T nginx \
-        wget --no-check-certificate --quiet --tries=1 --spider https://127.0.0.1/health/ready 2>/dev/null; then
+        wget --no-check-certificate --quiet --tries=1 --spider https://127.0.0.1/health 2>/dev/null; then
         echo -e "${GREEN}✅ Nginx HTTPS 路由与后端服务健康${NC}"
         break
     fi
@@ -236,47 +177,12 @@ PUBLIC_ORIGIN="https://${DOMAIN}"
 if [ "${HTTPS_PORT:-443}" != "443" ]; then
     PUBLIC_ORIGIN="${PUBLIC_ORIGIN}:${HTTPS_PORT}"
 fi
-# 公网验证：检查 DNS、证书和 HTTPS 路由。允许一次重试以应对网络波动。
-PUB_VERIFY_OK=false
 if command -v curl &> /dev/null; then
-    PUB_CMD="curl"
+    curl --fail --silent --show-error --max-time 15 "${PUBLIC_ORIGIN}/health" >/dev/null
 elif command -v wget &> /dev/null; then
-    PUB_CMD="wget"
+    wget --quiet --tries=1 --timeout=15 --spider "${PUBLIC_ORIGIN}/health"
 else
-    echo -e "${YELLOW}⚠️  未找到 curl 或 wget，跳过公网 TLS 证书校验${NC}"
-    PUB_VERIFY_OK=true
-fi
-
-if [ "$PUB_VERIFY_OK" != "true" ]; then
-    for attempt in 1 2; do
-        if [ "$PUB_CMD" = "curl" ]; then
-            if curl --fail --silent --show-error --max-time 15 "${PUBLIC_ORIGIN}/health/ready" >/dev/null 2>&1; then
-                PUB_VERIFY_OK=true
-                break
-            fi
-        else
-            if wget --quiet --tries=1 --timeout=15 --spider "${PUBLIC_ORIGIN}/health/ready" 2>/dev/null; then
-                PUB_VERIFY_OK=true
-                break
-            fi
-        fi
-        if [ $attempt -eq 1 ]; then
-            echo -e "${YELLOW}⏳ 公网验证未通过，5 秒后重试...${NC}"
-            sleep 5
-        fi
-    done
-fi
-
-if [ "$PUB_VERIFY_OK" != "true" ]; then
-    echo -e "${RED}❌ 公网 HTTPS 验证失败${NC}"
-    echo "  可能原因："
-    echo "    1. DNS 未生效（检查域名是否已解析到本机 IP）"
-    echo "    2. TLS 证书不匹配或未受信任"
-    echo "    3. 防火墙/安全组未开放 443 端口"
-    echo "    4. 网络波动"
-    echo ""
-    echo "  内部服务日志（供排查）："
-    $COMPOSE -f docker-compose.prod.yml logs --tail=30 nginx backend
+    echo -e "${RED}❌ 错误：需要 curl 或 wget 验证公网 TLS 证书${NC}"
     exit 1
 fi
 echo -e "${GREEN}✅ 公网 HTTPS、DNS 与证书校验通过${NC}"
@@ -297,14 +203,13 @@ echo ""
 echo "🌐 访问地址："
 echo "   前端: ${PUBLIC_ORIGIN}"
 echo "   API:  ${PUBLIC_ORIGIN}/api"
-echo "   API 文档: 生产环境默认不公开（本地开发访问 /docs）"
+echo "   文档: ${PUBLIC_ORIGIN}/docs"
 echo ""
 echo "📋 常用命令："
 echo "   查看日志: $COMPOSE -f docker-compose.prod.yml logs -f"
 echo "   重启服务: $COMPOSE -f docker-compose.prod.yml restart"
 echo "   停止服务: $COMPOSE -f docker-compose.prod.yml down"
 echo "   进入后端: $COMPOSE -f docker-compose.prod.yml exec backend bash"
-echo "   更新并部署: ./deploy.sh --update"
 echo ""
 echo -e "${YELLOW}⚠️  提醒：${NC}"
 echo "   1. 请定期验证自动备份可以实际恢复"

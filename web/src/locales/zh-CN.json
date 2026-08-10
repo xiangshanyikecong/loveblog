@@ -61,7 +61,8 @@
     "logout": "退出登录",
     "openNav": "打开导航",
     "closeNav": "关闭导航",
-    "licenses": "开源许可证与版权声明"
+    "licenses": "开源许可证与版权声明",
+    "sourceCode": "对应源代码"
   },
   "dialog": {
     "pleaseConfirm": "请确认",
@@ -2120,11 +2121,12 @@
   },
   "licenses": {
     "title": "开源许可证与版权声明",
-    "description": "本应用使用的第三方软件、版本、来源与许可证正文均在此公开。",
-    "openOriginal": "打开原始文件",
+    "description": "本项目许可证及应用使用的第三方软件、版本、来源与许可证正文均在此公开。",
+    "sourceCode": "查看对应源代码",
     "tabsAriaLabel": "声明类型",
     "loading": "正在加载声明…",
     "loadError": "声明文件暂时无法读取，请稍后重试。",
+    "projectLicenseLabel": "项目许可证",
     "noticeLabel": "版权声明",
     "fullLicensesLabel": "完整许可证"
   },

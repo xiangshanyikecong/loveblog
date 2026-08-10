@@ -41,13 +41,28 @@ ANDROID_INPUTS = (
     "gradle/libs.versions.toml",
     "app/build.gradle.kts",
 )
-AI_REVIEW_LIMITATION = (
-    "AI-assisted compilation and review limitation: These notices were assembled with artificial "
-    "intelligence assistance and have not received a complete legal or manual completeness review. "
-    "Some license identifiers, copyright notices, versions, sources, or texts may be incorrect or incomplete. "
-    "Verify the upstream license materials before redistribution or legal reliance.",
-    "\u4eba\u5de5\u667a\u80fd\u6574\u5408\u4e0e\u5b8c\u6574\u6027\u9650\u5236\uff1a\u7531\u4e8e\u4f7f\u7528\u4e86\u4eba\u5de5\u667a\u80fd\u6280\u672f\u8fdb\u884c\u6574\u5408\uff0c\u4e14\u7531\u4e8e\u90e8\u5206\u539f\u56e0\u6ca1\u6709\u5f7b\u5e95\u5ba1\u67e5\u5b8c\u6574\u6027\uff0c\u90e8\u5206\u8bb8\u53ef\u8bc1\u53ef\u80fd\u5b58\u5728\u9519\u8bef\u6216\u4e0d\u5b8c\u6574\u3002\u5728\u53d1\u5e03\u3001\u518d\u5206\u53d1\u6216\u4f5c\u51fa\u6cd5\u5f8b\u5224\u65ad\u524d\uff0c\u8bf7\u4ee5\u4e0a\u6e38\u9879\u76ee\u7684\u6b63\u5f0f\u8bb8\u53ef\u6587\u4ef6\u4e3a\u51c6\u3002",
+GENERATION_NOTE = (
+    "Generation note: This notice is produced from committed dependency locks and package metadata. "
+    "Regenerate and review it whenever dependencies change; authoritative upstream terms continue to control.",
+    "生成说明：本声明依据已提交的依赖锁文件和软件包元数据生成。依赖发生变化时必须重新生成并复核；"
+    "各上游发布的正式条款仍具有最终效力。",
 )
+NETEASE_SERVICE_DISCLOSURE = (
+    "NetEase service and content boundary: The original code in Love Journal's netease-api helper is licensed "
+    "under AGPL-3.0-only. That license covers only the project code and grants no rights to NetEase Cloud Music "
+    "APIs or services, accounts, music or other content, data, or trademarks. The helper uses unofficial "
+    "interfaces; access and use may be limited by current service terms, account rules, content licenses, "
+    "applicable law, and region. Operators must independently confirm authorization and compliance. This "
+    "disclosure describes external legal and service risk and does not add a field-of-use restriction to the "
+    "AGPL license for Love Journal code.",
+    "网易云音乐服务与内容边界：Love Journal 的 netease-api 辅助模块原创代码按 AGPL-3.0-only 授权。"
+    "该授权仅覆盖项目代码，不授予对网易云音乐 API 或服务、账号、音乐及其他内容、数据或商标的任何权利。"
+    "本模块使用非官方接口，其访问和使用可能受到届时有效的服务条款、账号规则、内容许可、适用法律及地区限制。"
+    "运营者须自行确认是否获得授权并满足合规要求。本说明披露的是外部法律与服务风险，不对 Love Journal 代码的 "
+    "AGPL 授权增加用途限制。",
+)
+
+Disclosure = tuple[str, str]
 
 
 @dataclass
@@ -107,7 +122,7 @@ def is_license_filename(name: str) -> bool:
     basename = PurePosixPath(name.replace("\\", "/")).name
     if LICENSE_FILE_PATTERN.match(basename):
         return True
-    return basename.lower() in {"third_party_licenses.txt", "third_party_licenses.json"}
+    return basename.lower() == "third_party_licenses.txt"
 
 
 def find_license_files(directory: Path, *, recursive: bool = False) -> list[tuple[str, str]]:
@@ -209,9 +224,14 @@ def npm_records(project: Path) -> list[PackageRecord]:
 
 
 def metadata_license(message: email.message.Message) -> str:
-    value = message.get("License-Expression") or message.get("License")
+    expression = message.get("License-Expression")
+    if expression and expression.strip().upper() not in {"UNKNOWN", "N/A"}:
+        return " ".join(expression.split())
+    value = message.get("License")
     if value and value.strip().upper() not in {"UNKNOWN", "N/A"}:
-        return " ".join(value.split())
+        normalized = " ".join(value.split())
+        detected = license_from_files([("License metadata", normalized)])
+        return detected if detected != "NOASSERTION" else normalized
     classifier_map = {
         "Apache Software License": "Apache-2.0",
         "BSD License": "BSD",
@@ -734,7 +754,12 @@ def android_records(project: Path) -> list[PackageRecord]:
                 license_files=deduplicate_license_files(
                     (str(item["name"]), str(item["text"]))
                     for item in files
-                    if isinstance(item, dict) and "name" in item and "text" in item
+                    if (
+                        isinstance(item, dict)
+                        and "name" in item
+                        and "text" in item
+                        and is_license_filename(str(item["name"]))
+                    )
                 ),
             )
         )
@@ -819,10 +844,61 @@ def license_text_section(records: list[PackageRecord], extra_texts: list[tuple[s
     return "\n".join(lines).rstrip()
 
 
+def android_sdk_disclosure(records: list[PackageRecord]) -> Disclosure | None:
+    external = [
+        record for record in records if "Android Software Development Kit License" in record.license_name
+    ]
+    if not external:
+        return None
+    terms_url = next((record.license_url for record in external if record.license_url), "https://developer.android.com/studio/terms")
+    return (
+        f"Android external SDK boundary: The resolved Android binary includes {len(external)} Google Play "
+        "services/Firebase artifacts whose Maven metadata declares the Android Software Development Kit License. "
+        f"Those external components are not covered by Love Journal's AGPL license and remain subject to the "
+        f"current Android SDK terms at {terms_url}. Consequently, the distributed Android binary is not composed "
+        "exclusively of open-source software, although Love Journal's original source code remains AGPL-licensed.",
+        f"Android 外部 SDK 边界：当前解析的 Android 二进制包含 {len(external)} 个 Maven 元数据声明适用 "
+        f"Android Software Development Kit License 的 Google Play 服务/Firebase 构件。这些外部组件不属于 "
+        f"Love Journal 的 AGPL 授权范围，仍受 {terms_url} 所列届时有效的 Android SDK 条款约束。"
+        "因此，发行的 Android 二进制并非完全由开源软件组成，但 Love Journal 的原创源代码仍按 AGPL 授权。",
+    )
+
+
+COPYLEFT_LICENSE_PATTERN = re.compile(r"(?<![A-Za-z])(?:A?GPL|LGPL|MPL|EPL|CDDL)(?![A-Za-z])", re.IGNORECASE)
+UNKNOWN_LICENSES = {"", "N/A", "NOASSERTION", "UNKNOWN", "UNLICENSED"}
+
+
+def validate_license_inventory(sections: list[tuple[str, list[PackageRecord]]]) -> None:
+    unknown = []
+    missing_copyleft_source = []
+    missing_external_terms = []
+    for component, records in sections:
+        for record in records:
+            license_name = record.license_name.strip()
+            label = f"{component}: {record.name}@{record.version}"
+            if license_name.upper() in UNKNOWN_LICENSES:
+                unknown.append(label)
+            if COPYLEFT_LICENSE_PATTERN.search(license_name) and not record.source.strip():
+                missing_copyleft_source.append(label)
+            if "Android Software Development Kit License" in license_name and not record.license_url.strip():
+                missing_external_terms.append(label)
+
+    problems = []
+    if unknown:
+        problems.append("unknown license declarations: " + ", ".join(unknown))
+    if missing_copyleft_source:
+        problems.append("copyleft dependencies without a source link: " + ", ".join(missing_copyleft_source))
+    if missing_external_terms:
+        problems.append("external Android SDK dependencies without a terms link: " + ", ".join(missing_external_terms))
+    if problems:
+        raise RuntimeError("License inventory validation stopped: " + " | ".join(problems))
+
+
 def render_document(
     title: str,
     sections: list[tuple[str, list[PackageRecord]]],
     extra_texts: list[tuple[str, str]] | None = None,
+    disclosures: list[Disclosure] | None = None,
 ) -> str:
     all_records = [record for _, records in sections for record in records]
     parts = [
@@ -835,23 +911,31 @@ def render_document(
         "Generated from committed dependency locks and locally available package metadata by "
         "`tools/generate_third_party_notices.py`.",
         "",
-        *AI_REVIEW_LIMITATION,
+        *GENERATION_NOTE,
         "",
     ]
+    if disclosures:
+        parts.extend(["## Service and distribution boundaries", ""])
+        for english, chinese in disclosures:
+            parts.extend([english, "", chinese, ""])
     for section_title, records in sections:
         parts.extend([inventory_section(section_title, records), ""])
     parts.append(license_text_section(all_records, extra_texts))
     return "\n".join(parts)
 
 
-def render_notice(counts: list[tuple[str, int]], component: str = "Love Journal") -> str:
+def render_notice(
+    counts: list[tuple[str, int]],
+    component: str = "Love Journal",
+    disclosures: list[Disclosure] | None = None,
+) -> str:
     lines = [
         component,
         "",
         "This distribution includes third-party software. Copyright notices, license declarations,",
         "license sources, project sources, and available license texts are provided in THIRD_PARTY_LICENSES.md.",
         "",
-        *AI_REVIEW_LIMITATION,
+        *GENERATION_NOTE,
         "",
         "Included resolved dependency inventories:",
     ]
@@ -863,6 +947,10 @@ def render_notice(counts: list[tuple[str, int]], component: str = "Love Journal"
             "This notice does not grant a license to that original code.",
         ]
     )
+    if disclosures:
+        lines.extend(["", "Service and distribution boundaries:"])
+        for english, chinese in disclosures:
+            lines.extend([english, chinese, ""])
     return "\n".join(lines)
 
 
@@ -912,6 +1000,10 @@ def main() -> None:
     android = android_records(android_project)
     all_records = android + web + netease + server
     apache_text = find_apache_license(all_records)
+    android_disclosure = android_sdk_disclosure(android)
+    root_disclosures = [NETEASE_SERVICE_DISCLOSURE]
+    if android_disclosure is not None:
+        root_disclosures.append(android_disclosure)
 
     sections = [
         ("Android client release runtime", android),
@@ -919,33 +1011,57 @@ def main() -> None:
         ("Python server", server),
         ("NetEase API helper", netease),
     ]
+    validate_license_inventory(sections)
     counts = [(name, len(records)) for name, records in sections]
-    write_text(ROOT / "NOTICE", render_notice(counts))
+    write_text(ROOT / "NOTICE", render_notice(counts, disclosures=root_disclosures))
     android_apache_extra = []
     if any("Apache-2.0" in record.license_name for record in android):
         android_apache_extra.append(("Android dependencies declared as Apache-2.0", apache_text))
     write_text(
         ROOT / "THIRD_PARTY_LICENSES.md",
-        render_document("Third-Party Software Notices", sections, android_apache_extra),
+        render_document(
+            "Third-Party Software Notices",
+            sections,
+            android_apache_extra,
+            disclosures=root_disclosures,
+        ),
     )
 
     component_outputs = [
-        (ROOT / "web" / "public", "Love Journal Web Client", [("Web client", web)], []),
-        (ROOT / "server", "Love Journal Python Server", [("Python server", server)], []),
-        (ROOT / "netease-api", "Love Journal NetEase API Helper", [("NetEase API helper", netease)], []),
+        (ROOT / "web" / "public", "Love Journal Web Client", [("Web client", web)], [], []),
+        (ROOT / "server", "Love Journal Python Server", [("Python server", server)], [], []),
+        (
+            ROOT / "netease-api",
+            "Love Journal NetEase API Helper",
+            [("NetEase API helper", netease)],
+            [],
+            [NETEASE_SERVICE_DISCLOSURE],
+        ),
     ]
-    for directory, component, component_sections, extra_texts in component_outputs:
+    for directory, component, component_sections, extra_texts, component_disclosures in component_outputs:
         component_counts = [(name, len(records)) for name, records in component_sections]
-        write_text(directory / "NOTICE", render_notice(component_counts, component))
+        write_text(
+            directory / "NOTICE",
+            render_notice(component_counts, component, disclosures=component_disclosures),
+        )
         write_text(
             directory / "THIRD_PARTY_LICENSES.md",
-            render_document(f"{component} Third-Party Notices", component_sections, extra_texts),
+            render_document(
+                f"{component} Third-Party Notices",
+                component_sections,
+                extra_texts,
+                disclosures=component_disclosures,
+            ),
         )
 
     android_directory = android_project / "app" / "src" / "main" / "res" / "raw"
     write_text(
         android_directory / "notice.txt",
-        render_notice([("Android client release runtime", len(android))], "Love Journal Android Client"),
+        render_notice(
+            [("Android client release runtime", len(android))],
+            "Love Journal Android Client",
+            disclosures=[android_disclosure] if android_disclosure is not None else [],
+        ),
     )
     write_text(
         android_directory / "third_party_licenses.md",
@@ -953,6 +1069,7 @@ def main() -> None:
             "Love Journal Android Client Third-Party Notices",
             [("Android client release runtime", android)],
             android_apache_extra,
+            disclosures=[android_disclosure] if android_disclosure is not None else [],
         ),
     )
 

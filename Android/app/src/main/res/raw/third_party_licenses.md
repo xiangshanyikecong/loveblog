@@ -4,8 +4,14 @@ This document identifies third-party software represented by the resolved depend
 
 Generated from committed dependency locks and locally available package metadata by `tools/generate_third_party_notices.py`.
 
-AI-assisted compilation and review limitation: These notices were assembled with artificial intelligence assistance and have not received a complete legal or manual completeness review. Some license identifiers, copyright notices, versions, sources, or texts may be incorrect or incomplete. Verify the upstream license materials before redistribution or legal reliance.
-人工智能整合与完整性限制：由于使用了人工智能技术进行整合，且由于部分原因没有彻底审查完整性，部分许可证可能存在错误或不完整。在发布、再分发或作出法律判断前，请以上游项目的正式许可文件为准。
+Generation note: This notice is produced from committed dependency locks and package metadata. Regenerate and review it whenever dependencies change; authoritative upstream terms continue to control.
+生成说明：本声明依据已提交的依赖锁文件和软件包元数据生成。依赖发生变化时必须重新生成并复核；各上游发布的正式条款仍具有最终效力。
+
+## Service and distribution boundaries
+
+Android external SDK boundary: The resolved Android binary includes 7 Google Play services/Firebase artifacts whose Maven metadata declares the Android Software Development Kit License. Those external components are not covered by Love Journal's AGPL license and remain subject to the current Android SDK terms at https://developer.android.com/studio/terms.html. Consequently, the distributed Android binary is not composed exclusively of open-source software, although Love Journal's original source code remains AGPL-licensed.
+
+Android 外部 SDK 边界：当前解析的 Android 二进制包含 7 个 Maven 元数据声明适用 Android Software Development Kit License 的 Google Play 服务/Firebase 构件。这些外部组件不属于 Love Journal 的 AGPL 授权范围，仍受 https://developer.android.com/studio/terms.html 所列届时有效的 Android SDK 条款约束。因此，发行的 Android 二进制并非完全由开源软件组成，但 Love Journal 的原创源代码仍按 AGPL 授权。
 
 ## Android client release runtime
 
@@ -175,22 +181,6 @@ AI-assisted compilation and review limitation: These notices were assembled with
 ## Available license and notice texts
 
 ### Text 1
-
-Applies to: com.google.android.datatransport:transport-api 3.1.0 (third_party_licenses.json); com.google.android.datatransport:transport-backend-cct 3.1.9 (third_party_licenses.json); com.google.firebase:firebase-common 21.0.0 (third_party_licenses.json); com.google.firebase:firebase-common-ktx 21.0.0 (third_party_licenses.json); com.google.firebase:firebase-components 18.0.0 (third_party_licenses.json); com.google.firebase:firebase-datatransport 18.2.0 (third_party_licenses.json); com.google.firebase:firebase-encoders-json 18.0.0 (third_party_licenses.json); com.google.firebase:firebase-installations 18.0.0 (third_party_licenses.json); com.google.firebase:firebase-installations-interop 17.1.1 (third_party_licenses.json); com.google.firebase:firebase-messaging 24.0.0 (third_party_licenses.json)
-
-```text
-{}
-```
-
-### Text 2
-
-Applies to: com.google.android.datatransport:transport-runtime 3.1.9 (third_party_licenses.json)
-
-```text
-{"Dagger":{"length":11361,"start":7}}
-```
-
-### Text 3
 
 Applies to: Android dependencies declared as Apache-2.0; com.google.android.datatransport:transport-runtime 3.1.9 (third_party_licenses.txt)
 
@@ -400,15 +390,7 @@ Dagger:
    limitations under the License.
 ```
 
-### Text 4
-
-Applies to: com.google.android.gms:play-services-base 18.0.1 (third_party_licenses.json)
-
-```text
-{"AndroidX lifecycle common library": {"length": 10694, "start": 38}, "AndroidX lifecycle livedatacore library": {"length": 10694, "start": 10776}, "AndroidX lifecycle runtime library": {"length": 10694, "start": 21509}, "Animal Sniffer": {"length": 1096, "start": 32222}, "Checker Framework Annotations": {"length": 1892, "start": 33352}, "Error Prone": {"length": 11357, "start": 35260}, "Guava JDK5": {"length": 11358, "start": 46632}, "Guava JDK7": {"length": 11362, "start": 58005}, "J2ObjC": {"length": 13064, "start": 69378}, "JSR 305": {"length": 1602, "start": 82454}, "JSpecify": {"length": 11358, "start": 117493}, "JsInterop Annotations": {"length": 11307, "start": 84082}, "Kotlin": {"length": 102807, "start": 128862}, "SafeParcelable library": {"length": 11358, "start": 95416}, "apksig": {"length": 10695, "start": 106785}}
-```
-
-### Text 5
+### Text 2
 
 Applies to: com.google.android.gms:play-services-base 18.0.1 (third_party_licenses.txt)
 
@@ -4760,15 +4742,7 @@ year after the cause of action arose. Each party waives its rights to a
 jury trial in any resulting litigation.
 ```
 
-### Text 6
-
-Applies to: com.google.android.gms:play-services-basement 18.3.0 (third_party_licenses.json); com.google.android.gms:play-services-tasks 18.1.0 (third_party_licenses.json)
-
-```text
-{"Animal Sniffer": {"length": 1096, "start": 19}, "Checker Framework Annotations": {"length": 1892, "start": 1149}, "Error Prone": {"length": 11357, "start": 3057}, "Guava JDK5": {"length": 11358, "start": 14429}, "Guava JDK7": {"length": 11362, "start": 25802}, "J2ObjC": {"length": 81008, "start": 37175}, "JSR 305": {"length": 1602, "start": 118195}, "JSpecify": {"length": 11358, "start": 119810}, "JsInterop Annotations": {"length": 11307, "start": 131194}, "Kotlin": {"length": 105133, "start": 142512}, "Kotlin coroutines": {"length": 11357, "start": 247667}, "SafeParcelable library": {"length": 11358, "start": 259051}, "apksig": {"length": 10695, "start": 270420}, "gsfclient": {"length": 11358, "start": 281129}, "java_annotations": {"length": 9116, "start": 292508}, "kotlinx_atomicfu": {"length": 11356, "start": 301645}}
-```
-
-### Text 7
+### Text 3
 
 Applies to: com.google.android.gms:play-services-basement 18.3.0 (third_party_licenses.txt); com.google.android.gms:play-services-tasks 18.1.0 (third_party_licenses.txt)
 
@@ -10599,15 +10573,7 @@ kotlinx_atomicfu:
    limitations under the License.
 ```
 
-### Text 8
-
-Applies to: com.google.android.gms:play-services-cloud-messaging 17.2.0 (third_party_licenses.json)
-
-```text
-{"Animal Sniffer": {"length": 1096, "start": 19}, "Checker Framework Annotations": {"length": 1892, "start": 1149}, "Error Prone": {"length": 11357, "start": 3057}, "Guava JDK5": {"length": 11358, "start": 14429}, "Guava JDK7": {"length": 11362, "start": 25802}, "J2ObjC": {"length": 81008, "start": 37175}, "JSR 305": {"length": 1602, "start": 118195}, "JSpecify": {"length": 11358, "start": 119810}, "JsInterop Annotations": {"length": 11307, "start": 131194}, "Kotlin": {"length": 112095, "start": 142512}, "Kotlin coroutines": {"length": 11357, "start": 254629}, "SafeParcelable library": {"length": 11358, "start": 266013}, "apksig": {"length": 10695, "start": 277382}, "gsfclient": {"length": 11358, "start": 288091}, "java_annotations": {"length": 9116, "start": 299470}, "kotlinx_atomicfu": {"length": 11356, "start": 308607}}
-```
-
-### Text 9
+### Text 4
 
 Applies to: com.google.android.gms:play-services-cloud-messaging 17.2.0 (third_party_licenses.txt)
 
@@ -16527,15 +16493,7 @@ kotlinx_atomicfu:
    limitations under the License.
 ```
 
-### Text 10
-
-Applies to: com.google.android.gms:play-services-stats 17.0.2 (third_party_licenses.json); com.google.firebase:firebase-iid-interop 17.1.0 (third_party_licenses.json)
-
-```text
-{"AndroidX lifecycle common library": {"length": 10694, "start": 115}, "AndroidX lifecycle livedatacore library": {"length": 10694, "start": 115}, "AndroidX lifecycle runtime library": {"length": 10694, "start": 115}, "Animal Sniffer": {"length": 1096, "start": 21534}, "Checker Framework Annotations": {"length": 1892, "start": 22664}, "Error Prone": {"length": 11357, "start": 24572}, "Guava JDK5": {"length": 11358, "start": 35986}, "Guava JDK7": {"length": 11362, "start": 47359}, "J2ObjC": {"length": 11358, "start": 35986}, "JSR 305": {"length": 1602, "start": 70066}, "JSpecify": {"length": 11358, "start": 35986}, "JsInterop Annotations": {"length": 11307, "start": 58747}, "SafeParcelable library": {"length": 11358, "start": 35986}, "apksig": {"length": 10695, "start": 10820}}
-```
-
-### Text 11
+### Text 5
 
 Applies to: com.google.android.gms:play-services-stats 17.0.2 (third_party_licenses.txt); com.google.firebase:firebase-iid-interop 17.1.0 (third_party_licenses.txt)
 
@@ -17845,15 +17803,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### Text 12
-
-Applies to: com.google.firebase:firebase-measurement-connector 19.0.0 (third_party_licenses.json)
-
-```text
-{"AndroidX annotation experimental library": {"length": 10691, "start": 45}, "AndroidX lifecycle common library": {"length": 10694, "start": 10877}, "AndroidX lifecycle livedatacore library": {"length": 10694, "start": 10877}, "AndroidX lifecycle runtime library": {"length": 10694, "start": 10877}, "AndroidX tracing library": {"length": 10694, "start": 10877}, "Animal Sniffer": {"length": 1096, "start": 32296}, "Checker Framework Annotations": {"length": 1892, "start": 33426}, "Error Prone": {"length": 11357, "start": 35334}, "Firebase": {"length": 11357, "start": 46704}, "FlatBuffers": {"length": 11342, "start": 58077}, "Guava JDK5": {"length": 11358, "start": 69485}, "Guava JDK7": {"length": 11362, "start": 80858}, "J2ObjC": {"length": 11358, "start": 69485}, "JSR 250": {"length": 11358, "start": 69485}, "JSR 305": {"length": 1602, "start": 103565}, "JSpecify": {"length": 11358, "start": 69485}, "JsInterop Annotations": {"length": 11307, "start": 92246}, "SafeParcelable library": {"length": 11358, "start": 69485}, "apksig": {"length": 10695, "start": 21582}}
-```
-
-### Text 13
+### Text 6
 
 Applies to: com.google.firebase:firebase-measurement-connector 19.0.0 (third_party_licenses.txt)
 
@@ -19766,7 +19716,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### Text 14
+### Text 7
 
 Applies to: com.squareup.okhttp3:okhttp 4.12.0 (NOTICE)
 

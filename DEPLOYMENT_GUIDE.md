@@ -18,7 +18,7 @@
 - **CPU**: 2 核
 - **内存**: 4GB RAM
 - **存储**: 20GB SSD（根据上传文件量调整）
-- **系统**: Ubuntu 20.04+ / Debian 11+ / CentOS 8+（含 Rocky Linux 8+ / AlmaLinux 9+）/ Fedora 35+ / openSUSE Leap 15.4+ / Arch Linux，或 **Windows 10/11 + Docker Desktop**
+- **系统**: Ubuntu 20.04+ / Debian 11+ / CentOS 8+，或 **Windows 10/11 + Docker Desktop**
 - **软件**: Docker 20.10+ 和 Docker Compose 2.0+（Windows 用 Docker Desktop 自带）
 
 ### 推荐配置
@@ -34,21 +34,14 @@
 ### 1. 安装 Docker
 
 ```bash
-# 通用方式（推荐，支持 Ubuntu/Debian/CentOS/RHEL/Rocky/AlmaLinux/Fedora/openSUSE）
+# Ubuntu/Debian
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
-# 重新登录（或执行 newgrp docker）使 docker 组生效
 
-# Docker Engine 已自带 docker compose V2 插件，无需单独安装
-```
-
-```bash
-# Arch Linux（使用官方仓库）
-sudo pacman -S --noconfirm docker docker-compose
-sudo systemctl enable --now docker
-sudo usermod -aG docker $USER
-# 重新登录（或执行 newgrp docker）使 docker 组生效
+# 安装 Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 ### 2. 克隆项目
@@ -57,6 +50,8 @@ sudo usermod -aG docker $USER
 git clone https://github.com/xiangshanyikecong/loveblog.git love-journal
 cd love-journal
 ```
+
+部署修改版 fork 时，请改为该 fork 的仓库地址，并确保其中包含实际部署版本的完整对应源代码。
 
 ### 3. 配置环境变量
 
@@ -87,12 +82,16 @@ BOOTSTRAP_SETUP_TOKEN=your_bootstrap_setup_token_here
 DOMAIN=yourdomain.com
 CORS_ORIGINS=https://yourdomain.com
 VITE_API_BASE_URL=/api
+VITE_SOURCE_CODE_URL=https://github.com/xiangshanyikecong/loveblog
 COOKIE_SECURE=true
 ```
 
-**生成密钥（需生成两个不同的密钥，分别用于 JWT_SECRET_KEY 和 COOKIE_VAULT_KEY）：**
+`VITE_SOURCE_CODE_URL` 会显示在页面底部和许可证页面。部署任何修改版时，必须将它改为该版本匿名可访问、
+固定到 tag 或 commit 的精确对应源地址，并重新构建 Web 镜像；不能继续指向会变化的分支或未包含部署修改的
+上游仓库。
+
+**生成 JWT 密钥：**
 ```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
@@ -108,15 +107,12 @@ chmod +x deploy.sh
 
 # 执行部署
 ./deploy.sh
-
-# 也可以一键从 GitHub 拉取最新代码并部署
-./deploy.sh --update
 ```
 
 ### 5. 访问应用
 
 - 前端: `https://yourdomain.com`
-- API 文档：生产 Nginx 默认不公开 `/docs`；本地开发可访问 `http://localhost:8000/docs`，生产调试请临时配置 IP 白名单
+- API 文档: `https://yourdomain.com/docs`
 - 首次进入时，使用 `X-Bootstrap-Token` 完成第一位 Partner 初始化
 - 初始化完成后，再使用刚创建的账号登录
 
@@ -145,8 +141,8 @@ powershell -ExecutionPolicy Bypass -File deploy.ps1
 #   或直接双击 deploy.bat
 ```
 
-`deploy.ps1` 与 `deploy.sh` 行为一致：校验配置 -> 加载环境变量 -> 创建目录 -> 备份旧上传文件
--> 拉取/构建镜像 -> 启动 -> 健康检查。脚本会自动探测 `docker compose`（插件）或 `docker-compose`。
+`deploy.ps1` 与 `deploy.sh` 行为一致：校验配置 → 加载环境变量 → 创建目录 → 备份旧上传文件
+→ 拉取/构建镜像 → 启动 → 健康检查。脚本会自动探测 `docker compose`（插件）或 `docker-compose`。
 
 > 说明：Windows 上没有 nginx 的额外系统配置差异，所有服务都在容器内运行，行为与 Linux 一致。
 
@@ -157,46 +153,17 @@ powershell -ExecutionPolicy Bypass -File deploy.ps1
 ### 步骤 1: 准备服务器
 
 ```bash
-# ===== Ubuntu/Debian =====
+# 更新系统
 sudo apt update && sudo apt upgrade -y
+
+# 安装必要工具
 sudo apt install -y git curl wget vim
 
-# ===== CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora =====
-sudo dnf update -y
-sudo dnf install -y git curl wget vim
-
-# ===== openSUSE =====
-sudo zypper refresh && sudo zypper update -y
-sudo zypper install -y git curl wget vim
-
-# ===== Arch Linux =====
-sudo pacman -Syu --noconfirm
-sudo pacman -S --noconfirm git curl wget vim
-```
-
-配置防火墙：
-
-```bash
-# ===== Ubuntu/Debian（ufw）=====
+# 配置防火墙
 sudo ufw allow 22/tcp    # SSH
 sudo ufw allow 80/tcp    # HTTP
 sudo ufw allow 443/tcp   # HTTPS
 sudo ufw enable
-
-# ===== CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora/openSUSE（firewalld）=====
-sudo systemctl enable --now firewalld
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --reload
-
-# ===== Arch Linux（firewalld，需先安装）=====
-sudo pacman -S --noconfirm firewalld
-sudo systemctl enable --now firewalld
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --reload
 ```
 
 ### 步骤 2: 配置域名
@@ -260,17 +227,7 @@ docker volume inspect love-journal_redis_data
 
 ```bash
 # 安装 Certbot
-# Ubuntu/Debian
 sudo apt install -y certbot
-
-# CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora
-sudo dnf install -y certbot
-
-# openSUSE
-sudo zypper install -y certbot
-
-# Arch Linux
-sudo pacman -S --noconfirm certbot
 
 # 停止 Nginx（临时）
 docker-compose -f docker-compose.prod.yml stop nginx
@@ -284,7 +241,7 @@ sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/
 sudo chown $USER:$USER nginx/ssl/*.pem
 
 # 配置已经默认启用 HTTPS，证书就位后启动/重启服务
-docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### 方法 2: 使用自签名证书（仅测试）
@@ -315,7 +272,7 @@ sudo crontab -e
 
 登录管理员界面的备份页配置启用状态、间隔与保留份数。旧的
 `BACKUP_ENABLED/BACKUP_INTERVAL_HOURS/BACKUP_KEEP_LAST` 环境变量从未被后端读取，
-已经移除，避免出现"配置已写但实际未启用"的假象。
+已经移除，避免出现“配置已写但实际未启用”的假象。
 
 备份文件、计划和历史统一持久化到 `server/backups/`；状态文件分别是
 `server/backups/backup_schedule.json` 和
@@ -385,12 +342,11 @@ docker-compose -f docker-compose.prod.yml down
 ### 更新应用
 
 ```bash
-# 方式一：手动拉取最新代码后部署
+# 拉取最新代码
 git pull origin main
-./deploy.sh
 
-# 方式二：使用部署脚本一键从 GitHub 拉取更新并部署（推荐）
-./deploy.sh --update
+# 重新部署
+./deploy.sh
 ```
 
 ### 数据库维护
@@ -432,7 +388,7 @@ docker-compose -f docker-compose.prod.yml logs backend
 
 # 常见原因：
 # - 数据库连接失败：检查 POSTGRES_PASSWORD
-# - 端口被占用：检查 80/443 端口（生产环境仅 nginx 映射到宿主机）
+# - 端口被占用：检查 8000 端口
 # - 权限问题：检查 uploads 目录权限
 ```
 
@@ -511,7 +467,7 @@ find server/backups/ -name "*.zip" -mtime +30 -delete
 
 ### 7. 「一起听」扫码登录异常 / profile 为 null
 
-「小屋一起听」依赖容器 `netease`（`NeteaseCloudMusicApiEnhanced` 自构建镜像，由 `./netease-api` 目录构建为 `love-netease-enhanced:local`）。
+「小屋一起听」依赖容器 `netease`（社区维护的 `binaryify/netease_cloud_music_api`）。
 
 - **生产环境必须包含 `netease` 服务**：`docker-compose.prod.yml` 已内置该服务，仅在内网
   （`love-network`）暴露，不映射到宿主机端口。确认其健康：
@@ -521,9 +477,9 @@ find server/backups/ -name "*.zip" -mtime +30 -delete
 - **后端连不上 netease**：检查 backend 环境变量 `NETEASE_API_BASE_URL=http://netease:3000`，
   并确认两者在同一网络。
 - **扫码后 `profile: null` / 登录态异常**：这是上游社区库的已知问题（与最新网易云服务端
-  偶有不兼容），并非本项目代码问题。缓解办法是重新构建镜像后重启：
+  偶有不兼容），并非本项目代码问题。缓解办法是拉取最新镜像后重启：
   ```bash
-  docker compose -f docker-compose.prod.yml build --no-cache netease
+  docker compose -f docker-compose.prod.yml pull netease
   docker compose -f docker-compose.prod.yml up -d netease
   ```
 
@@ -536,21 +492,12 @@ find server/backups/ -name "*.zip" -mtime +30 -delete
 
 ### 2. 定期更新
 ```bash
-# Ubuntu/Debian
+# 更新系统
 sudo apt update && sudo apt upgrade -y
 
-# CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora
-sudo dnf upgrade --refresh -y
-
-# openSUSE
-sudo zypper refresh && sudo zypper update -y
-
-# Arch Linux
-sudo pacman -Syu --noconfirm
-
 # 更新 Docker 镜像
-docker-compose --env-file .env.production -f docker-compose.prod.yml pull
-docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### 3. 限制 API 文档访问
@@ -565,41 +512,17 @@ location /docs {
 
 ### 4. 启用防火墙
 ```bash
-# Ubuntu/Debian（ufw）
 sudo ufw enable
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-
-# CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora/openSUSE/Arch Linux（firewalld）
-sudo systemctl enable --now firewalld
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-sudo firewall-cmd --reload
 ```
 
 ### 5. 配置 Fail2ban（防暴力破解）
 ```bash
-# Ubuntu/Debian
 sudo apt install -y fail2ban
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-
-# CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora
-sudo dnf install -y fail2ban
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-
-# openSUSE
-sudo zypper install -y fail2ban
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-
-# Arch Linux
-sudo pacman -S --noconfirm fail2ban
 sudo systemctl enable fail2ban
 sudo systemctl start fail2ban
 ```
@@ -611,7 +534,7 @@ sudo systemctl start fail2ban
 如有问题，请查看：
 1. 项目 GitHub Issues
 2. 日志文件：`docker-compose -f docker-compose.prod.yml logs`
-3. 健康检查：`https://yourdomain.com/health`
+3. 健康检查：`https://your-domain/health`
 
 ---
 

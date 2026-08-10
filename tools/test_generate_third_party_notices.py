@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import email
 import importlib.util
 import sys
 import tempfile
@@ -78,6 +79,51 @@ class ThirdPartyNoticeGeneratorTests(unittest.TestCase):
         apache_text = "Apache License\nVersion 2.0, January 2004\n"
         self.assertEqual(generator.license_from_files([("LICENSE", apache_text)]), "Apache-2.0")
         self.assertEqual(generator.license_from_files([("NOTICE", "custom legal notice")]), "NOASSERTION")
+
+    def test_python_full_mit_license_metadata_is_normalized(self) -> None:
+        message = email.message_from_string(
+            "License: The MIT License (MIT) Copyright (c) Example Permission is hereby granted\n"
+        )
+        self.assertEqual(generator.metadata_license(message), "MIT")
+
+    def test_inventory_rejects_unknown_and_untraceable_copyleft_licenses(self) -> None:
+        unknown = generator.PackageRecord("unknown", "1.0", "NOASSERTION", "")
+        copyleft = generator.PackageRecord("copyleft", "1.0", "LGPL-3.0-only", "")
+        external_sdk = generator.PackageRecord(
+            "external-sdk", "1.0", "Android Software Development Kit License", ""
+        )
+        with self.assertRaisesRegex(RuntimeError, "unknown license declarations"):
+            generator.validate_license_inventory([("test", [unknown])])
+        with self.assertRaisesRegex(RuntimeError, "copyleft dependencies without a source link"):
+            generator.validate_license_inventory([("test", [copyleft])])
+        with self.assertRaisesRegex(RuntimeError, "external Android SDK dependencies without a terms link"):
+            generator.validate_license_inventory([("test", [external_sdk])])
+
+    def test_android_license_index_json_is_not_treated_as_license_text(self) -> None:
+        self.assertFalse(generator.is_license_filename("res/raw/third_party_licenses.json"))
+        self.assertTrue(generator.is_license_filename("res/raw/third_party_licenses.txt"))
+        self.assertTrue(generator.is_license_filename("META-INF/LICENSE"))
+
+    def test_service_disclosure_does_not_add_an_agpl_use_restriction(self) -> None:
+        rendered = generator.render_notice(
+            [("NetEase API helper", 1)],
+            disclosures=[generator.NETEASE_SERVICE_DISCLOSURE],
+        )
+        self.assertIn("does not add a field-of-use restriction", rendered)
+        self.assertIn("不对 Love Journal 代码的 AGPL 授权增加用途限制", rendered)
+
+    def test_android_sdk_disclosure_marks_external_binary_components(self) -> None:
+        record = generator.PackageRecord(
+            name="com.google.android.gms:play-services-base",
+            version="1.0",
+            license_name="Android Software Development Kit License",
+            license_url="https://developer.android.com/studio/terms.html",
+            source="",
+        )
+        disclosure = generator.android_sdk_disclosure([record])
+        self.assertIsNotNone(disclosure)
+        assert disclosure is not None
+        self.assertIn("not composed exclusively of open-source software", disclosure[0])
 
 
 if __name__ == "__main__":

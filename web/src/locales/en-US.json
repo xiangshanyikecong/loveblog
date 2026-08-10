@@ -61,7 +61,8 @@
     "logout": "Log Out",
     "openNav": "Open navigation",
     "closeNav": "Close navigation",
-    "licenses": "Open Source Licenses"
+    "licenses": "Open Source Licenses",
+    "sourceCode": "Corresponding Source"
   },
   "dialog": {
     "pleaseConfirm": "Please Confirm",
@@ -2120,11 +2121,12 @@
   },
   "licenses": {
     "title": "Open Source Licenses & Copyright Notice",
-    "description": "Third-party software, versions, sources, and license texts used by this app are all disclosed here.",
-    "openOriginal": "Open original file",
+    "description": "The project license and the third-party software, versions, sources, and license texts used by this app are disclosed here.",
+    "sourceCode": "View Corresponding Source",
     "tabsAriaLabel": "Document type",
     "loading": "Loading document…",
     "loadError": "The document file is temporarily unavailable, please try again later.",
+    "projectLicenseLabel": "Project License",
     "noticeLabel": "Copyright Notice",
     "fullLicensesLabel": "Full Licenses"
   },

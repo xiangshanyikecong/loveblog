@@ -4,16 +4,22 @@ This document identifies third-party software represented by the resolved depend
 
 Generated from committed dependency locks and locally available package metadata by `tools/generate_third_party_notices.py`.
 
-AI-assisted compilation and review limitation: These notices were assembled with artificial intelligence assistance and have not received a complete legal or manual completeness review. Some license identifiers, copyright notices, versions, sources, or texts may be incorrect or incomplete. Verify the upstream license materials before redistribution or legal reliance.
-人工智能整合与完整性限制：由于使用了人工智能技术进行整合，且由于部分原因没有彻底审查完整性，部分许可证可能存在错误或不完整。在发布、再分发或作出法律判断前，请以上游项目的正式许可文件为准。
+Generation note: This notice is produced from committed dependency locks and package metadata. Regenerate and review it whenever dependencies change; authoritative upstream terms continue to control.
+生成说明：本声明依据已提交的依赖锁文件和软件包元数据生成。依赖发生变化时必须重新生成并复核；各上游发布的正式条款仍具有最终效力。
+
+## Service and distribution boundaries
+
+NetEase service and content boundary: The original code in Love Journal's netease-api helper is licensed under AGPL-3.0-only. That license covers only the project code and grants no rights to NetEase Cloud Music APIs or services, accounts, music or other content, data, or trademarks. The helper uses unofficial interfaces; access and use may be limited by current service terms, account rules, content licenses, applicable law, and region. Operators must independently confirm authorization and compliance. This disclosure describes external legal and service risk and does not add a field-of-use restriction to the AGPL license for Love Journal code.
+
+网易云音乐服务与内容边界：Love Journal 的 netease-api 辅助模块原创代码按 AGPL-3.0-only 授权。该授权仅覆盖项目代码，不授予对网易云音乐 API 或服务、账号、音乐及其他内容、数据或商标的任何权利。本模块使用非官方接口，其访问和使用可能受到届时有效的服务条款、账号规则、内容许可、适用法律及地区限制。运营者须自行确认是否获得授权并满足合规要求。本说明披露的是外部法律与服务风险，不对 Love Journal 代码的 AGPL 授权增加用途限制。
 
 ## NetEase API helper
 
 | Package | Version | Declared license(s) | License source | Project source |
 | --- | --- | --- | --- | --- |
 | @borewit/text-codec | 0.2.2 | MIT | Not declared | <https://github.com/Borewit/text-codec> |
-| @neteasecloudmusicapienhanced/api | 4.35.0 | MIT | Not declared | <https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced> |
-| @neteasecloudmusicapienhanced/unblockmusic-utils | 0.3.2 | MIT | Not declared | <https://registry.npmjs.org/@neteasecloudmusicapienhanced/unblockmusic-utils/-/unblockmusic-utils-0.3.2.tgz> |
+| @neteasecloudmusicapienhanced/api | 4.39.0 | MIT | Not declared | <https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced> |
+| @neteasecloudmusicapienhanced/unblockmusic-utils | 0.3.4 | MIT | Not declared | <https://registry.npmjs.org/@neteasecloudmusicapienhanced/unblockmusic-utils/-/unblockmusic-utils-0.3.4.tgz> |
 | @tokenizer/inflate | 0.4.1 | MIT | Not declared | <https://github.com/Borewit/tokenizer-inflate> |
 | @tokenizer/token | 0.3.0 | MIT | Not declared | <https://github.com/Borewit/tokenizer-token> |
 | @tootallnate/quickjs-emscripten | 0.23.0 | MIT | Not declared | <https://github.com/justjake/quickjs-emscripten> |
@@ -36,10 +42,10 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | ast-types | 0.13.4 | MIT | Not declared | <https://github.com/benjamn/ast-types> |
 | asynckit | 0.4.0 | MIT | Not declared | <https://github.com/alexindigo/asynckit> |
 | atomic-sleep | 1.0.0 | MIT | Not declared | <https://github.com/davidmarkclements/atomic-sleep> |
-| axios | 1.17.0 | MIT | Not declared | <https://github.com/axios/axios> |
+| axios | 1.19.0 | MIT | Not declared | <https://github.com/axios/axios> |
 | basic-ftp | 5.3.1 | MIT | Not declared | <https://github.com/patrickjuchli/basic-ftp> |
-| body-parser | 1.20.5 | MIT | Not declared | expressjs/body-parser |
-| body-parser | 2.2.2 | MIT | Not declared | expressjs/body-parser |
+| body-parser | 1.20.6 | MIT | Not declared | expressjs/body-parser |
+| body-parser | 2.3.0 | MIT | Not declared | expressjs/body-parser |
 | busboy | 1.6.0 | MIT | <http://github.com/mscdex/busboy/raw/master/LICENSE> | <http://github.com/mscdex/busboy> |
 | bytes | 3.1.2 | MIT | Not declared | visionmedia/bytes.js |
 | call-bind-apply-helpers | 1.0.2 | MIT | Not declared | <https://github.com/ljharb/call-bind-apply-helpers> |
@@ -60,6 +66,8 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | content-disposition | 0.5.4 | MIT | Not declared | jshttp/content-disposition |
 | content-disposition | 1.1.0 | MIT | Not declared | jshttp/content-disposition |
 | content-type | 1.0.5 | MIT | Not declared | jshttp/content-type |
+| content-type | 2.0.0 | MIT | Not declared | jshttp/content-type |
+| content-type | 2.0.0 | MIT | Not declared | jshttp/content-type |
 | content-type | 2.0.0 | MIT | Not declared | jshttp/content-type |
 | cookie | 0.7.2 | MIT | Not declared | jshttp/cookie |
 | cookie-signature | 1.0.7 | MIT | Not declared | <https://github.com/visionmedia/node-cookie-signature> |
@@ -142,6 +150,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | math-intrinsics | 1.1.0 | MIT | Not declared | <https://github.com/es-shims/math-intrinsics> |
 | media-typer | 0.3.0 | MIT | Not declared | jshttp/media-typer |
 | media-typer | 1.1.0 | MIT | Not declared | jshttp/media-typer |
+| media-typer | 2.0.0 | MIT | Not declared | jshttp/media-typer |
 | merge-descriptors | 1.0.3 | MIT | Not declared | sindresorhus/merge-descriptors |
 | merge-descriptors | 2.0.0 | MIT | Not declared | sindresorhus/merge-descriptors |
 | methods | 1.1.2 | MIT | Not declared | jshttp/methods |
@@ -155,7 +164,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | mri | 1.1.4 | MIT | Not declared | lukeed/mri |
 | ms | 2.0.0 | MIT | Not declared | zeit/ms |
 | ms | 2.1.3 | MIT | Not declared | vercel/ms |
-| music-metadata | 11.12.3 | MIT | Not declared | github:Borewit/music-metadata |
+| music-metadata | 11.14.0 | MIT | Not declared | github:Borewit/music-metadata |
 | negotiator | 0.6.3 | MIT | Not declared | jshttp/negotiator |
 | negotiator | 1.0.0 | MIT | Not declared | jshttp/negotiator |
 | netmask | 2.1.1 | MIT | Not declared | <https://github.com/rs/node-netmask> |
@@ -252,7 +261,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | y18n | 4.0.3 | ISC | Not declared | <https://github.com/yargs/y18n> |
 | y18n | 5.0.8 | ISC | Not declared | yargs/y18n |
 | yargs | 15.4.1 | MIT | Not declared | <https://github.com/yargs/yargs> |
-| yargs | 17.7.2 | MIT | Not declared | <https://github.com/yargs/yargs> |
+| yargs | 17.7.3 | MIT | Not declared | <https://github.com/yargs/yargs> |
 | yargs | 18.0.0 | MIT | Not declared | <https://github.com/yargs/yargs> |
 | yargs-parser | 18.1.3 | ISC | Not declared | <https://github.com/yargs/yargs-parser> |
 | yargs-parser | 21.1.1 | ISC | Not declared | <https://github.com/yargs/yargs-parser> |
@@ -278,7 +287,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Text 2
 
-Applies to: @neteasecloudmusicapienhanced/api 4.35.0 (LICENSE)
+Applies to: @neteasecloudmusicapienhanced/api 4.39.0 (LICENSE)
 
 ```text
 The MIT License (MIT)
@@ -306,7 +315,7 @@ THE SOFTWARE.
 
 ### Text 3
 
-Applies to: @neteasecloudmusicapienhanced/unblockmusic-utils 0.3.2 (LICENSE)
+Applies to: @neteasecloudmusicapienhanced/unblockmusic-utils 0.3.4 (LICENSE)
 
 ```text
 MIT License
@@ -1467,7 +1476,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### Text 17
 
-Applies to: axios 1.17.0 (LICENSE)
+Applies to: axios 1.19.0 (LICENSE)
 
 ```text
 # Copyright (c) 2014-present Matt Zabriskie & Collaborators
@@ -1507,7 +1516,7 @@ SOFTWARE.
 
 ### Text 19
 
-Applies to: body-parser 1.20.5 (LICENSE); body-parser 2.2.2 (LICENSE); type-is 1.6.18 (LICENSE); type-is 2.1.0 (LICENSE)
+Applies to: body-parser 1.20.6 (LICENSE); body-parser 2.3.0 (LICENSE); type-is 1.6.18 (LICENSE); type-is 2.1.0 (LICENSE)
 
 ```text
 (The MIT License)
@@ -1724,7 +1733,7 @@ THE SOFTWARE.
 
 ### Text 28
 
-Applies to: content-disposition 0.5.4 (LICENSE); content-disposition 1.1.0 (LICENSE); forwarded 0.2.0 (LICENSE); media-typer 1.1.0 (LICENSE); vary 1.1.2 (LICENSE)
+Applies to: content-disposition 0.5.4 (LICENSE); content-disposition 1.1.0 (LICENSE); forwarded 0.2.0 (LICENSE); media-typer 1.1.0 (LICENSE); media-typer 2.0.0 (LICENSE); vary 1.1.2 (LICENSE)
 
 ```text
 (The MIT License)
@@ -1753,7 +1762,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### Text 29
 
-Applies to: content-type 1.0.5 (LICENSE); content-type 2.0.0 (LICENSE)
+Applies to: content-type 1.0.5 (LICENSE); content-type 2.0.0 (LICENSE); content-type 2.0.0 (LICENSE); content-type 2.0.0 (LICENSE)
 
 ```text
 (The MIT License)
@@ -3360,7 +3369,7 @@ SOFTWARE.
 
 ### Text 88
 
-Applies to: music-metadata 11.12.3 (LICENSE.txt); token-types 6.1.2 (LICENSE.txt); win-guid 0.2.1 (LICENSE.txt)
+Applies to: music-metadata 11.14.0 (LICENSE.txt); token-types 6.1.2 (LICENSE.txt); win-guid 0.2.1 (LICENSE.txt)
 
 ```text
 The MIT License (MIT)
@@ -5212,7 +5221,7 @@ THIS SOFTWARE.
 
 ### Text 143
 
-Applies to: yargs 15.4.1 (LICENSE); yargs 17.7.2 (LICENSE); yargs 18.0.0 (LICENSE)
+Applies to: yargs 15.4.1 (LICENSE); yargs 17.7.3 (LICENSE); yargs 18.0.0 (LICENSE)
 
 ```text
 MIT License

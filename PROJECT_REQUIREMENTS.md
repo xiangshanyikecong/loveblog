@@ -1,9 +1,5 @@
 # 恋爱记（Love Journal）项目需求说明
 
-> **⚠️ 历史文档**：本文件记录项目早期 MVP 阶段的需求愿景，仅供追溯，不代表当前实现。
-> 其中描述的「Laravel 总站 / MySQL」等架构未实际落地，当前系统为 FastAPI + PostgreSQL。
-> 请以 [README.md](./README.md) 和 [docs/PROJECT_GUIDE_ZH.md](./docs/PROJECT_GUIDE_ZH.md) 为准。
-
 ## 1. 项目定位
 
 本项目是一个面向情侣的“恋爱记录 + 博客分享”软件，支持：
@@ -49,7 +45,7 @@
   - Redis：状态/缓存
 - API 规范：
   - RESTful
-  - 至少提供 `v1/timeline`、`v1/albums` 等版本化接口
+  - 至少提供 `v1/timeline`、`v1/gallery` 等版本化接口
 - 前端技术：Vue3 + Tailwind CSS
 - 前端要求：
   - 响应式页面

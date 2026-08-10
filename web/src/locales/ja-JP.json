@@ -61,7 +61,8 @@
     "logout": "ログアウト",
     "openNav": "ナビゲーションを開く",
     "closeNav": "ナビゲーションを閉じる",
-    "licenses": "オープンソースライセンス"
+    "licenses": "オープンソースライセンス",
+    "sourceCode": "対応するソースコード"
   },
   "dialog": {
     "pleaseConfirm": "確認してください",
@@ -1636,11 +1637,12 @@
   },
   "licenses": {
     "title": "オープンソースライセンスと著作権表示",
-    "description": "本アプリで使用しているサードパーティソフトウェア、バージョン、出典、ライセンス正文をここに公開しています。",
-    "openOriginal": "元のファイルを開く",
+    "description": "プロジェクトのライセンスと、本アプリで使用しているサードパーティソフトウェア、バージョン、出典、ライセンス正文をここに公開しています。",
+    "sourceCode": "対応するソースコードを見る",
     "tabsAriaLabel": "文書タイプ",
     "loading": "文書を読み込み中…",
     "loadError": "文書ファイルを一時的に読み込めません、後でもう一度お試しください。",
+    "projectLicenseLabel": "プロジェクトライセンス",
     "noticeLabel": "著作権表示",
     "fullLicensesLabel": "完全なライセンス"
   },

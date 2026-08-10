@@ -4,7 +4,9 @@ FROM node:20.19.4-alpine3.22 AS builder
 WORKDIR /app
 
 ARG VITE_API_BASE_URL=/api
+ARG VITE_SOURCE_CODE_URL=https://github.com/xiangshanyikecong/loveblog
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_SOURCE_CODE_URL=$VITE_SOURCE_CODE_URL
 
 # 复制依赖文件
 COPY package*.json ./
@@ -21,6 +23,7 @@ FROM nginx:1.27.4-alpine3.21
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/public/LICENSE /usr/share/nginx/html/LICENSE
 COPY --from=builder /app/public/NOTICE /usr/share/nginx/html/NOTICE
 COPY --from=builder /app/public/THIRD_PARTY_LICENSES.md /usr/share/nginx/html/THIRD_PARTY_LICENSES.md
 

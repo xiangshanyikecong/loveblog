@@ -8,6 +8,11 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val sourceCodeUrl = providers.gradleProperty("SOURCE_CODE_URL")
+    .orElse("https://github.com/xiangshanyikecong/loveblog")
+    .get()
+val sourceCodeUrlLiteral = "\"${sourceCodeUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
 android {
     namespace = "com.lovejournal.app"
     compileSdk = 36
@@ -18,13 +23,14 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
 
         buildConfigField("String", "API_BASE_URL", "\"https://love.invalid/api/v1/\"")
         buildConfigField("String", "MEDIA_BASE_URL", "\"https://love.invalid\"")
+        buildConfigField("String", "SOURCE_CODE_URL", sourceCodeUrlLiteral)
         buildConfigField("boolean", "ALLOW_CLEARTEXT_LOCAL", "false")
     }
 

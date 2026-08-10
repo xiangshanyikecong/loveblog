@@ -365,7 +365,6 @@
     <string name="period_start_date">Start date</string>
     <string name="period_end_date_optional">End date (optional, leave blank if ongoing)</string>
     <string name="period_end_date_not_set">Not set</string>
-    <string name="btn_clear">Clear</string>
 
     <!-- ==================== Plans ==================== -->
     <string name="plan_no_plans">No date plans yet — tap the button to add one</string>
@@ -706,9 +705,11 @@
 
     <!-- ==================== Licenses ==================== -->
     <string name="licenses_title">Open source licenses</string>
-    <string name="licenses_subtitle">Third-party software, versions, sources, and license text</string>
+    <string name="licenses_subtitle">Project license and third-party software, versions, sources, and license text</string>
+    <string name="licenses_project_license">Project license</string>
     <string name="licenses_copyright">Copyright notice</string>
     <string name="licenses_full_license">Full license</string>
+    <string name="licenses_source_code">View corresponding source</string>
 
     <!-- ==================== Albums ==================== -->
     <string name="albums_title">Our albums</string>

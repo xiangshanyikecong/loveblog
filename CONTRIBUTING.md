@@ -111,6 +111,39 @@ All new features or bug fixes should include appropriate test coverage.
 
 ---
 
+## Dependency and License Maintenance
+
+Dependency locks, resolved Android runtime inventory, and generated legal notices must change together. Start with an
+empty `.license-wheels` directory, then run:
+
+```bash
+cd web && npm ci && cd ..
+cd netease-api && npm ci && cd ..
+python -m pip wheel --wheel-dir .license-wheels -r server/requirements.lock
+cd Android && ./gradlew :app:exportReleaseLicenseInventory && cd ..
+python tools/generate_third_party_notices.py --python-wheel-directory .license-wheels --refresh-android-lock
+python tools/sync_project_license.py
+python -m unittest tools/test_generate_third_party_notices.py
+python tools/sync_project_license.py --check
+```
+
+When `server/requirements.txt` changes, resolve its complete Linux CPython 3.12 wheel set into the empty wheel directory
+and add `--write-python-lock` to the generator command. Review every generated diff, especially copyleft,
+non-open-source SDK, and service-specific entries. The generator rejects unknown license declarations, copyleft
+dependencies without a source link, and Android SDK entries without a terms link. CI repeats this process, audits
+NetEase production dependencies, and rejects stale locks, notices, or project license copies.
+
+Dependabot opens separate weekly update pull requests for Web npm, NetEase npm, Python, Android/Gradle, and GitHub
+Actions dependencies. These pull requests are intentionally not auto-merged: regenerate the resolved inventories and
+legal notices, review upstream license or service-term changes, and make every compliance job pass before merging.
+
+Modified Web distributions must set `VITE_SOURCE_CODE_URL` to their exact corresponding source before building. Modified
+Android distributions must pass `-PSOURCE_CODE_URL=https://example.invalid/your/source`; do not leave either link pointing
+at upstream when the deployed code contains downstream changes. Release links must be anonymously accessible and pinned
+to a tag or commit so later branch updates cannot make the source link describe a different build.
+
+---
+
 ## Commit Conventions
 
 This project follows [**Conventional Commits**](https://www.conventionalcommits.org/).

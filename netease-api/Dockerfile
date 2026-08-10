@@ -18,7 +18,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY server.js ./
-COPY NOTICE THIRD_PARTY_LICENSES.md ./
+COPY LICENSE NOTICE THIRD_PARTY_LICENSES.md ./
 
 EXPOSE 3000
 

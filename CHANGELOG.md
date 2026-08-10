@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.github/workflows/ci.yml` — automated CI for server tests, web tests, and linting
 - `SECURITY.md` — vulnerability reporting policy (GitHub Private Advisories)
 - `CONTRIBUTING.md` — development workflow and Conventional Commits conventions
-- `web/eslint.config.js` and `web/.prettierrc.json` - JS/Vue lint and format configs
+- `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1
+- `web/eslint.config.js` and `web/.prettierrc.json` — JS/Vue lint and format configs
 - English summary section in `README.md`
 - Project metadata (`license`, `repository`, `author`, `bugs`) in `web/package.json` and `netease-api/package.json`
 
@@ -85,7 +86,7 @@ First public open-source release.
 
 ### Clients
 
-- **Web**: Vue 3 + Vite + Tailwind CSS + Vue Router (primary client)
+- **Web**: Vue 3 + Vite + Tailwind CSS + Vue Router + Pinia (primary client)
 - **Android**: Kotlin + Jetpack Compose — full REST + WebSocket parity, offline-first with
   WorkManager sync, FCM push, Glance widget, camera/gallery upload, client-side encrypted vault
 - **iOS**: SwiftUI client (not open-sourced in this repository)
@@ -94,5 +95,5 @@ First public open-source release.
 
 - Docker Compose for development (`docker-compose.yml`) and production (`docker-compose.prod.yml`)
 - PostgreSQL 16 + Redis 7 + Nginx + NeteaseCloudMusicApiEnhanced
-- Alembic migrations (38 schema versions)
+- Alembic migrations (41 schema versions)
 - Third-party notices for all four client tiers (Android 160 pkgs, Web 201 pkgs, Python 82 pkgs, Node 246 pkgs)
