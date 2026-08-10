@@ -1,5 +1,5 @@
 # Development and CI-only tooling. Runtime dependencies remain pinned in
 # requirements.lock so production images do not ship test or lint tooling.
-pytest==8.3.5
+pytest==9.1.1
 httpx2==2.9.1
 flake8==7.3.0
