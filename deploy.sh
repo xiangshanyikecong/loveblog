@@ -57,14 +57,40 @@ if [ "$AUTO_UPDATE" = true ]; then
         # GitHub tarball 仅包含源码，不含任何用户数据（.env.production、上传文件、
         # 备份、SSL 证书等均被 gitignore），因此可安全覆盖到当前目录。
         if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
-            echo -e "${RED}❌ 错误：未安装 Git，且未找到 curl/wget，无法下载更新${NC}"
-            echo "  请任选其一："
-            echo "    1. 安装 git 后克隆：git clone ${GIT_REPO_URL}"
-            echo "    2. 安装 curl 或 wget 后重新运行 ./deploy.sh --update"
+            echo -e "${RED}❌ 错误：未安装 Git，且未找到 curl 或 wget，无法下载更新${NC}"
+            echo "  需要下载工具才能获取最新版本，请安装 curl（或 wget）："
+            if command -v apt-get &> /dev/null; then
+                echo "    Debian/Ubuntu:  sudo apt-get update && sudo apt-get install -y curl"
+            elif command -v dnf &> /dev/null; then
+                echo "    Fedora/RHEL:    sudo dnf install -y curl"
+            elif command -v yum &> /dev/null; then
+                echo "    CentOS/RHEL:    sudo yum install -y curl"
+            elif command -v apk &> /dev/null; then
+                echo "    Alpine:         sudo apk add --no-cache curl"
+            elif command -v zypper &> /dev/null; then
+                echo "    openSUSE:       sudo zypper install -y curl"
+            else
+                echo "    请使用系统包管理器安装 curl 或 wget"
+            fi
+            echo "  安装完成后重新运行：./deploy.sh --update"
+            echo "  或改用 Git 克隆：git clone ${GIT_REPO_URL}"
             exit 1
         fi
         if ! command -v tar &> /dev/null; then
             echo -e "${RED}❌ 错误：未安装 tar，无法解压源码包${NC}"
+            if command -v apt-get &> /dev/null; then
+                echo "    Debian/Ubuntu:  sudo apt-get install -y tar"
+            elif command -v dnf &> /dev/null; then
+                echo "    Fedora/RHEL:    sudo dnf install -y tar"
+            elif command -v yum &> /dev/null; then
+                echo "    CentOS/RHEL:    sudo yum install -y tar"
+            elif command -v apk &> /dev/null; then
+                echo "    Alpine:         sudo apk add --no-cache tar"
+            elif command -v zypper &> /dev/null; then
+                echo "    openSUSE:       sudo zypper install -y tar"
+            else
+                echo "    请使用系统包管理器安装 tar"
+            fi
             exit 1
         fi
 
