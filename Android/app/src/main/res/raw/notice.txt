@@ -3,15 +3,11 @@ Love Journal Android Client
 This distribution includes third-party software. Copyright notices, license declarations,
 license sources, project sources, and available license texts are provided in THIRD_PARTY_LICENSES.md.
 
-Generation note: This notice is produced from committed dependency locks and package metadata. Regenerate and review it whenever dependencies change; authoritative upstream terms continue to control.
-生成说明：本声明依据已提交的依赖锁文件和软件包元数据生成。依赖发生变化时必须重新生成并复核；各上游发布的正式条款仍具有最终效力。
+AI-assisted compilation and review limitation: These notices were assembled with artificial intelligence assistance and have not received a complete legal or manual completeness review. Some license identifiers, copyright notices, versions, sources, or texts may be incorrect or incomplete. Verify the upstream license materials before redistribution or legal reliance.
+人工智能整合与完整性限制：由于使用了人工智能技术进行整合，且由于部分原因没有彻底审查完整性，部分许可证可能存在错误或不完整。在发布、再分发或作出法律判断前，请以上游项目的正式许可文件为准。
 
 Included resolved dependency inventories:
 - Android client release runtime: 160 packages
 
 The Love Journal project's original code is separate from these third-party works.
 This notice does not grant a license to that original code.
-
-Service and distribution boundaries:
-Android external SDK boundary: The resolved Android binary includes 7 Google Play services/Firebase artifacts whose Maven metadata declares the Android Software Development Kit License. Those external components are not covered by Love Journal's AGPL license and remain subject to the current Android SDK terms at https://developer.android.com/studio/terms.html. Consequently, the distributed Android binary is not composed exclusively of open-source software, although Love Journal's original source code remains AGPL-licensed.
-Android 外部 SDK 边界：当前解析的 Android 二进制包含 7 个 Maven 元数据声明适用 Android Software Development Kit License 的 Google Play 服务/Firebase 构件。这些外部组件不属于 Love Journal 的 AGPL 授权范围，仍受 https://developer.android.com/studio/terms.html 所列届时有效的 Android SDK 条款约束。因此，发行的 Android 二进制并非完全由开源软件组成，但 Love Journal 的原创源代码仍按 AGPL 授权。

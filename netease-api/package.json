@@ -17,13 +17,13 @@
   "type": "commonjs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/xiangshanyikecong/loveblog.git",
+    "url": "https://github.com/love-node/love-node.git",
     "directory": "netease-api"
   },
   "bugs": {
-    "url": "https://github.com/xiangshanyikecong/loveblog/issues"
+    "url": "https://github.com/love-node/love-node/issues"
   },
   "dependencies": {
-    "@neteasecloudmusicapienhanced/api": "^4.39.0"
+    "@neteasecloudmusicapienhanced/api": "^4.35.0"
   }
 }

@@ -247,7 +247,10 @@ else {
     Write-Info "Python virtual environment exists"
 }
 
-$requirementsPath = Join-Path $BackendDir "requirements.txt"
+$requirementsPath = Join-Path $BackendDir "requirements.lock"
+if (-not (Test-Path -LiteralPath $requirementsPath)) {
+    $requirementsPath = Join-Path $BackendDir "requirements.txt"
+}
 $backendStamp = Join-Path $StateDir "backend_requirements.sha256"
 $requirementsHash = Get-FileHashText $requirementsPath
 $installedRequirementsHash = if (Test-Path -LiteralPath $backendStamp) { (Get-Content -Raw -LiteralPath $backendStamp).Trim() } else { "" }
@@ -257,7 +260,7 @@ if ($SkipInstall) {
 }
 elseif ($requirementsHash -and ($requirementsHash -ne $installedRequirementsHash)) {
     if ($CheckOnly) {
-        Write-Info "Would install backend dependencies from requirements.txt"
+        Write-Info "Would install backend dependencies from $([System.IO.Path]::GetFileName($requirementsPath))"
     }
     else {
         Invoke-Checked -FilePath $venvPython -Arguments @("-m", "pip", "install", "-r", $requirementsPath) -WorkingDirectory $BackendDir
@@ -286,10 +289,16 @@ if ($SkipInstall) {
 }
 elseif ((-not (Test-Path -LiteralPath $nodeModulesPath)) -or ($frontendHash -and ($frontendHash -ne $installedFrontendHash))) {
     if ($CheckOnly) {
-        Write-Info "Would install frontend dependencies with npm install"
+        if (Test-Path -LiteralPath $packageLockPath) {
+            Write-Info "Would install frontend dependencies with npm ci"
+        }
+        else {
+            Write-Info "Would install frontend dependencies with npm install"
+        }
     }
     else {
-        Invoke-Checked -FilePath $npmPath -Arguments @("install") -WorkingDirectory $WebDir
+        $npmInstallArguments = if (Test-Path -LiteralPath $packageLockPath) { @("ci") } else { @("install") }
+        Invoke-Checked -FilePath $npmPath -Arguments $npmInstallArguments -WorkingDirectory $WebDir
         Set-Content -LiteralPath $frontendStamp -Value $frontendHash -Encoding ASCII
     }
 }
@@ -305,10 +314,17 @@ if ($CheckOnly) {
 
 Write-Step "Starting backend"
 $databaseEnvCommand = ""
+$redisEnvCommand = ""
 if (-not $WithDockerInfra) {
     $sqlitePath = Join-Path $BackendDir "local_demo.db"
     $sqliteUrl = "sqlite:///" + ($sqlitePath -replace "\\", "/")
     $databaseEnvCommand = "`$env:DATABASE_URL = $(Quote-PS $sqliteUrl)"
+}
+else {
+    # docker-compose.yml protects the development Redis instance with the
+    # local-only password "love". Override server/.env so the two launch
+    # modes use the same connection settings.
+    $redisEnvCommand = "`$env:REDIS_URL = 'redis://:love@127.0.0.1:6379/0'"
 }
 
 $backendCommand = @"
@@ -316,6 +332,7 @@ $backendCommand = @"
 `$env:APP_PORT = '$BackendPort'
 `$env:PYTHONUTF8 = '1'
 $databaseEnvCommand
+$redisEnvCommand
 Set-Location -LiteralPath $(Quote-PS $BackendDir)
 & $(Quote-PS $venvPython) -m uvicorn app.main:app --reload --host 0.0.0.0 --port $BackendPort
 "@

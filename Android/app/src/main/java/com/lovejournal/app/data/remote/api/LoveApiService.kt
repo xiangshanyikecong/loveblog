@@ -133,6 +133,7 @@ import com.lovejournal.app.data.remote.dto.CanvasArtworkListResponse
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.data.remote.dto.SiteSettingUpdateRequest
+import com.lovejournal.app.data.remote.dto.MomentCreateRequest
 import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.remote.dto.TimelineListResponse
 import okhttp3.MultipartBody

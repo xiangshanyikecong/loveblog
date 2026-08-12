@@ -365,6 +365,7 @@
     <string name="period_start_date">开始日期</string>
     <string name="period_end_date_optional">结束日期（可选，留空表示进行中）</string>
     <string name="period_end_date_not_set">未设置</string>
+    <string name="btn_clear">清除</string>
 
     <!-- ==================== Plans ==================== -->
     <string name="plan_no_plans">还没有约会计划，点右下角加一个吧</string>
@@ -705,11 +706,9 @@
 
     <!-- ==================== Licenses ==================== -->
     <string name="licenses_title">开源许可证</string>
-    <string name="licenses_subtitle">项目许可证及第三方软件、版本、来源与许可证正文</string>
-    <string name="licenses_project_license">项目许可证</string>
+    <string name="licenses_subtitle">第三方软件、版本、来源与许可证正文</string>
     <string name="licenses_copyright">版权声明</string>
     <string name="licenses_full_license">完整许可证</string>
-    <string name="licenses_source_code">查看对应源代码</string>
 
     <!-- ==================== Albums ==================== -->
     <string name="albums_title">我们的相册</string>

@@ -6,7 +6,7 @@ COPY package.json /app/package.json
 RUN npm install
 
 COPY . /app
-COPY public/LICENSE public/NOTICE public/THIRD_PARTY_LICENSES.md /app/
+COPY public/NOTICE public/THIRD_PARTY_LICENSES.md /app/
 
 EXPOSE 5173
 

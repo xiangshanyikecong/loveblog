@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -101,6 +102,17 @@ class HealthApiTests(unittest.TestCase):
         self.assertIn("app", body)
         self.assertIn("database", body)
         self.assertIn("redis", body)
+
+    def test_readiness_health_returns_503_when_redis_is_unavailable(self) -> None:
+        with patch("app.api.v1.health.redis.Redis.from_url") as redis_from_url:
+            redis_from_url.return_value.ping.side_effect = RuntimeError("redis down")
+            resp = self.client.get("/health/ready")
+
+        self.assertEqual(resp.status_code, 503, msg=resp.text)
+        body = resp.json()
+        self.assertEqual(body["app"], "ok")
+        self.assertEqual(body["database"], "ok")
+        self.assertEqual(body["redis"], "error")
 
     def test_system_health_requires_authentication(self) -> None:
         # 暂时移除 get_current_user 的覆盖，测试未授权的情况

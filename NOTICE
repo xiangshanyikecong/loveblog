@@ -3,21 +3,14 @@ Love Journal
 This distribution includes third-party software. Copyright notices, license declarations,
 license sources, project sources, and available license texts are provided in THIRD_PARTY_LICENSES.md.
 
-Generation note: This notice is produced from committed dependency locks and package metadata. Regenerate and review it whenever dependencies change; authoritative upstream terms continue to control.
-生成说明：本声明依据已提交的依赖锁文件和软件包元数据生成。依赖发生变化时必须重新生成并复核；各上游发布的正式条款仍具有最终效力。
+AI-assisted compilation and review limitation: These notices were assembled with artificial intelligence assistance and have not received a complete legal or manual completeness review. Some license identifiers, copyright notices, versions, sources, or texts may be incorrect or incomplete. Verify the upstream license materials before redistribution or legal reliance.
+人工智能整合与完整性限制：由于使用了人工智能技术进行整合，且由于部分原因没有彻底审查完整性，部分许可证可能存在错误或不完整。在发布、再分发或作出法律判断前，请以上游项目的正式许可文件为准。
 
 Included resolved dependency inventories:
 - Android client release runtime: 160 packages
 - Web client: 383 packages
 - Python server: 82 packages
-- NetEase API helper: 249 packages
+- NetEase API helper: 246 packages
 
 The Love Journal project's original code is separate from these third-party works.
 This notice does not grant a license to that original code.
-
-Service and distribution boundaries:
-NetEase service and content boundary: The original code in Love Journal's netease-api helper is licensed under AGPL-3.0-only. That license covers only the project code and grants no rights to NetEase Cloud Music APIs or services, accounts, music or other content, data, or trademarks. The helper uses unofficial interfaces; access and use may be limited by current service terms, account rules, content licenses, applicable law, and region. Operators must independently confirm authorization and compliance. This disclosure describes external legal and service risk and does not add a field-of-use restriction to the AGPL license for Love Journal code.
-网易云音乐服务与内容边界：Love Journal 的 netease-api 辅助模块原创代码按 AGPL-3.0-only 授权。该授权仅覆盖项目代码，不授予对网易云音乐 API 或服务、账号、音乐及其他内容、数据或商标的任何权利。本模块使用非官方接口，其访问和使用可能受到届时有效的服务条款、账号规则、内容许可、适用法律及地区限制。运营者须自行确认是否获得授权并满足合规要求。本说明披露的是外部法律与服务风险，不对 Love Journal 代码的 AGPL 授权增加用途限制。
-
-Android external SDK boundary: The resolved Android binary includes 7 Google Play services/Firebase artifacts whose Maven metadata declares the Android Software Development Kit License. Those external components are not covered by Love Journal's AGPL license and remain subject to the current Android SDK terms at https://developer.android.com/studio/terms.html. Consequently, the distributed Android binary is not composed exclusively of open-source software, although Love Journal's original source code remains AGPL-licensed.
-Android 外部 SDK 边界：当前解析的 Android 二进制包含 7 个 Maven 元数据声明适用 Android Software Development Kit License 的 Google Play 服务/Firebase 构件。这些外部组件不属于 Love Journal 的 AGPL 授权范围，仍受 https://developer.android.com/studio/terms.html 所列届时有效的 Android SDK 条款约束。因此，发行的 Android 二进制并非完全由开源软件组成，但 Love Journal 的原创源代码仍按 AGPL 授权。

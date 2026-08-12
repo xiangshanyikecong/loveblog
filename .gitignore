@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
-.license-wheels/
 
 # Node / Vite
 node_modules/
@@ -106,6 +105,7 @@ netstat.txt
 temp-upload.png
 upload-response.json
 tmp_zip_test/
+_commit_msg.txt
 
 # Local archival clone from a previously embedded Git repository.
 # The root project owns server/ and web/ directly; never track this copy.

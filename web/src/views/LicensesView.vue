@@ -23,8 +23,8 @@
         <h1>{{ t('licenses.title') }}</h1>
         <p>{{ t('licenses.description') }}</p>
       </div>
-      <a class="source-link" :href="sourceCodeUrl" target="_blank" rel="noopener noreferrer">
-        {{ t('licenses.sourceCode') }}
+      <a class="source-link" href="/THIRD_PARTY_LICENSES.md" target="_blank" rel="noopener">
+        {{ t('licenses.openOriginal') }}
       </a>
     </header>
 
@@ -55,14 +55,12 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-const sourceCodeUrl = import.meta.env.VITE_SOURCE_CODE_URL || "https://github.com/xiangshanyikecong/loveblog";
 const documents = [
-  { key: "project", label: t('licenses.projectLicenseLabel'), path: "/LICENSE" },
   { key: "notice", label: t('licenses.noticeLabel'), path: "/NOTICE" },
   { key: "licenses", label: t('licenses.fullLicensesLabel'), path: "/THIRD_PARTY_LICENSES.md" }
 ];
 
-const activeDocument = ref("project");
+const activeDocument = ref("notice");
 const content = ref("");
 const loading = ref(false);
 const error = ref("");
@@ -135,8 +133,7 @@ watch(
 
 .license-tabs {
   display: inline-grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(100%, 31rem);
+  grid-template-columns: repeat(2, minmax(7.5rem, 1fr));
   margin-top: 1rem;
   padding: 3px;
   border: 1px solid rgb(148 163 184 / 0.35);
@@ -145,7 +142,7 @@ watch(
 }
 
 .license-tab {
-  min-height: 48px;
+  min-height: 38px;
   border: 0;
   border-radius: 6px;
   padding: 0.45rem 0.8rem;

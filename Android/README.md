@@ -10,7 +10,7 @@
 - Retrofit + OkHttp + Kotlinx Serialization
 - Room（离线缓存）+ DataStore（会话）
 - WorkManager（离线编辑自动同步）
-- CameraX 依赖就绪 + 系统相机/相册（拍照/选图上传）
+- 系统相机/相册（拍照/选图上传）
 - Glance（桌面小组件：在一起天数）
 - Firebase Cloud Messaging（推送，需正式构建提供 Firebase 配置）
 
@@ -51,16 +51,10 @@ cd Android
 
 产物：`app/build/outputs/apk/debug/app-debug.apk`
 
-官方未修改版本的许可证页面默认链接到上游仓库。构建任何正式或修改版 release 时，必须把链接改为该版本
-匿名可访问、固定到 tag 或 commit 的精确对应源代码地址：
-
-```bash
-./gradlew assembleRelease -PSOURCE_CODE_URL=https://example.invalid/your/source
-```
-
 ### 后端地址
 
-`API_BASE_URL` 默认 `http://10.0.2.2:8000/v1/`（模拟器访问宿主机 localhost）。
+`API_BASE_URL` release 默认 `https://love.invalid/api/v1/`（占位域名，正式构建前必须修改）。
+debug 构建默认 `http://10.0.2.2:8000/v1/`（模拟器访问宿主机 localhost）。
 真机调试请改 `app/build.gradle.kts` 里的 `buildConfigField`。
 
 ## 推送（可选）

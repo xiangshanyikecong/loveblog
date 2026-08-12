@@ -58,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -247,12 +246,16 @@ private fun ArtworkCard(
 private fun ThumbnailView(thumbDataUrl: String) {
     // The server ships a data:image/png;base64,… URL. Decode with the
     // platform's stock ImageDecoder; no extra Coil/Glide dependency needed.
-    val imageBitmap = remember(thumbDataUrl) {
-        decodeBase64Png(thumbDataUrl)?.asImageBitmap()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val painter = remember(thumbDataUrl) {
+        val bitmap = decodeBase64Png(thumbDataUrl)
+        if (bitmap != null) {
+            androidx.compose.ui.graphics.asImageBitmap(bitmap)
+        } else null
     }
-    if (imageBitmap != null) {
+    if (painter != null) {
         androidx.compose.foundation.Image(
-            bitmap = imageBitmap,
+            painter = painter,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
         )

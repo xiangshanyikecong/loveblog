@@ -365,6 +365,7 @@
     <string name="period_start_date">開始日</string>
     <string name="period_end_date_optional">終了日（任意、空欄で進行中）</string>
     <string name="period_end_date_not_set">未設定</string>
+    <string name="btn_clear">クリア</string>
 
     <!-- ==================== Plans ==================== -->
     <string name="plan_no_plans">まだデート計画がありません。右下のボタンで追加しましょう</string>
@@ -705,11 +706,9 @@
 
     <!-- ==================== Licenses ==================== -->
     <string name="licenses_title">オープンソースライセンス</string>
-    <string name="licenses_subtitle">プロジェクトライセンスとサードパーティソフトウェア、バージョン、出典、ライセンス正文</string>
-    <string name="licenses_project_license">プロジェクトライセンス</string>
+    <string name="licenses_subtitle">サードパーティソフトウェア、バージョン、出典、ライセンス正文</string>
     <string name="licenses_copyright">著作権表示</string>
     <string name="licenses_full_license">完全なライセンス</string>
-    <string name="licenses_source_code">対応するソースコードを見る</string>
 
     <!-- ==================== Albums ==================== -->
     <string name="albums_title">私たちのアルバム</string>

@@ -20,7 +20,7 @@ from pathlib import Path
 
 import psutil
 import redis
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.api.deps import ensure_partner, get_current_user
@@ -366,9 +366,7 @@ def _parse_requested_components(
     return requested_components
 
 
-@router.get("/health", response_model=HealthResponse)
-def health_check(db: Session = Depends(get_db)) -> HealthResponse:
-    """简单健康检查（用于容器健康检查）"""
+def _basic_health(db: Session) -> HealthResponse:
     db_state = "ok"
     redis_state = "ok"
 
@@ -384,6 +382,21 @@ def health_check(db: Session = Depends(get_db)) -> HealthResponse:
         redis_state = "error"
 
     return HealthResponse(app="ok", database=db_state, redis=redis_state)
+
+
+@router.get("/health", response_model=HealthResponse)
+def health_check(db: Session = Depends(get_db)) -> HealthResponse:
+    """进程存活检查，保持公开且不因依赖短暂异常改变接口形状。"""
+    return _basic_health(db)
+
+
+@router.get("/health/ready", response_model=HealthResponse)
+def readiness_check(response: Response, db: Session = Depends(get_db)) -> HealthResponse:
+    """服务就绪检查；数据库或 Redis 异常时返回 HTTP 503。"""
+    health = _basic_health(db)
+    if health.database != "ok" or health.redis != "ok":
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    return health
 
 
 @router.get("/health/system", response_model=SystemHealthResponse)

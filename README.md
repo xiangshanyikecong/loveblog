@@ -16,7 +16,7 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 
 - **后端**：FastAPI + SQLAlchemy 2.0 + Alembic 迁移
 - **数据库**：PostgreSQL（默认/生产）+ Redis（缓存/状态）；测试与轻量本地可用 SQLite
-- **前端**：Vue 3 + Vite + Tailwind CSS + Vue Router + Pinia
+- **前端**：Vue 3 + Vite + Tailwind CSS + Vue Router
 - **实时**：WebSocket（「一起听」同步播放）
 - **富文本**：Vditor 编辑器
 - **第三方**：内置 `netease` 服务（NeteaseCloudMusicApi 维护分支，供「一起听」检索/取流）
@@ -226,29 +226,16 @@ npm run dev
 ## 第三方软件与版权
 
 本项目使用的第三方软件、锁定版本、来源及可获得的许可证正文见 [NOTICE](./NOTICE) 与
-[THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md)。这些声明由已提交的依赖锁文件和软件包元数据生成；
-各上游发布的正式条款仍具有最终效力。依赖升级后必须刷新 Python 锁定依赖和 Android release 运行时库存、
-重新生成声明，并通过 CI 的发行合规检查。完整命令见 [CONTRIBUTING.md](./CONTRIBUTING.md#dependency-and-license-maintenance)。
-
-Android release 运行时包含部分 Maven 元数据声明适用 Android Software Development Kit License 的
-Google Play 服务/Firebase 外部组件。这些组件不属于 Love Journal 的 AGPL 授权范围，因此发行的 Android
-二进制并非完全由开源软件组成；具体构件和条款来源见 Android 应用内的许可证页面及
-[THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md)。
+[THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md)。声明文件使用人工智能技术辅助整合；由于尚未彻底
+审查完整性，部分许可证可能存在错误或不完整，发布前应以各上游项目的正式许可文件为准。依赖升级后，请先
+刷新 Python 锁定依赖和 Android release 运行时库存，再运行 `python tools/generate_third_party_notices.py`
+重新生成各客户端和容器随附的声明文件。
 
 ## 多端客户端
 
 - **Web**：主端，本仓库 `web/`
 - **iOS**：SwiftUI 客户端（未随本仓库开源，`ios/` 不在仓库范围内）
-- **Android**：Kotlin + Jetpack Compose 客户端，`Android/`（覆盖文章 / 相册 / 留言 / 纪念日 / 时间线 / 回忆 / 评论 / 版本历史 / 胶囊 / 搜索 / 通知 / 回收站 + 小屋：聊天、收藏、撤回、置顶语录、媒体面板、心情、签到、心愿、每日一问 + 一起听、一起看、五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜 + 兑换券、提醒、计划、情侣账本、恋爱月报、足迹地图、生理期关怀 + 客户端加密保险箱 + 系统健康 / 存储统计 / 审计日志 / 安全用户 / 备份与自动同步 + 离线队列、Cookie 会话、FCM、桌面小组件、相机/相册上传）
-
-## 路线图（候选）
-
-> 以下为已勾勒、尚未落地的方向，按性价比排序，欢迎参与。
-> **已落地**（不再列为候选）：每日心情打卡 / 情绪日历、想一起做的事心愿单、每日一问盲答揭晓、一起玩战绩聚合页、文章共同创作 + 冲突解决、系统健康历史趋势 + 自动修复。
-
-1. **主动提醒调度 + 站外推送**：把纪念日 / 胶囊提醒从「打开 App 才生成」改为后台定时主动生成，并可选邮件 / 微信推送，让通知系统真正「活」起来。
-2. **恋爱年报 / 月报**：聚合文章、碎碎念、报备、相册、事件生成回忆报告。
-3. **总站 Hub OAuth 与跨站访客评论**：`sso_source` 字段已预留，接入后支持跨站登录与来源追踪。
+- **Android**：Kotlin + Jetpack Compose 客户端，`Android/`（覆盖文章 / 相册 / 留言 / 纪念日 / 时间线 / 回忆 / 评论 / 版本历史 / 胶囊 / 搜索 / 通知 / 回收站 + 小屋：聊天、收藏、撤回、置顶语录、媒体面板、心情、签到、心愿、每日一问 + 一起听、一起看、五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜 + 兑换券、提醒、计划、情侣账本、恋爱月报、足迹地图、生理期关怀 + 客户端加密保险箱 + 系统健康 / 存储统计 / 审计日志 / 安全用户 / 备份与自动同步 + 离线队列、Cookie 会话、FCM、桌面小组件、相机/相册上传），但仍在开发流程中，还没有决定具体事宜。
 
 ## 工程约定
 
@@ -259,18 +246,7 @@ Google Play 服务/Firebase 外部组件。这些组件不属于 Love Journal �
 ## License
 
 本项目采用 **GNU Affero General Public License v3.0** (`AGPL-3.0-only`) 授权。详见 [LICENSE](./LICENSE)。
-复制、修改、分发本项目或通过网络向用户提供修改版本时，须遵守 AGPL-3.0 的相应条款，包括向网络用户提供
-修改版本的对应源代码。
+任何使用、修改、分发或通过网络提供服务的行为,均须遵守 AGPL-3.0 的条款,包括以相同许可证公开衍生作品的源代码。
 第三方依赖的许可证见 [NOTICE](./NOTICE) 与 [THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md)。
 
-官方未修改版本的 Web 源码入口默认指向
-<https://github.com/xiangshanyikecong/loveblog>。下游修改版或镜像部署者必须在构建时把
-`VITE_SOURCE_CODE_URL`（Android 使用 Gradle 属性 `SOURCE_CODE_URL`）改为该发行版本的精确对应源地址；
-正式发行应固定到匿名可访问的 tag 或 commit。仅指向会继续变化的分支，或指向未包含部署修改的原始上游，
-都不足以长期提供该运行版本的精确对应源。
-
-> **NetEase 外部风险披露（不是软件许可证用途限制）**：`netease-api` 辅助模块的原创代码仍完整按
-> `AGPL-3.0-only` 授权，不附加“仅供学习研究”等字段限制。但该授权仅覆盖项目代码，不授予网易云音乐
-> API 或服务、账号、音乐及其他内容、数据或商标的任何权利。本模块使用非官方接口，其访问和使用可能受到
-> 届时有效的服务条款、账号规则、内容许可、适用法律及地区限制。部署者须自行确认授权与合规性，并应准备在
-> 上游规则变化、接口停用或收到权利方要求时禁用该可选模块。详见 [netease-api/NOTICE](./netease-api/NOTICE)。
+> **特别说明**:`netease-api` 模块通过逆向调用网易云音乐非公开接口实现「一起听」功能,在部分司法管辖区属于法律灰色地带。该模块仅供个人学习与研究使用,使用者需自行承担合规责任。详见 [netease-api/NOTICE](./netease-api/NOTICE)。

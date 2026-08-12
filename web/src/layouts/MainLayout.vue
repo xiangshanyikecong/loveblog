@@ -104,7 +104,6 @@
 
       <footer class="legal-footer">
         <router-link to="/licenses">{{ t('nav.licenses') }}</router-link>
-        <a :href="sourceCodeUrl" target="_blank" rel="noopener noreferrer">{{ t('nav.sourceCode') }}</a>
       </footer>
     </main>
 
@@ -125,7 +124,6 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { token, canManageContent, logout } = useAuth();
-const sourceCodeUrl = import.meta.env.VITE_SOURCE_CODE_URL || "https://github.com/xiangshanyikecong/loveblog";
 
 const message = ref(null);
 const mobileNavOpen = ref(false);
@@ -420,10 +418,6 @@ async function handleLogout() {
 }
 
 .legal-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.45rem 1rem;
   padding: 1.8rem 0 0.4rem;
   text-align: center;
   font-size: 0.76rem;
