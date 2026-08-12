@@ -30,7 +30,7 @@ for arg in "$@"; do
             echo "用法: ./deploy.sh [选项]"
             echo ""
             echo "选项："
-            echo "  --update, -u  从 GitHub 拉取最新代码后再部署"
+            echo "  --update, -u  更新到 GitHub 最新版本后再部署（无需 Git，自动下载源码包）"
             echo "  --help, -h    显示帮助信息"
             exit 0
             ;;
@@ -44,20 +44,80 @@ done
 
 echo "🚀 开始部署 Love Journal..."
 
-# 如果指定了 --update，从 GitHub 拉取最新代码
+# 如果指定了 --update，更新代码到最新版本
 if [ "$AUTO_UPDATE" = true ]; then
-    echo "📥 从 GitHub 拉取最新代码..."
-    if [ -d ".git" ]; then
-        if ! command -v git &> /dev/null; then
-            echo -e "${RED}❌ 错误：未安装 git，无法拉取更新${NC}"
+    echo "📥 更新代码到最新版本..."
+
+    if [ -d ".git" ] && command -v git &> /dev/null; then
+        # 方式一：Git（适合从仓库克隆的贡献者/用户）
+        git pull
+        echo -e "${GREEN}✅ 代码已通过 Git 更新到最新版本${NC}"
+    else
+        # 方式二：下载源码包（适合未安装 Git 或直接下载发行版的普通用户）
+        # GitHub tarball 仅包含源码，不含任何用户数据（.env.production、上传文件、
+        # 备份、SSL 证书等均被 gitignore），因此可安全覆盖到当前目录。
+        if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
+            echo -e "${RED}❌ 错误：未安装 Git，且未找到 curl/wget，无法下载更新${NC}"
+            echo "  请任选其一："
+            echo "    1. 安装 git 后克隆：git clone ${GIT_REPO_URL}"
+            echo "    2. 安装 curl 或 wget 后重新运行 ./deploy.sh --update"
             exit 1
         fi
-        git pull
-        echo -e "${GREEN}✅ 代码已更新到最新版本${NC}"
-    else
-        echo -e "${RED}❌ 错误：当前目录不是 Git 仓库，无法拉取更新${NC}"
-        echo "  请先克隆项目：git clone ${GIT_REPO_URL}"
-        exit 1
+        if ! command -v tar &> /dev/null; then
+            echo -e "${RED}❌ 错误：未安装 tar，无法解压源码包${NC}"
+            exit 1
+        fi
+
+        TMP_DIR="$(mktemp -d)"
+        trap 'rm -rf "$TMP_DIR"' EXIT
+
+        # 下载源码包：优先 main 分支，失败则回退 master
+        download_ok=false
+        for branch in main master; do
+            TARBALL_URL="${GIT_REPO_URL%.git}/archive/refs/heads/${branch}.tar.gz"
+            echo "   正在从 GitHub 下载源码包（${branch}）..."
+            if command -v curl &> /dev/null; then
+                if curl -fsSL "$TARBALL_URL" -o "$TMP_DIR/loveblog.tar.gz" 2>/dev/null; then
+                    download_ok=true
+                    break
+                fi
+            else
+                if wget -q "$TARBALL_URL" -O "$TMP_DIR/loveblog.tar.gz" 2>/dev/null; then
+                    download_ok=true
+                    break
+                fi
+            fi
+        done
+
+        if [ "$download_ok" != "true" ] || [ ! -s "$TMP_DIR/loveblog.tar.gz" ]; then
+            echo -e "${RED}❌ 错误：下载源码包失败，请检查网络连接${NC}"
+            exit 1
+        fi
+
+        tar -xzf "$TMP_DIR/loveblog.tar.gz" -C "$TMP_DIR"
+        SRC_DIR="$(find "$TMP_DIR" -maxdepth 1 -mindepth 1 -type d -name "loveblog-*" | head -n1)"
+        if [ -z "$SRC_DIR" ] || [ ! -f "$SRC_DIR/deploy.sh" ]; then
+            echo -e "${RED}❌ 错误：解压源码包失败或内容异常${NC}"
+            exit 1
+        fi
+
+        # 同步源码到当前目录。rsync --delete 会清理新版本中已删除的旧文件，
+        # 同时通过 --exclude 保留所有用户数据；无 rsync 时回退到 cp（仅覆盖，
+        # 不清理旧文件，对 Docker 构建无影响）。
+        if command -v rsync &> /dev/null; then
+            rsync -a --delete \
+                --exclude '.git' \
+                --exclude '.env.production' \
+                --exclude 'nginx/ssl' \
+                --exclude 'server/uploads' \
+                --exclude 'server/backups' \
+                --exclude 'backups' \
+                "$SRC_DIR/" "$SCRIPT_DIR/"
+        else
+            cp -a "$SRC_DIR"/. "$SCRIPT_DIR"/
+        fi
+
+        echo -e "${GREEN}✅ 代码已通过源码包更新到最新版本${NC}"
     fi
 fi
 
