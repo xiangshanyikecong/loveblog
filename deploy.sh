@@ -4,7 +4,7 @@
 # Love Journal 生产环境部署脚本
 # ============================================
 
-set -e  # 遇到错误立即退出
+set -eu  # 遇到错误立即退出；引用未定义变量也视为错误
 
 # 无论从哪里调用，都以脚本所在目录作为 Compose 项目根目录。
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -186,6 +186,14 @@ if [ -d "server/uploads" ] && [ "$(ls -A server/uploads)" ]; then
     echo -e "${YELLOW}💾 备份现有上传文件到 $BACKUP_DIR${NC}"
     mkdir -p "$BACKUP_DIR"
     cp -r server/uploads/* "$BACKUP_DIR/"
+
+    # 备份轮换：仅保留最近 5 份部署快照，避免长期累积占满磁盘。
+    # 目录名含固定格式时间戳，字典序降序即时间从新到旧。
+    KEEP_COUNT=5
+    ls -1d backups/uploads_* 2>/dev/null | sort -r | tail -n +$((KEEP_COUNT + 1)) | while IFS= read -r old; do
+        echo -e "${YELLOW}🗑️  清理旧部署快照：$old${NC}"
+        rm -rf "$old"
+    done
 fi
 
 # 先拉取和构建新版本。旧容器保持运行，构建失败时不会主动制造停机。
