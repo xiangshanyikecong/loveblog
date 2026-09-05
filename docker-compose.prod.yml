@@ -157,6 +157,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro  # SSL 证书目录
+      - ./nginx/ssl-challenge:/var/www/certbot:ro  # ACME 挑战目录（certbot webroot 申请/续期）
       - ./server/uploads:/var/www/uploads:ro  # 静态文件服务
     depends_on:
       - web

@@ -26,6 +26,9 @@ server/backups/*
 nginx/ssl/*.pem
 nginx/ssl/*.key
 nginx/ssl/*.crt
+# ACME/certbot 数据（含账户私钥）与 HTTP-01 验证临时目录
+nginx/certbot/
+nginx/ssl-challenge/
 
 # OS
 .DS_Store

@@ -98,20 +98,34 @@ python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 
 ### 4. 执行部署
 
-```bash
-# 生产配置强制 TLS；先按下方 SSL/HTTPS 章节准备这两个文件
-test -s nginx/ssl/fullchain.pem
-test -s nginx/ssl/privkey.pem
+**一键安装（推荐）**：全新 Linux 服务器上一条命令完成「安装 Docker（如缺失）→
+拉取代码 → 生成配置（随机密码/密钥）→ 自动申请 SSL → 部署 → 配置证书自动续期」：
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiangshanyikecong/loveblog/main/install.sh | sudo bash
+```
+
+脚本会交互式询问域名与 Let's Encrypt 邮箱（也可用环境变量免交互：在 `bash` 前加
+`DOMAIN=love.example.com ACME_EMAIL=me@example.com`）。执行前请确保：
+- 域名已解析到本机公网 IP（A 记录指向服务器 IP，并等待 DNS 生效）
+- 防火墙/安全组已放行 80 与 443 端口
+
+**手动部署**：已克隆项目或不想用一键脚本时：
+
+```bash
 # 给部署脚本执行权限
 chmod +x deploy.sh
 
-# 执行部署
+# 执行部署（缺证书时自动向 Let's Encrypt 申请，无需手动准备证书）
 ./deploy.sh
 
 # 也可以一键从 GitHub 拉取最新代码并部署
 ./deploy.sh --update
 ```
+
+> 提示：首次申请 SSL 需要域名能通过 80 端口完成验证；证书 90 天有效，部署脚本
+> 会在到期前 30 天自动续期，并自动安装每周一 03:00 的续期定时任务
+> （`./deploy.sh --renew-ssl`），无需人工干预。
 
 ### 5. 访问应用
 
@@ -149,6 +163,9 @@ powershell -ExecutionPolicy Bypass -File deploy.ps1
 -> 拉取/构建镜像 -> 启动 -> 健康检查。脚本会自动探测 `docker compose`（插件）或 `docker-compose`。
 
 > 说明：Windows 上没有 nginx 的额外系统配置差异，所有服务都在容器内运行，行为与 Linux 一致。
+> 注意：SSL 自动申请/续期是 Linux（`deploy.sh`/`install.sh`）的功能；Windows 的
+> `deploy.ps1` 仍需按下方 SSL 章节手动放置证书到 `nginx/ssl/`（或安装 WSL2 后在
+> WSL 里使用 `install.sh` 一键安装）。
 
 ---
 
@@ -226,9 +243,9 @@ love-journal/
 │   ├── nginx.conf
 │   ├── conf.d/
 │   │   └── love-journal.conf
-│   └── ssl/                   # SSL 证书目录
-│       ├── fullchain.pem
-│       └── privkey.pem
+│   ├── ssl/                   # SSL 证书（fullchain.pem / privkey.pem，部署时自动签发/续期）
+│   ├── ssl-challenge/         # ACME HTTP-01 验证目录（自动生成，供续期使用）
+│   └── certbot/               # certbot/Let's Encrypt 账户与证书数据（自动生成）
 ├── server/
 │   ├── uploads/               # 上传文件（需要备份）
 │   ├── backups/               # 自动备份与运行状态（统一持久化目录）
@@ -256,38 +273,24 @@ docker volume inspect love-journal_redis_data
 
 ## SSL/HTTPS 配置
 
-### 方法 1: 使用 Let's Encrypt（推荐）
+### 自动申请与续期（推荐，默认行为）
 
-```bash
-# 安装 Certbot
-# Ubuntu/Debian
-sudo apt install -y certbot
+`deploy.sh` 已内置 SSL 自动管理，无需手工安装 Certbot 或放置证书：
 
-# CentOS/RHEL/Rocky Linux/AlmaLinux/Fedora
-sudo dnf install -y certbot
+- **自动申请**：首次部署时若 `nginx/ssl/` 缺少证书，脚本会用 certbot 容器自动向
+  Let's Encrypt 申请证书并安装到 `nginx/ssl/`。只需在 `.env.production` 中配置
+  `ACME_EMAIL`，并保证域名已解析到本机、80 端口可达。
+- **自动续期**：证书 90 天有效。部署脚本在证书剩余不足 30 天时自动续期，并在
+  首次部署时自动安装 cron 定时任务（每周一 03:00 调用 `./deploy.sh --renew-ssl`），
+  续期后自动重载 nginx，全程零维护。
+- **手动续期**：随时执行 `./deploy.sh --renew-ssl`。
 
-# openSUSE
-sudo zypper install -y certbot
+### 手动放置证书（可选）
 
-# Arch Linux
-sudo pacman -S --noconfirm certbot
+已有证书（如商业证书）时，直接把 `fullchain.pem` 和 `privkey.pem` 放到
+`nginx/ssl/` 即可；部署脚本检测到有效证书会自动跳过申请。
 
-# 停止 Nginx（临时）
-docker-compose -f docker-compose.prod.yml stop nginx
-
-# 获取证书
-sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
-
-# 复制证书到项目目录
-sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/
-sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/
-sudo chown $USER:$USER nginx/ssl/*.pem
-
-# 配置已经默认启用 HTTPS，证书就位后启动/重启服务
-docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
-```
-
-### 方法 2: 使用自签名证书（仅测试）
+### 自签名证书（仅测试）
 
 ```bash
 # 生成自签名证书
@@ -295,16 +298,6 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout nginx/ssl/privkey.pem \
   -out nginx/ssl/fullchain.pem \
   -subj "/CN=yourdomain.com"
-```
-
-### 自动续期
-
-```bash
-# 添加 cron 任务
-sudo crontab -e
-
-# 添加以下行（每月1号凌晨2点续期）
-0 2 1 * * certbot renew --quiet && docker-compose -f /path/to/love-journal/docker-compose.prod.yml restart nginx
 ```
 
 ---

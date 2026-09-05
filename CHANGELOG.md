@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `install.sh` — 一键安装脚本：一条命令完成「安装 Docker（如缺失）→ 拉取代码 →
+  生成 `.env.production`（随机密码/密钥）→ 部署」，并接入 `deploy.sh` 的自动 SSL 能力
+- SSL 证书自动申请与续期（`deploy.sh`）：
+  - 缺证书时自动用 certbot 容器向 Let's Encrypt 申请并安装到 `nginx/ssl/`
+  - 证书剩余不足 30 天时自动续期（webroot 零停机优先，失败回退 standalone）
+  - 新增 `--renew-ssl` 参数供定时任务调用；首次部署自动安装每周续期 cron
+  - 新增 `ACME_EMAIL` / `ACME_SERVER` 环境变量（见 `.env.production.example`）
+
+### Changed
+
+- `nginx/conf.d/love-journal.conf` — 80 端口开放 `/.well-known/acme-challenge/`
+  供 certbot webroot 方式申请/续期
+- `docker-compose.prod.yml` — nginx 挂载 `nginx/ssl-challenge` 作为 ACME 挑战目录
+- `DEPLOYMENT_GUIDE.md` / `DEPLOYMENT_CHECKLIST.md` — SSL 章节改为自动申请/续期说明
+
 ## [1.0.1] - 2026-07-30
 
 ### Added

@@ -21,17 +21,22 @@ GIT_REPO_URL="https://github.com/xiangshanyikecong/loveblog.git"
 
 # 解析命令行参数
 AUTO_UPDATE=false
+RENEW_SSL_ONLY=false
 for arg in "$@"; do
     case "$arg" in
         --update|-u)
             AUTO_UPDATE=true
             ;;
+        --renew-ssl)
+            RENEW_SSL_ONLY=true
+            ;;
         --help|-h)
             echo "用法: ./deploy.sh [选项]"
             echo ""
             echo "选项："
-            echo "  --update, -u  更新到 GitHub 最新版本后再部署（无需 Git，自动下载源码包）"
-            echo "  --help, -h    显示帮助信息"
+            echo "  --update, -u     更新到 GitHub 最新版本后再部署（无需 Git，自动下载源码包）"
+            echo "  --renew-ssl      仅检查并续期 SSL 证书（供 cron 定时任务调用）"
+            echo "  --help, -h       显示帮助信息"
             exit 0
             ;;
         *)
@@ -135,6 +140,8 @@ if [ "$AUTO_UPDATE" = true ]; then
                 --exclude '.git' \
                 --exclude '.env.production' \
                 --exclude 'nginx/ssl' \
+                --exclude 'nginx/certbot' \
+                --exclude 'nginx/ssl-challenge' \
                 --exclude 'server/uploads' \
                 --exclude 'server/backups' \
                 --exclude 'backups' \
@@ -228,12 +235,135 @@ if [ "${COOKIE_SECURE,,}" != "true" ]; then
     echo -e "${RED}❌ 错误：生产 nginx 强制 HTTPS，COOKIE_SECURE 必须为 true${NC}"
     exit 1
 fi
-for cert in nginx/ssl/fullchain.pem nginx/ssl/privkey.pem; do
-    if [ ! -s "$cert" ]; then
-        echo -e "${RED}❌ 错误：缺少 TLS 文件 $cert（部署前先申请并放入证书）${NC}"
+# ---------- SSL 自动申请与续期 ----------
+# 证书由 certbot 容器签发，数据保存在 nginx/certbot/，签发的 fullchain.pem /
+# privkey.pem 安装到 nginx/ssl/（nginx 固定读取路径）。证书缺失时自动申请，
+# 临近过期时自动续期，全程无需手工准备证书。
+
+# 运行 certbot。容器内以 root 复制证书到 nginx/ssl，避免宿主机非 root 用户
+# 读不了 /etc/letsencrypt 下 root 私有的证书文件。
+# 用法：run_certbot <standalone|webroot> <certbot 参数...>
+run_certbot() {
+    local mode="$1"; shift
+    local extra=""
+    if [ "$mode" = "standalone" ]; then
+        extra="-p 80:80"   # standalone 需要占用宿主机 80 端口
+    fi
+    docker rm -f "love-certbot-${mode}" >/dev/null 2>&1 || true
+    docker run --rm --name "love-certbot-${mode}" \
+        --entrypoint sh \
+        -e "ACME_EMAIL=$ACME_EMAIL" \
+        -e "ACME_DOMAIN=$DOMAIN" \
+        -e "ACME_SERVER=${ACME_SERVER:-https://acme-v02.api.letsencrypt.org/directory}" \
+        -v "$SCRIPT_DIR/nginx/certbot/etc:/etc/letsencrypt" \
+        -v "$SCRIPT_DIR/nginx/ssl-challenge:/var/www/certbot" \
+        -v "$SCRIPT_DIR/nginx/ssl:/ssl" \
+        $extra \
+        certbot/certbot -c '
+            certbot "$@" --non-interactive --cert-name love-journal --server "$ACME_SERVER" \
+            && cp /etc/letsencrypt/live/love-journal/fullchain.pem /ssl/fullchain.pem \
+            && cp /etc/letsencrypt/live/love-journal/privkey.pem /ssl/privkey.pem \
+            && chmod 644 /ssl/fullchain.pem /ssl/privkey.pem
+        ' sh "$@"
+}
+
+# 全新申请证书（standalone，需 80 端口空闲 —— 首次部署时服务尚未启动，端口为空闲）
+issue_ssl() {
+    if [ -z "${ACME_EMAIL:-}" ] || [ "$ACME_EMAIL" = "you@example.com" ]; then
+        echo -e "${RED}❌ 错误：缺少 TLS 证书且未配置有效的 ACME_EMAIL，无法自动申请 SSL${NC}"
+        echo "  请在 .env.production 中把 ACME_EMAIL 设置为你的真实邮箱（用于 Let's Encrypt 通知）"
         exit 1
     fi
-done
+    echo -e "${GREEN}🌐 自动申请 SSL 证书（$DOMAIN）...${NC}"
+    echo -e "${YELLOW}  要求：域名已解析到本机公网 IP，且 80 端口可达（防火墙/安全组需放行）${NC}"
+    if ! run_certbot standalone certonly --standalone --agree-tos --email "$ACME_EMAIL" --domain "$DOMAIN"; then
+        echo -e "${RED}❌ 错误：SSL 证书自动申请失败${NC}"
+        echo "  常见原因："
+        echo "    1. 域名 $DOMAIN 未解析到本机 IP 或 DNS 尚未生效"
+        echo "    2. 防火墙/安全组未放行 80 端口"
+        echo "    3. 80 端口已被其他程序占用"
+        echo "  可先切换到 Let's Encrypt 测试环境试跑（在 .env.production 中）："
+        echo "    ACME_SERVER=https://acme-staging-v02.api.letsencrypt.org/directory"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ SSL 证书申请成功，已安装到 nginx/ssl/${NC}"
+}
+
+# 续期证书：优先 webroot 经 nginx 零停机续期；失败时回退 standalone（临时停止 nginx）
+renew_ssl() {
+    echo -e "${YELLOW}⚠️  TLS 证书将在 30 天内过期，开始自动续期...${NC}"
+    local nginx_running=false
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-nginx-prod'; then
+        nginx_running=true
+    fi
+
+    local ok=false
+    # 1) webroot 零停机续期（仅 nginx 在运行且已暴露 ACME 挑战路径时）
+    if [ "$nginx_running" = true ] && run_certbot webroot renew --webroot -w /var/www/certbot --quiet; then
+        ok=true
+    fi
+
+    # 2) standalone 续期（需要 80 端口空闲；nginx 在运行则临时停止，稍后由流程恢复）
+    if [ "$ok" != true ]; then
+        if [ "$nginx_running" = true ]; then
+            echo "   停止 nginx 以释放 80 端口..."
+            $COMPOSE -f docker-compose.prod.yml stop nginx
+        fi
+        if run_certbot standalone renew --standalone --quiet; then
+            ok=true
+        fi
+    fi
+
+    # 3) 极少数情况（证书由外部工具签发、无 certbot 续期配置）→ 全新签发
+    if [ "$ok" != true ]; then
+        echo -e "${YELLOW}   常规续期未生效，尝试重新签发证书...${NC}"
+        if run_certbot standalone certonly --standalone --force-renewal --agree-tos --email "${ACME_EMAIL:-}" --domain "$DOMAIN"; then
+            ok=true
+        fi
+    fi
+
+    if [ "$ok" != true ]; then
+        echo -e "${RED}❌ 错误：SSL 证书自动续期失败，请检查网络与 80 端口后重试${NC}"
+        return 1
+    fi
+
+    # 重载 nginx 使新证书生效（standalone 路径下 nginx 已被停止，由后续流程恢复）
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-nginx-prod'; then
+        docker exec love-nginx-prod nginx -s reload 2>/dev/null || true
+    fi
+    echo -e "${GREEN}✅ SSL 证书续期完成${NC}"
+}
+
+# 证书就绪检查：缺失则申请，临近过期则续期，否则跳过
+ensure_ssl() {
+    mkdir -p nginx/ssl nginx/ssl-challenge nginx/certbot/etc
+    local cert="nginx/ssl/fullchain.pem"
+    local key="nginx/ssl/privkey.pem"
+
+    if [ -s "$cert" ] && [ -s "$key" ]; then
+        if command -v openssl &> /dev/null && openssl x509 -in "$cert" -noout -checkend 2592000 >/dev/null 2>&1; then
+            echo -e "${GREEN}✅ TLS 证书有效（30 天内不过期），无需处理${NC}"
+            return 0
+        fi
+        renew_ssl
+        return $?
+    fi
+    issue_ssl
+}
+
+# 自动申请/续期 TLS 证书（首次部署无需再手动准备证书）
+ensure_ssl || exit 1
+
+# 纯续期模式（供 cron 定时任务调用）：续期完成后直接结束，不执行完整部署
+if [ "$RENEW_SSL_ONLY" = true ]; then
+    # standalone 续期可能临时停止过 nginx，确保其恢复运行
+    if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-nginx-prod'; then
+        echo "🚀 恢复 nginx 服务..."
+        $COMPOSE -f docker-compose.prod.yml up -d nginx
+    fi
+    echo -e "${GREEN}✅ SSL 续期检查完成${NC}"
+    exit 0
+fi
 
 # 在停止任何现有服务前完成 Compose 配置校验，避免配置错误造成停机。
 echo "🔎 校验生产 Compose 配置..."
@@ -243,7 +373,7 @@ $COMPOSE -f docker-compose.prod.yml config --quiet
 echo "📁 创建必需的目录..."
 mkdir -p server/uploads/{albums,articles,avatars,timeline,videos}
 mkdir -p server/backups
-mkdir -p nginx/ssl
+mkdir -p nginx/ssl nginx/ssl-challenge nginx/certbot/etc
 mkdir -p nginx/conf.d
 # Older releases bind-mounted these as individual files at /app. Preserve
 # their state before switching to files inside the already-persistent backups
@@ -265,6 +395,25 @@ for state_file in backup_history.json backup_schedule.json; do
 done
 [ -f server/backups/backup_history.json ] || printf '[]\n' > server/backups/backup_history.json
 [ -f server/backups/backup_schedule.json ] || printf '{}\n' > server/backups/backup_schedule.json
+
+# 安装证书自动续期定时任务（幂等）。certbot 续期后自动重载 nginx；日志写入
+# nginx/ssl/ssl-renew.log（该目录已被 rsync 排除且 *.log 已 gitignore）。
+setup_renew_cron() {
+    command -v crontab &> /dev/null || {
+        echo -e "${YELLOW}⚠️  未检测到 cron，跳过自动续期定时任务（可手动执行 ./deploy.sh --renew-ssl）${NC}"
+        return 0
+    }
+    local line="0 3 * * 1 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /bin/bash '$SCRIPT_DIR/deploy.sh' --renew-ssl >> '$SCRIPT_DIR/nginx/ssl/ssl-renew.log' 2>&1"
+    if crontab -l 2>/dev/null | grep -Fq -- "$SCRIPT_DIR/deploy.sh --renew-ssl"; then
+        return 0
+    fi
+    if ! ( crontab -l 2>/dev/null; echo "$line" ) | crontab -; then
+        echo -e "${YELLOW}⚠️  自动续期定时任务安装失败（不影响本次部署），可稍后手动添加：crontab -e${NC}"
+        return 0
+    fi
+    echo -e "${GREEN}✅ 已安装证书自动续期定时任务（每周一 03:00，到期前 30 天自动续期）${NC}"
+}
+setup_renew_cron
 
 # 备份旧数据（如果存在）
 if [ -d "server/uploads" ] && [ "$(ls -A server/uploads)" ]; then
@@ -399,9 +548,10 @@ echo "   重启服务: $COMPOSE -f docker-compose.prod.yml restart"
 echo "   停止服务: $COMPOSE -f docker-compose.prod.yml down"
 echo "   进入后端: $COMPOSE -f docker-compose.prod.yml exec backend bash"
 echo "   更新并部署: ./deploy.sh --update"
+echo "   续期证书:   ./deploy.sh --renew-ssl"
 echo ""
 echo -e "${YELLOW}⚠️  提醒：${NC}"
 echo "   1. 请定期验证自动备份可以实际恢复"
-echo "   2. 请设置证书自动续期并在续期后 reload nginx"
+echo "   2. SSL 证书已自动续期（每周一 03:00 检查，到期前 30 天自动续期并重载 nginx，日志：nginx/ssl/ssl-renew.log）"
 echo "   3. 请修改默认管理员密码"
 echo ""

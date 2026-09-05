@@ -63,25 +63,15 @@ chmod +x deploy.sh
 
 ## SSL/HTTPS 配置 🔒
 
-### Let's Encrypt 证书
-```bash
-# 安装 Certbot
-sudo apt install -y certbot
+### 自动申请（推荐）
+- [ ] `.env.production` 中已配置 `ACME_EMAIL`（Let's Encrypt 通知邮箱）
+- [ ] 域名已解析到本机公网 IP，防火墙/安全组已放行 80 与 443 端口
+- [ ] 执行 `./deploy.sh`，确认输出包含「自动申请 SSL 证书」且最终成功
+- [ ] 证书已生成：`nginx/ssl/fullchain.pem` 与 `nginx/ssl/privkey.pem` 非空
 
-# 停止 Nginx
-docker-compose -f docker-compose.prod.yml stop nginx
-
-# 获取证书
-sudo certbot certonly --standalone -d yourdomain.com
-
-# 复制证书
-sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/
-sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/
-sudo chown $USER:$USER nginx/ssl/*.pem
-
-# 配置默认启用 HTTPS，证书就位后重启服务
-docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
-```
+### 手动放置证书（可选，已有证书时）
+把 `fullchain.pem` 和 `privkey.pem` 放到 `nginx/ssl/`，部署脚本检测到有效证书
+会自动跳过申请。
 
 ### 验证 HTTPS
 - [ ] HTTPS 可以访问：`https://yourdomain.com`
@@ -90,13 +80,9 @@ docker-compose --env-file .env.production -f docker-compose.prod.yml up -d
 - [ ] 浏览器显示安全锁图标
 
 ### 自动续期
-```bash
-# 添加 cron 任务
-sudo crontab -e
-
-# 添加以下行
-0 2 1 * * certbot renew --quiet && docker-compose -f /path/to/love-journal/docker-compose.prod.yml restart nginx
-```
+- [ ] 首次部署时脚本已自动安装每周续期定时任务（日志：`nginx/ssl/ssl-renew.log`）
+- [ ] 已确认 `crontab -l` 包含 `deploy.sh --renew-ssl` 一行
+- [ ] 证书剩余不足 30 天时，`./deploy.sh --renew-ssl` 会自动续期并重载 nginx
 
 ---
 
