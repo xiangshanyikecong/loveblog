@@ -157,10 +157,10 @@ flowchart LR
 | 认证 | /v1/auth |
 | 文章、相册、事件、时间线 | /v1/articles、/v1/albums、/v1/events、/v1/timeline |
 | 留言、胶囊、搜索、通知 | /v1/messages、/v1/capsules、/v1/search、/v1/notifications |
-| 小屋 | /v1/cottage/*、/v1/checkins、/v1/wishes |
+| 小屋 | /v1/cottage/*、/v1/checkins、/v1/cottage/wishes |
 | 上传、导出、设置 | /v1/uploads、/v1/export、/v1/settings |
 | 安全和维护 | /v1/security、/v1/privacy、/v1/audit-logs、/v1/recycle-bin |
-| 健康 | /health、/health/ready、/health/system、/health/system/history |
+| 健康 | /health、/health/ready、/health/system、/health/system/history、/health/system/remediate |
 
 后端启动后可以访问：
 

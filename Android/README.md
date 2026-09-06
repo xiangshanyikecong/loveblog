@@ -79,4 +79,4 @@ Android 客户端现已与 FastAPI 服务端的 REST 能力完整对齐，并接
 - 管理维护：系统健康、存储统计、审计日志、安全用户、备份计划/历史与自动备份触发。
 - 平台能力：离线队列、Cookie 会话、FCM、桌面小组件、相机/系统相册上传。
 
-服务端 204 个 HTTP/WebSocket 路由中，198 个 REST 路由均已在 Retrofit 声明；聊天、一起听、一起看、通用游戏、你画我猜等 WebSocket 由专用 OkHttp 客户端实现。
+服务端 220 个 HTTP/WebSocket 路由中，214 个 REST 路由均已在 Retrofit 声明；聊天、一起听、一起看、通用游戏、你画我猜等 WebSocket 由专用 OkHttp 客户端实现。

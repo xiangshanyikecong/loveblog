@@ -72,10 +72,10 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 - **一起看**：`/v1/cottage/watch`（含 WebSocket）—— 共享片库（支持 `poster_url` 海报字段，富 UI 海报墙）+ 同步播放本地上传或直链视频（`.mp4` / `.m3u8`）
 - **悄悄话**：`/v1/cottage/chat`（含 WebSocket）—— 双人私密聊天，支持文字 / 图片 / 贴纸；启用共享客户端密钥后使用 AES-GCM 端到端加密，密钥不可用时拒绝降级发送明文
 - **心情打卡**：`/v1/cottage/mood` —— 每日心情记录与情绪日历
-- **心愿单**：`/v1/wishes` —— 两人想一起做的事，可勾选完成
+- **心愿单**：`/v1/cottage/wishes` —— 两人想一起做的事，可勾选完成
 - **每日一问**：`/v1/cottage/questions` —— 双方盲答，答完后互相揭晓
 - **共同计划 / 提醒**：`/v1/cottage/plans`、`/v1/cottage/reminders`
-- **一起玩**：`/v1/cottage/games/*`（含 WebSocket）—— 五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜；实时对局 + 战绩统计（持久化到数据库）+ 跨游戏战绩聚合页 `CottageGamesStatsView`（每位 partner 的胜 / 负 / 平局一目了然）
+- **一起玩**：`/v1/cottage/games/*`（含 WebSocket）—— 五子棋、井字棋、黑白棋、记忆翻牌、连连看；你画我猜为独立模块 `/v1/cottage/draw`（含 WebSocket）。实时对局 + 战绩统计（持久化到数据库）+ 跨游戏战绩聚合页 `CottageGamesStatsView`（每位 partner 的胜 / 负 / 平局一目了然）
 
 > **依赖 Redis**：一起听、一起看、悄悄话、一起玩等实时模块的状态保存在 Redis。本地开发需启动 Redis（见下方「本地开发启动」）；无 Redis 时这些功能会降级为不可用（HTTP 503 / WebSocket 断开），不会拖垮其余模块。
 
@@ -106,8 +106,8 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 
 | 模块 | 前缀 |
 | --- | --- |
-| 健康检查 | `GET /health`、`GET /health/system`、`GET /health/system/history`、`POST /health/system/remediate` |
-| 认证 | `/v1/auth`（register / login …） |
+| 健康检查 | `GET /health`、`GET /health/ready`、`GET /health/system`、`GET /health/system/history`、`POST /health/system/remediate` |
+| 认证 | `/v1/auth`（register / login / bootstrap …） |
 | 首页 | `/v1/dashboard` |
 | 文章 | `/v1/articles` |
 | 相册 | `/v1/albums` |
@@ -119,13 +119,23 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 | 一起听 | `/v1/cottage/listen`（REST + WebSocket） |
 | 一起看 | `/v1/cottage/watch`（REST + WebSocket） |
 | 悄悄话 | `/v1/cottage/chat`（REST + WebSocket） |
+| 悄悄话密钥（E2EE） | `/v1/cottage/chat/keys` |
 | 心情打卡 | `/v1/cottage/mood` |
-| 心愿单 | `/v1/wishes` |
+| 心愿单 | `/v1/cottage/wishes` |
 | 每日一问 | `/v1/cottage/questions` |
 | 共同计划 | `/v1/cottage/plans` |
 | 小屋提醒 | `/v1/cottage/reminders` |
-| 一起玩 | `/v1/cottage/games/{game}`（REST + WebSocket；`gomoku` / `tictactoe` / `reversi` / `memory` / `linklink` / `draw`） |
+| 一起玩 | `/v1/cottage/games/{game}`（REST + WebSocket；`gomoku` / `tictactoe` / `reversi` / `memory` / `linklink`） |
+| 你画我猜 | `/v1/cottage/draw`（REST + WebSocket） |
+| 协作画布 | `/v1/cottage/canvas`（REST + WebSocket） |
+| 兑换券 | `/v1/cottage/coupons` |
+| 情侣账本 | `/v1/cottage/ledger` |
+| 生理期关怀 | `/v1/cottage/period` |
+| 恋爱足迹 | `/v1/cottage/footprints` |
+| 恋爱月报 | `/v1/cottage/reports` |
+| 保险箱 | `/v1/cottage/vault` |
 | 通知 | `/v1/notifications` |
+| 推送 | `/v1/push` |
 | 搜索 | `/v1/search` |
 | 上传 | `/v1/uploads` |
 | 导出 / 备份 | `/v1/export` |
