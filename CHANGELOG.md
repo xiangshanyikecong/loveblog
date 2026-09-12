@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.3] - 2026-09-12
 
 ### Added
 
@@ -13,24 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   用户名、新密码和部署时生成的 `BOOTSTRAP_SETUP_TOKEN` 即可重置任意
   伴侣账号密码；重置会吊销该账号全部会话并解除登录冻结。接口限流
   3 次/分钟，访客账号不支持此方式（由伴侣账号在后台管理），操作写入审计日志
-- `install-docker.sh` — Docker 版一键安装：免 Git，仅下载运行所需文件
-  （compose / deploy.sh / nginx 配置），直接拉取 ghcr.io 预构建镜像部署；
-  重复执行等于更新部署（数据与配置均保留）
-
-### Changed
-
-- `docker-compose.prod.yml` — 生产 Redis 启用 AOF 持久化（`--appendonly yes`），
-  硬重启最多丢约 1 秒写入，避免默认 RDB 快照间隔导致网易云登录 Cookie 等
-  数据在异常重启后丢失
 
 ### Fixed
 
-- 迁移链多处 PostgreSQL 兼容性缺陷（此前任何全新服务器部署都会在后端启动
-  迁移时崩溃，CI 使用 SQLite 未覆盖）：
-  - `20260501_1400` 文章/相册可见性迁移的枚举值大小写错误与 text→enum
-    缺失显式转型
-  - `20260614_0000` / `20260619_1000` / `20260718_1500` / `20260718_1600`
-    Boolean 列 `server_default` 使用裸整数（PostgreSQL 要求 `false`）
+- `install.sh` / `install-docker.sh` — 华为 HCE / openEuler 自动安装 Docker
+  支持：`get.docker.com` 不支持这两类发行版，改用 docker-ce 官方 EL 仓库
+  （华为云镜像源），已在 HCE 2.0 实测通过
+- `deploy.sh` — 修正证书续期 cron 幂等检查跨引号匹配失败导致的重复安装
+  （每次部署都会重复追加一条续期定时任务）
 
 ## [1.0.2] - 2026-09-11
 
@@ -44,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `.env.production.example` 新增 `IMAGE_TAG`（默认 `latest`，可固定版本）
 - `install.sh` — 一键安装脚本：一条命令完成「安装 Docker（如缺失）→ 拉取代码 →
   生成 `.env.production`（随机密码/密钥）→ 部署」，并接入 `deploy.sh` 的自动 SSL 能力
+- `install-docker.sh` — Docker 版一键安装：免 Git，仅下载运行所需文件
+  （compose / deploy.sh / nginx 配置），直接拉取 ghcr.io 预构建镜像部署；
+  重复执行等于更新部署（数据与配置均保留）；下载失败时降级使用本地已有文件
 - SSL 证书自动申请与续期（`deploy.sh`）：
   - 缺证书时自动用 certbot 容器向 Let's Encrypt 申请并安装到 `nginx/ssl/`
   - 证书剩余不足 30 天时自动续期（webroot 零停机优先，失败回退 standalone）
@@ -54,8 +47,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `nginx/conf.d/love-journal.conf` — 80 端口开放 `/.well-known/acme-challenge/`
   供 certbot webroot 方式申请/续期
-- `docker-compose.prod.yml` — nginx 挂载 `nginx/ssl-challenge` 作为 ACME 挑战目录
+- `docker-compose.prod.yml` — nginx 挂载 `nginx/ssl-challenge` 作为 ACME 挑战目录；
+  生产 Redis 启用 AOF 持久化（`--appendonly yes`），硬重启最多丢约 1 秒写入，
+  避免默认 RDB 快照间隔导致网易云登录 Cookie 等数据在异常重启后丢失
 - `DEPLOYMENT_GUIDE.md` / `DEPLOYMENT_CHECKLIST.md` — SSL 章节改为自动申请/续期说明
+
+### Fixed
+
+- Dockerfile arm64 构建：构建阶段固定原生平台（`--platform=$BUILDPLATFORM`），
+  修复 QEMU 模拟下 node 触发 SIGILL 崩溃
+- 迁移链多处 PostgreSQL 兼容性缺陷（此前任何全新服务器部署都会在后端启动
+  迁移时崩溃，CI 使用 SQLite 未覆盖）：
+  - `20260501_1400` 文章/相册可见性迁移的枚举值大小写错误与 text→enum
+    缺失显式转型
+  - `20260614_0000` / `20260619_1000` / `20260718_1500` / `20260718_1600`
+    Boolean 列 `server_default` 使用裸整数（PostgreSQL 要求 `false`）
 
 ## [1.0.1] - 2026-07-30
 
