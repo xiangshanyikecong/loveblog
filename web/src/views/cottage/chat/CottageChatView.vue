@@ -1079,7 +1079,19 @@ function mergeMessages(items) {
     } else if (cmp > 0) {
       result.push(newItems[j++]);
     } else {
-      result.push({ ...arr[i], ...newItems[j] });
+      const merged = { ...arr[i], ...newItems[j] };
+      // Mirror the upsertMessage guard: a decrypted plaintext (or a
+      // locally-restored one) must never be overwritten by an undecrypted
+      // server copy whose content is null, otherwise an already-readable
+      // message snaps back to the [encrypted] placeholder.
+      if (merged.content == null && arr[i].content != null) {
+        merged.content = arr[i].content;
+        merged._decryption_failed = arr[i]._decryption_failed;
+      }
+      if (merged.can_recall == null && arr[i].can_recall === true) {
+        merged.can_recall = arr[i].can_recall;
+      }
+      result.push(merged);
       i++; j++;
     }
   }
@@ -1454,7 +1466,11 @@ async function loadOlder() {
   const prevHeight = el ? el.scrollHeight : 0;
   try {
     const data = await fetchChatMessages({ limit: 30, before_id: nextBeforeId.value });
-    mergeMessages(data.items);
+    // Decrypt before merging: these are E2E messages from older pages, and
+    // merging raw ciphertext copies would both show [encrypted] placeholders
+    // and overwrite already-decrypted duplicates via the merge guard.
+    const decrypted = await decryptAll(data.items);
+    mergeMessages(decrypted);
     hasMore.value = !!data.has_more;
     nextBeforeId.value = data.next_before_id;
     if (!firstUnreadMid.value && data.first_unread_mid) {
