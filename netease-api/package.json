@@ -1,6 +1,6 @@
 {
   "name": "netease-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Love Journal 一起听 upstream: NeteaseCloudMusicApiEnhanced (maintained fork of the archived Binaryify NeteaseCloudMusicApi)",
   "main": "server.js",
   "private": true,

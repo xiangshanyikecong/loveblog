@@ -1,6 +1,6 @@
 {
   "name": "love-node-web",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Love Journal - a private journal + blog + real-time interaction platform for couples (Vue 3 web client)",
   "type": "module",
