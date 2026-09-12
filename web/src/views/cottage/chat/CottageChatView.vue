@@ -389,7 +389,14 @@
                 <span>{{ t('cottageChat.encryptedLocked') }}</span>
               </div>
               <div
-                v-else-if="m.is_encrypted && !mediaSrc(m)"
+                v-else-if="m.is_encrypted && m.type === 'text' && m.content == null"
+                class="chat-encrypted-placeholder"
+              >
+                <LockKeyhole :size="16" :stroke-width="2" aria-hidden="true" />
+                <span>{{ t('cottageChat.decrypting') }}</span>
+              </div>
+              <div
+                v-else-if="m.is_encrypted && m.type !== 'text' && !mediaSrc(m)"
                 class="chat-encrypted-placeholder"
               >
                 <LockKeyhole :size="16" :stroke-width="2" aria-hidden="true" />
