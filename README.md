@@ -4,7 +4,7 @@
 Node，记录日记、相册、纪念日，并通过「报备」「一起听」等模块实时互动。仓库已从早期
 MVP 成长为前后端一体化、含多端客户端的完整应用。
 
-当前源码发布版本：`1.0.1`。
+当前源码发布版本：`1.0.3`。
 
 > **English**: Love Journal is a self-hosted private platform for couples — a journal +
 > blog + real-time interaction suite. Each couple deploys their own Node to record diaries,
