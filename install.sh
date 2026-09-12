@@ -113,6 +113,15 @@ if ! command -v docker &> /dev/null; then
     echo -e "${GREEN}✅ Docker 安装完成（若当前用户不在 docker 组，请重新登录后重试）${NC}"
 fi
 
+# 确保 Docker 守护进程已启动并开机自启（get.docker.com 会自动处理，
+# 但 HCE/openEuler 的 dnf 安装路径不会，daemon 未启动会导致后续
+# docker info 全部失败并被误报为"权限不足"）
+if [ "$(id -u)" = "0" ]; then
+    systemctl enable --now docker &> /dev/null || true
+else
+    sudo systemctl enable --now docker &> /dev/null || true
+fi
+
 # ---- 4. 生成生产配置（已存在则保留，不覆盖用户数据）----
 if [ -f .env.production ]; then
     echo -e "${GREEN}✅ 检测到已有 .env.production，保留现有配置${NC}"

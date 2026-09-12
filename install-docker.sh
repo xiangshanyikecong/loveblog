@@ -126,6 +126,15 @@ if ! command -v docker &> /dev/null; then
     echo -e "${GREEN}✅ Docker 安装完成（若当前用户不在 docker 组，请重新登录后重试）${NC}"
 fi
 
+# 确保 Docker 守护进程已启动并开机自启（get.docker.com 会自动处理，
+# 但 HCE/openEuler 的 dnf 安装路径不会，daemon 未启动会导致后续
+# docker info 全部失败并被误报为"权限不足"）
+if [ "$(id -u)" = "0" ]; then
+    systemctl enable --now docker &> /dev/null || true
+else
+    sudo systemctl enable --now docker &> /dev/null || true
+fi
+
 # ---- 3. 确定安装目录（在本项目目录内运行则直接用当前目录）----
 if [ -f "$(pwd)/docker-compose.prod.yml" ] && [ -f "$(pwd)/deploy.sh" ]; then
     INSTALL_DIR="$(pwd)"
