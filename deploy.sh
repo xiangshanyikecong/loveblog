@@ -409,7 +409,10 @@ setup_renew_cron() {
         return 0
     }
     local line="0 3 * * 1 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /bin/bash '$SCRIPT_DIR/deploy.sh' --renew-ssl >> '$SCRIPT_DIR/nginx/ssl/ssl-renew.log' 2>&1"
-    if crontab -l 2>/dev/null | grep -Fq -- "$SCRIPT_DIR/deploy.sh --renew-ssl"; then
+    # 只匹配到脚本路径为止：cron 行里路径带引号（'.../deploy.sh'），
+    # 若把 " --renew-ssl" 一并纳入匹配串，会跨过引号边界导致永远匹配不上、
+    # 每次部署都重复追加定时任务。
+    if crontab -l 2>/dev/null | grep -Fq -- "$SCRIPT_DIR/deploy.sh"; then
         return 0
     fi
     if ! ( crontab -l 2>/dev/null; echo "$line" ) | crontab -; then
