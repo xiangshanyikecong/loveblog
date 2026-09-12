@@ -1,5 +1,9 @@
 # 生产环境 Dockerfile - 多阶段构建
-FROM node:20.19.4-alpine3.22 AS builder
+# 构建阶段固定在原生构建平台（--platform=$BUILDPLATFORM）：npm/vite 不经
+# QEMU 模拟运行（QEMU 模拟 arm64 时 node 易触发 SIGILL 崩溃，且模拟执行
+# 极慢）。产物 dist 是平台无关的静态文件，可直接复制进目标架构
+# （amd64/arm64）的 nginx 运行镜像。
+FROM --platform=$BUILDPLATFORM node:20.19.4-alpine3.22 AS builder
 
 WORKDIR /app
 
