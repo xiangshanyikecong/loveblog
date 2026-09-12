@@ -31,7 +31,7 @@ depends_on = None
 def upgrade() -> None:
     with op.batch_alter_table("chat_messages") as batch_op:
         batch_op.add_column(
-            sa.Column("is_encrypted", sa.Boolean(), nullable=False, server_default=sa.text("0"))
+            sa.Column("is_encrypted", sa.Boolean(), nullable=False, server_default=sa.text("false"))
         )
         batch_op.add_column(sa.Column("iv", sa.String(length=64), nullable=True))
         batch_op.add_column(sa.Column("ciphertext", sa.Text(), nullable=True))
@@ -52,7 +52,7 @@ def upgrade() -> None:
         sa.Column("verifier_iv", sa.String(length=64), nullable=False),
         sa.Column("verifier_cipher", sa.String(length=512), nullable=False),
         sa.Column("verifier_hash", sa.String(length=128), nullable=False),
-        sa.Column("needs_re_encrypt", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("needs_re_encrypt", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),

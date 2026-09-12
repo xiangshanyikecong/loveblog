@@ -43,7 +43,7 @@ def upgrade() -> None:
         sa.Column("black_id", sa.Integer(), nullable=False),
         sa.Column("white_id", sa.Integer(), nullable=False),
         sa.Column("winner_id", sa.Integer(), nullable=True),
-        sa.Column("is_draw", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_draw", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("end_reason", sa.String(length=16), nullable=False, server_default=sa.text("'five'")),
         sa.Column("move_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column(

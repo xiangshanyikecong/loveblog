@@ -54,11 +54,11 @@ def upgrade() -> None:
     # - If status=published and is_encrypted=False -> public
     # - If status=draft -> private
     op.execute("""
-        UPDATE articles 
-        SET visibility = CASE 
-            WHEN is_encrypted = TRUE THEN 'partners_only'
-            WHEN status = 'published' AND is_encrypted = FALSE THEN 'public'
-            ELSE 'private'
+        UPDATE articles
+        SET visibility = CASE
+            WHEN is_encrypted = TRUE THEN 'partners_only'::content_visibility
+            WHEN status = 'published' AND is_encrypted = FALSE THEN 'public'::content_visibility
+            ELSE 'private'::content_visibility
         END
         WHERE visibility IS NULL
     """)
@@ -81,11 +81,11 @@ def upgrade() -> None:
     # - If is_public=True and is_encrypted=False -> public
     # - If is_public=False -> private
     op.execute("""
-        UPDATE albums 
-        SET visibility = CASE 
-            WHEN is_encrypted = TRUE THEN 'partners_only'
-            WHEN is_public = TRUE AND is_encrypted = FALSE THEN 'public'
-            ELSE 'private'
+        UPDATE albums
+        SET visibility = CASE
+            WHEN is_encrypted = TRUE THEN 'partners_only'::content_visibility
+            WHEN is_public = TRUE AND is_encrypted = FALSE THEN 'public'::content_visibility
+            ELSE 'private'::content_visibility
         END
         WHERE visibility IS NULL
     """)

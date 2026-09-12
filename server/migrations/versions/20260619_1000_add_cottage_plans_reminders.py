@@ -69,7 +69,7 @@ def upgrade() -> None:
         sa.Column("note", sa.Text(), nullable=True),
         sa.Column("remind_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("audience", sa.String(length=16), nullable=False, server_default=sa.text("'both'")),
-        sa.Column("is_done", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("is_done", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("done_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("done_by_id", sa.Integer(), nullable=True),
         sa.Column("last_notified_at", sa.DateTime(timezone=True), nullable=True),

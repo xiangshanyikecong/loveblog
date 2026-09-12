@@ -39,7 +39,7 @@ def upgrade() -> None:
             "remediated",
             sa.Boolean(),
             nullable=False,
-            server_default=sa.text("0"),
+            server_default=sa.text("false"),
         ),
         sa.Column("remediation_note", sa.String(length=500), nullable=False, server_default=""),
         sa.Column(
