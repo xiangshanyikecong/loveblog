@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GHCR 预构建镜像发布：
+  - `.github/workflows/docker-publish.yml` — 推送 `v*` 标签时由 GitHub Actions
+    多架构（amd64/arm64）构建 backend/web/netease 并发布到 ghcr.io（公开包）
+  - 部署默认直接拉取预构建镜像，不再在用户服务器上构建；`deploy.sh --build`
+    / `deploy.ps1 -Build` 保留服务器本地构建选项，拉取失败时自动回退
+  - `.env.production.example` 新增 `IMAGE_TAG`（默认 `latest`，可固定版本）
 - `install.sh` — 一键安装脚本：一条命令完成「安装 Docker（如缺失）→ 拉取代码 →
   生成 `.env.production`（随机密码/密钥）→ 部署」，并接入 `deploy.sh` 的自动 SSL 能力
 - SSL 证书自动申请与续期（`deploy.sh`）：

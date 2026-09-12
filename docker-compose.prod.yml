@@ -42,10 +42,12 @@ services:
     # (see netease-api/server.js). Used exclusively by cottage-listen-together.
     # Intentionally NOT exposed to the host: only the `backend` service can
     # reach it via the internal love-network at http://netease:3000.
+    # 镜像由 GitHub Actions 构建并推送到 GHCR（见 .github/workflows/docker-publish.yml）；
+    # 保留 build 以便 `./deploy.sh --build` 在服务器上本地构建。
     build:
       context: ./netease-api
       dockerfile: Dockerfile
-    image: love-netease-enhanced:local
+    image: ghcr.io/xiangshanyikecong/loveblog-netease:${IMAGE_TAG:-latest}
     container_name: love-netease-prod
     restart: always
     networks:
@@ -59,9 +61,12 @@ services:
       start_period: 30s
 
   backend:
+    # 镜像由 GitHub Actions 构建并推送到 GHCR（见 .github/workflows/docker-publish.yml）；
+    # 保留 build 以便 `./deploy.sh --build` 在服务器上本地构建。
     build:
       context: ./server
       dockerfile: Dockerfile
+    image: ghcr.io/xiangshanyikecong/loveblog-backend:${IMAGE_TAG:-latest}
     container_name: love-backend-prod
     restart: always
     environment:
@@ -130,11 +135,16 @@ services:
       start_period: 40s
 
   web:
+    # 镜像由 GitHub Actions 构建并推送到 GHCR（见 .github/workflows/docker-publish.yml）；
+    # 保留 build 以便 `./deploy.sh --build` 在服务器上本地构建。
+    # 注意：拉取预构建镜像时 VITE_API_BASE_URL 固定为 Actions 构建时的 /api，
+    # 若自定义了该值需使用 `./deploy.sh --build` 在服务器上构建。
     build:
       context: ./web
       dockerfile: Dockerfile.prod
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: ghcr.io/xiangshanyikecong/loveblog-web:${IMAGE_TAG:-latest}
     container_name: love-web-prod
     restart: always
     networks:

@@ -22,10 +22,14 @@ GIT_REPO_URL="https://github.com/xiangshanyikecong/loveblog.git"
 # 解析命令行参数
 AUTO_UPDATE=false
 RENEW_SSL_ONLY=false
+BUILD_ON_SERVER=false
 for arg in "$@"; do
     case "$arg" in
         --update|-u)
             AUTO_UPDATE=true
+            ;;
+        --build|-b)
+            BUILD_ON_SERVER=true
             ;;
         --renew-ssl)
             RENEW_SSL_ONLY=true
@@ -35,13 +39,14 @@ for arg in "$@"; do
             echo ""
             echo "选项："
             echo "  --update, -u     更新到 GitHub 最新版本后再部署（无需 Git，自动下载源码包）"
+            echo "  --build, -b      在本服务器上构建应用镜像（默认拉取 GHCR 预构建镜像，更快更稳）"
             echo "  --renew-ssl      仅检查并续期 SSL 证书（供 cron 定时任务调用）"
             echo "  --help, -h       显示帮助信息"
             exit 0
             ;;
         *)
             echo -e "${RED}❌ 未知参数: $arg${NC}"
-            echo "用法: ./deploy.sh [--update|-u]"
+            echo "用法: ./deploy.sh [--update|-u] [--build|-b]"
             exit 1
             ;;
     esac
@@ -431,13 +436,25 @@ if [ -d "server/uploads" ] && [ "$(ls -A server/uploads)" ]; then
     done
 fi
 
-# 先拉取和构建新版本。旧容器保持运行，构建失败时不会主动制造停机。
-echo "📥 拉取基础镜像..."
-$COMPOSE -f docker-compose.prod.yml pull postgres redis nginx
+# 先拉取/构建新版本。旧容器保持运行，拉取或构建失败时不会主动制造停机。
+if [ "$BUILD_ON_SERVER" = true ]; then
+    # 服务器本地构建（备用选项）：适合网络无法访问 GHCR、或自定义了
+    # VITE_API_BASE_URL 等构建参数的场景。
+    echo "📥 拉取基础镜像..."
+    $COMPOSE -f docker-compose.prod.yml pull postgres redis nginx
 
-# 构建应用镜像
-echo "🔨 构建应用镜像..."
-$COMPOSE -f docker-compose.prod.yml build --no-cache
+    echo "🔨 在服务器上构建应用镜像..."
+    $COMPOSE -f docker-compose.prod.yml build --no-cache
+else
+    # 默认：拉取 GitHub Actions 预构建镜像（公开包，无需登录），避免在
+    # 用户服务器上构建（慢、依赖网络、易因环境差异失败）。
+    echo "📥 拉取预构建镜像（ghcr.io）..."
+    if ! $COMPOSE -f docker-compose.prod.yml pull; then
+        echo -e "${YELLOW}⚠️  镜像拉取失败（可能是网络无法访问 ghcr.io）。${NC}"
+        echo "   将尝试使用本地已有镜像继续；若本地无镜像，启动时会自动回退为在服务器上构建。"
+        echo "   也可显式指定在服务器上构建：./deploy.sh --build"
+    fi
+fi
 
 # 启动服务
 echo "🚀 启动服务..."
@@ -548,6 +565,7 @@ echo "   重启服务: $COMPOSE -f docker-compose.prod.yml restart"
 echo "   停止服务: $COMPOSE -f docker-compose.prod.yml down"
 echo "   进入后端: $COMPOSE -f docker-compose.prod.yml exec backend bash"
 echo "   更新并部署: ./deploy.sh --update"
+echo "   服务器本地构建: ./deploy.sh --build"
 echo "   续期证书:   ./deploy.sh --renew-ssl"
 echo ""
 echo -e "${YELLOW}⚠️  提醒：${NC}"

@@ -123,6 +123,11 @@ chmod +x deploy.sh
 ./deploy.sh --update
 ```
 
+> 提示：部署脚本默认直接拉取 ghcr.io 上的预构建镜像（由 GitHub Actions 构建的公开
+> 镜像，无需登录），不在服务器上编译，速度快且不受服务器环境影响；同时支持
+> x86_64 与 ARM64（树莓派/ARM NAS）服务器。如需在服务器上本地构建（例如网络
+> 无法访问 ghcr.io，或自定义了 `VITE_API_BASE_URL`），使用 `./deploy.sh --build`。
+
 > 提示：首次申请 SSL 需要域名能通过 80 端口完成验证；证书 90 天有效，部署脚本
 > 会在到期前 30 天自动续期，并自动安装每周一 03:00 的续期定时任务
 > （`./deploy.sh --renew-ssl`），无需人工干预。
@@ -157,6 +162,7 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"
 # 3. 执行部署（二选一）
 powershell -ExecutionPolicy Bypass -File deploy.ps1
 #   或直接双击 deploy.bat
+# 需要在本机构建镜像时，追加 -Build 参数（默认拉取 ghcr.io 预构建镜像）
 ```
 
 `deploy.ps1` 与 `deploy.sh` 行为一致：校验配置 -> 加载环境变量 -> 创建目录 -> 备份旧上传文件
@@ -384,7 +390,12 @@ git pull origin main
 
 # 方式二：使用部署脚本一键从 GitHub 拉取更新并部署（推荐）
 ./deploy.sh --update
+
+# 服务器网络无法访问 ghcr.io 时，可改为在服务器上本地构建
+./deploy.sh --update --build
 ```
+
+更新默认只拉取新镜像并重启，无需在服务器上重新构建，通常一分钟内完成。
 
 ### 数据库维护
 

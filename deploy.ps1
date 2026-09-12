@@ -1,9 +1,15 @@
 # ============================================
 # Love Journal 生产环境部署脚本 (Windows / PowerShell)
 # deploy.sh 的 Windows 等价版本。需安装 Docker Desktop for Windows。
-# 用法: powershell -ExecutionPolicy Bypass -File deploy.ps1
+# 用法: powershell -ExecutionPolicy Bypass -File deploy.ps1 [-Build]
 #       或双击 deploy.bat
+#   -Build   在本机构建应用镜像（默认拉取 ghcr.io 预构建镜像）
 # ============================================
+
+param(
+    # 在本机构建应用镜像（默认拉取 GHCR 预构建镜像）
+    [switch] $Build
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -43,15 +49,18 @@ if (-not $ComposeArgs) {
     }
 }
 
-# 统一的 compose 调用封装
+# 统一的 compose 调用封装。-AllowFailure 时不抛异常，返回退出码由调用方处理。
 function Invoke-Compose {
-    param([Parameter(ValueFromRemainingArguments = $true)] [string[]] $Args)
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)] [string[]] $Args,
+        [switch] $AllowFailure
+    )
     if ($ComposeArgs.Count -gt 0) {
         & docker @ComposeArgs --env-file .env.production -f docker-compose.prod.yml @Args
     } else {
         & docker-compose --env-file .env.production -f docker-compose.prod.yml @Args
     }
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0 -and -not $AllowFailure) {
         throw "Docker Compose 命令失败（退出码 $LASTEXITCODE）：$($Args -join ' ')"
     }
 }
@@ -157,13 +166,26 @@ if ((Test-Path "server/uploads") -and (Get-ChildItem "server/uploads" -Force | S
     Copy-Item -Path "server/uploads/*" -Destination $BackupDir -Recurse -Force
 }
 
-# 先拉取和构建新版本。旧容器保持运行，构建失败时不会主动制造停机。
-Write-Host "📥 拉取基础镜像..."
-Invoke-Compose pull postgres redis nginx
+# 先拉取/构建新版本。旧容器保持运行，拉取或构建失败时不会主动制造停机。
+if ($Build) {
+    # 本地构建（备用选项）：适合网络无法访问 ghcr.io、或自定义了
+    # VITE_API_BASE_URL 等构建参数的场景。
+    Write-Host "📥 拉取基础镜像..."
+    Invoke-Compose pull postgres redis nginx
 
-# -------------------- 构建应用镜像 --------------------
-Write-Host "🔨 构建应用镜像..."
-Invoke-Compose build --no-cache
+    Write-Host "🔨 在本机构建应用镜像..."
+    Invoke-Compose build --no-cache
+} else {
+    # 默认：拉取 GitHub Actions 预构建镜像（公开包，无需登录），避免在
+    # 本机构建（慢、易因环境差异失败）。
+    Write-Host "📥 拉取预构建镜像（ghcr.io）..."
+    Invoke-Compose pull -AllowFailure
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "⚠️  镜像拉取失败（可能是网络无法访问 ghcr.io）。" -ForegroundColor Yellow
+        Write-Host "   将尝试使用本地已有镜像继续；若本地无镜像，启动时会自动回退为本机构建。"
+        Write-Host "   也可显式指定本机构建：powershell -ExecutionPolicy Bypass -File deploy.ps1 -Build"
+    }
+}
 
 # -------------------- 启动服务 --------------------
 Write-Host "🚀 启动服务..."
