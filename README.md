@@ -20,7 +20,7 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 - **实时**：WebSocket（「一起听」同步播放）
 - **富文本**：Vditor 编辑器
 - **第三方**：内置 `netease` 服务（NeteaseCloudMusicApi 维护分支，供「一起听」检索/取流）
-- **客户端**：Web（主端）、iOS（SwiftUI，封面 + 一起听）、Android（Kotlin + Jetpack Compose，详见 `Android/README.md`）
+- **客户端**：Web（主端）、iOS（SwiftUI，封面 + 一起听）[尚属于开发中，未完成功能]、Android（Kotlin + Jetpack Compose，详见 `Android/README.md`）[尚属于开发中，未完成功能]
 - **编排**：开发 `docker-compose.yml`；生产 `docker-compose.prod.yml`（含 nginx、PostgreSQL、Redis、netease）
 
 ## 功能总览
