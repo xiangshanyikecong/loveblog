@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   硬重启最多丢约 1 秒写入，避免默认 RDB 快照间隔导致网易云登录 Cookie 等
   数据在异常重启后丢失
 
+### Fixed
+
+- 迁移链多处 PostgreSQL 兼容性缺陷（此前任何全新服务器部署都会在后端启动
+  迁移时崩溃，CI 使用 SQLite 未覆盖）：
+  - `20260501_1400` 文章/相册可见性迁移的枚举值大小写错误与 text→enum
+    缺失显式转型
+  - `20260614_0000` / `20260619_1000` / `20260718_1500` / `20260718_1600`
+    Boolean 列 `server_default` 使用裸整数（PostgreSQL 要求 `false`）
+
 ## [1.0.2] - 2026-09-11
 
 ### Added
