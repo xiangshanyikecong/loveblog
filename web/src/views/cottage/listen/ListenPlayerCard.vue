@@ -32,7 +32,16 @@
         />
         <div v-else class="player-cover player-cover--placeholder">♪</div>
         <div class="player-text">
-          <h3 class="player-title">{{ current.song_meta?.name || current.song_id }}</h3>
+          <div class="player-title-row">
+            <h3 class="player-title">{{ current.song_meta?.name || current.song_id }}</h3>
+            <button
+              v-if="current.song_meta"
+              type="button"
+              class="player-like"
+              :class="{ 'player-like--active': liked }"
+              @click="onToggleLike"
+            >{{ liked ? "♥" : "♡" }}</button>
+          </div>
           <p class="player-artists">
             {{ (current.song_meta?.artists || []).join(", ") || t("listenPlayer.unknownArtist") }}
           </p>
@@ -95,10 +104,14 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, inject, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
+import { fetchLikedStatus, toggleLikedTrack } from "../../../lib/api";
+import { parseError } from "../../../utils/helpers";
+
 const { t } = useI18n();
+const showMessage = inject("showMessage", () => {});
 
 const props = defineProps({
   current: { type: Object, required: true },
@@ -115,6 +128,37 @@ const props = defineProps({
   // instead of toggling shared state — see CottageListenView.
   needsResume: { type: Boolean, default: false }
 });
+
+// ♥ liked-tracks state for the current song. Re-checked whenever the room
+// switches to another song (the partner may have liked it from their side).
+const liked = ref(false);
+
+watch(
+  () => props.current?.song_id,
+  async (songId) => {
+    liked.value = false;
+    if (!songId) return;
+    try {
+      const data = await fetchLikedStatus([songId]);
+      liked.value = (data.song_ids || []).includes(songId);
+    } catch {
+      liked.value = false;
+    }
+  },
+  { immediate: true }
+);
+
+async function onToggleLike() {
+  const song = props.current?.song_meta;
+  if (!song) return;
+  try {
+    const data = await toggleLikedTrack(song);
+    liked.value = !!data.liked;
+    showMessage(t(data.liked ? "listenLibrary.likedToastOn" : "listenLibrary.likedToastOff"));
+  } catch (error) {
+    showMessage(parseError(error));
+  }
+}
 
 // Track length in ms. Prefer the metadata duration (known instantly from the
 // NetEase song meta) and fall back to the actual decoded media duration.
@@ -258,13 +302,46 @@ function onSeekCommit(evt) {
   min-width: 0;
 }
 
+.player-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
 .player-title {
+  flex: 1;
+  min-width: 0;
   margin: 0 0 0.25rem;
   font-size: 1rem;
   color: #2f3754;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.player-like {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  background: rgba(255, 255, 255, 0.85);
+  color: #94a3b8;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.player-like--active {
+  color: #ff5c8a;
+  border-color: rgba(255, 92, 138, 0.45);
+  background: rgba(255, 92, 138, 0.08);
+}
+
+.player-like:active {
+  transform: scale(0.92);
 }
 
 .player-artists {

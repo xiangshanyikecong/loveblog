@@ -70,6 +70,11 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str = Field(min_length=3, max_length=32)
     password: str = Field(min_length=1, max_length=128)
+    # Optional second factor. If the account has 2FA enabled and this field is
+    # absent, login returns 401 with detail "totp_required" so the client can
+    # prompt for the code; the value may be a 6-digit TOTP code or a recovery
+    # code of the form "xxxx-xxxx".
+    totp_code: str | None = Field(default=None, min_length=1, max_length=16)
 
     @field_validator("username")
     @classmethod

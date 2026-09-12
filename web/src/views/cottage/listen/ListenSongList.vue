@@ -23,23 +23,112 @@
         <span class="search-item-artists">{{ (song.artists || []).join(", ") }}</span>
       </div>
       <div class="search-item-actions">
+        <button
+          type="button"
+          class="like-btn"
+          :class="{ 'like-btn--active': isLiked(song.song_id) }"
+          @click="onToggleLike(song)"
+        >{{ isLiked(song.song_id) ? "♥" : "♡" }}</button>
+        <button type="button" class="action-btn" @click="onAddToPlaylist(song, $event)">{{ t("listenLibrary.addToPlaylist") }}</button>
         <button type="button" class="action-btn" @click="$emit('append-to-queue', song)">{{ t("listenSongList.addToQueue") }}</button>
         <button type="button" class="action-btn action-btn--primary" @click="$emit('play-now', song)">{{ t("listenSongList.playNow") }}</button>
       </div>
     </li>
   </ul>
+
+  <PlaylistPickerPopover
+    :open="pickerOpen"
+    :playlists="pickerPlaylists"
+    :loading="pickerLoading"
+    :saving="pickerSaving"
+    :song-name="pickerSong?.name || ''"
+    :anchor="pickerAnchor"
+    @select="addToPlaylist"
+    @create="createPlaylistAndAdd"
+    @close="closePicker"
+  />
 </template>
 
 <script setup>
+import { inject, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { t } = useI18n();
+import { fetchLikedStatus, toggleLikedTrack } from "../../../lib/api";
+import { parseError } from "../../../utils/helpers";
+import PlaylistPickerPopover from "./PlaylistPickerPopover.vue";
+import { usePlaylistPicker } from "./usePlaylistPicker";
 
-defineProps({
+const { t } = useI18n();
+const showMessage = inject("showMessage", () => {});
+
+const props = defineProps({
   songs: { type: Array, default: () => [] }
 });
 
 defineEmits(["append-to-queue", "play-now"]);
+
+// ♥ liked ids for the currently rendered songs, batch-fetched whenever the
+// list changes (search results swap, playlist opens...).
+const likedIds = ref(new Set());
+let likedSeq = 0;
+
+watch(
+  () => (props.songs || []).map((s) => s.song_id).filter(Boolean).join(","),
+  refreshLiked,
+  { immediate: true }
+);
+
+async function refreshLiked() {
+  const ids = (props.songs || []).map((s) => s.song_id).filter(Boolean);
+  const seq = ++likedSeq;
+  if (!ids.length) {
+    likedIds.value = new Set();
+    return;
+  }
+  try {
+    const data = await fetchLikedStatus(ids);
+    if (seq !== likedSeq) return; // a newer list already replaced this one
+    likedIds.value = new Set(data.song_ids || []);
+  } catch {
+    // Best-effort decoration: a failed status check just leaves the hearts
+    // grey instead of nagging the user with toasts.
+  }
+}
+
+function isLiked(songId) {
+  return likedIds.value.has(songId);
+}
+
+async function onToggleLike(song) {
+  try {
+    const data = await toggleLikedTrack(song);
+    const next = new Set(likedIds.value);
+    if (data.liked) next.add(song.song_id);
+    else next.delete(song.song_id);
+    likedIds.value = next;
+    showMessage(t(data.liked ? "listenLibrary.likedToastOn" : "listenLibrary.likedToastOff"));
+  } catch (error) {
+    showMessage(parseError(error));
+  }
+}
+
+// ── "add to couple playlist" picker (shared popover) ──────────────────────────
+const {
+  pickerOpen,
+  pickerSong,
+  pickerAnchor,
+  pickerPlaylists,
+  pickerLoading,
+  pickerSaving,
+  openPicker,
+  closePicker,
+  addToPlaylist,
+  createPlaylistAndAdd
+} = usePlaylistPicker();
+
+function onAddToPlaylist(song, evt) {
+  openPicker(song, evt?.currentTarget);
+}
 </script>
 
 <style scoped>
@@ -84,7 +173,32 @@ defineEmits(["append-to-queue", "play-now"]);
 
 .search-item-actions {
   display: flex;
+  align-items: center;
   gap: 0.35rem;
+}
+
+.like-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.85);
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.like-btn--active {
+  color: #ff5c8a;
+  border-color: rgba(255, 92, 138, 0.45);
+  background: rgba(255, 92, 138, 0.08);
+}
+
+.like-btn:active {
+  transform: scale(0.92);
 }
 
 .action-btn {
@@ -111,6 +225,7 @@ defineEmits(["append-to-queue", "play-now"]);
   }
   .search-item-actions {
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
 }
 </style>

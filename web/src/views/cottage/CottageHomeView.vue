@@ -67,6 +67,26 @@
       </div>
     </section>
 
+    <!-- 回忆回顾：回到那一天 / 年度报告 -->
+    <section class="cottage-module-group">
+      <div class="cottage-modules">
+        <router-link to="/cottage/memories" class="cottage-module-card glass-card cottage-recall-card">
+          <h4 class="cottage-module-title">
+            <span class="cottage-module-icon" aria-hidden="true">🕰️</span>
+            <span class="cottage-module-name">{{ t('cottageMemories.title') }}</span>
+          </h4>
+          <p class="cottage-module-desc">{{ t('cottageMemories.subtitle') }}</p>
+        </router-link>
+        <router-link to="/cottage/reports/annual" class="cottage-module-card glass-card cottage-recall-card">
+          <h4 class="cottage-module-title">
+            <span class="cottage-module-icon" aria-hidden="true">📊</span>
+            <span class="cottage-module-name">{{ t('cottageAnnualReport.title') }}</span>
+          </h4>
+          <p class="cottage-module-desc">{{ t('cottageAnnualReport.subtitle') }}</p>
+        </router-link>
+      </div>
+    </section>
+
     <section
       v-for="g in groupedModules"
       :key="g.key"
@@ -91,6 +111,17 @@
           <p class="cottage-module-desc">{{ t(m.descKey) }}</p>
         </router-link>
       </div>
+    </section>
+
+    <!-- 安全中心入口 -->
+    <section class="cottage-modules security-entry">
+      <router-link to="/cottage/security" class="cottage-module-card glass-card">
+        <h4 class="cottage-module-title">
+          <span class="cottage-module-icon" aria-hidden="true">🔒</span>
+          <span class="cottage-module-name">{{ t('securityCenter.title') }}</span>
+        </h4>
+        <p class="cottage-module-desc">{{ t('securityCenter.subtitle') }}</p>
+      </router-link>
     </section>
 
     <!-- 戳一戳飞入动画 -->
@@ -351,6 +382,9 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 0.7rem;
 }
+.security-entry .cottage-module-card {
+  max-width: 340px;
+}
 .cottage-group-title {
   margin: 0;
   display: flex;
@@ -405,6 +439,14 @@ onBeforeUnmount(() => {
   justify-content: center;
 }
 .cottage-module-desc { margin: 0; font-size: 0.84rem; color: var(--text-soft); line-height: 1.55; }
+
+/* 回忆回顾入口（回到那一天 / 年度报告）· 渐变粉色调 */
+.cottage-recall-card {
+  background: linear-gradient(135deg, rgba(255, 224, 238, 0.88), rgba(247, 226, 255, 0.78));
+  border: 1px solid rgba(255, 182, 205, 0.55);
+  box-shadow: 0 10px 24px rgba(255, 138, 181, 0.16);
+}
+.cottage-recall-card .cottage-module-desc { color: #8a6b7c; }
 
 /* Poke flash */
 .poke-flash {

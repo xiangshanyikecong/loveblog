@@ -1453,3 +1453,135 @@ export async function fetchFootprints() {
   const { data } = await api.get("/v1/cottage/footprints");
   return data; // { cities, total_cities, total_checkins, recent }
 }
+
+// ── Listen library: liked tracks ("我喜欢") ────────────────────────────────────
+export async function fetchLikedTracks({ limit = 100, offset = 0 } = {}) {
+  const { data } = await api.get("/v1/cottage/listen/liked", { params: { limit, offset } });
+  return data; // { items: LikedTrackItem[], total }
+}
+
+export async function fetchLikedStatus(songIds = []) {
+  const { data } = await api.get("/v1/cottage/listen/liked/status", {
+    params: { song_ids: songIds.join(",") }
+  });
+  return data; // { song_ids: string[], total }
+}
+
+export async function toggleLikedTrack(song) {
+  const { data } = await api.put("/v1/cottage/listen/liked/toggle", {
+    song_id: song.song_id,
+    name: song.name || "",
+    artists: song.artists || [],
+    album: song.album || null,
+    duration_ms: song.duration_ms ?? null,
+    cover_url: song.cover_url || null
+  });
+  return data; // { liked: bool, total }
+}
+
+export async function removeLikedTrack(songId) {
+  await api.delete(`/v1/cottage/listen/liked/${encodeURIComponent(songId)}`);
+}
+
+// ── Listen library: couple custom playlists ("我们的歌单") ─────────────────────
+export async function fetchMyPlaylists() {
+  const { data } = await api.get("/v1/cottage/listen/playlists/mine");
+  return data; // { items: PlaylistSummary[] }
+}
+
+export async function createMyPlaylist(payload) {
+  const { data } = await api.post("/v1/cottage/listen/playlists/mine", payload);
+  return data; // PlaylistSummary
+}
+
+export async function fetchMyPlaylist(pid) {
+  const { data } = await api.get(`/v1/cottage/listen/playlists/mine/${pid}`);
+  return data; // PlaylistDetail
+}
+
+export async function updateMyPlaylist(pid, payload) {
+  const { data } = await api.put(`/v1/cottage/listen/playlists/mine/${pid}`, payload);
+  return data; // PlaylistSummary
+}
+
+export async function deleteMyPlaylist(pid) {
+  await api.delete(`/v1/cottage/listen/playlists/mine/${pid}`);
+}
+
+export async function addTrackToMyPlaylist(pid, song) {
+  const { data } = await api.post(`/v1/cottage/listen/playlists/mine/${pid}/tracks`, {
+    song_id: song.song_id,
+    name: song.name || "",
+    artists: song.artists || [],
+    album: song.album || null,
+    duration_ms: song.duration_ms ?? null,
+    cover_url: song.cover_url || null
+  });
+  return data; // PlaylistTrackItem
+}
+
+export async function removeTrackFromMyPlaylist(pid, songId) {
+  await api.delete(`/v1/cottage/listen/playlists/mine/${pid}/tracks/${encodeURIComponent(songId)}`);
+}
+
+export async function playMyPlaylist(pid) {
+  const { data } = await api.post(`/v1/cottage/listen/playlists/mine/${pid}/play`);
+  return data; // { queued: number }
+}
+
+// ── Memories: "on this day" (回到那一天) ───────────────────────────────────────
+export async function fetchOnThisDay(date = null) {
+  const { data } = await api.get("/v1/memories/on-this-day", {
+    params: date ? { date } : {}
+  });
+  return data; // { date, years: [{year, articles, albums, songs, totals}], totals }
+}
+
+// ── Annual couple report (年度报告) ────────────────────────────────────────────
+export async function fetchAnnualReport(year) {
+  const { data } = await api.get("/v1/reports/annual", { params: { year } });
+  return data; // AnnualReportResponse
+}
+
+// ── Storage usage panel (存储空间统计) ─────────────────────────────────────────
+export async function fetchStorageUsage() {
+  const { data } = await api.get("/v1/storage/usage");
+  return data; // { disk, uploads, database, breakdown }
+}
+
+// ── Two-factor authentication (TOTP 两步验证) ──────────────────────────────────
+export async function totpSetup() {
+  const { data } = await api.post("/v1/auth/totp/setup");
+  return data; // { secret, uri }
+}
+
+export async function totpEnable(code) {
+  const { data } = await api.post("/v1/auth/totp/enable", { code });
+  return data; // { enabled, recovery_codes }
+}
+
+export async function totpDisable(code, password) {
+  const { data } = await api.post("/v1/auth/totp/disable", { code, password });
+  return data; // { enabled: false }
+}
+
+export async function totpStatus() {
+  const { data } = await api.get("/v1/auth/totp/status");
+  return data; // { enabled, recovery_codes_remaining }
+}
+
+// ── Login devices (登录设备管理) ────────────────────────────────────────────────
+export async function fetchLoginDevices() {
+  const { data } = await api.get("/v1/auth/devices");
+  return data; // { items: LoginDeviceResponse[] }
+}
+
+export async function revokeLoginDevice(did) {
+  const { data } = await api.delete(`/v1/auth/devices/${did}`);
+  return data; // { revoked: true, new_session_version }
+}
+
+export async function revokeAllLoginDevices() {
+  const { data } = await api.delete("/v1/auth/devices");
+  return data; // { revoked: number }
+}

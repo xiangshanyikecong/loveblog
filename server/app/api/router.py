@@ -16,22 +16,28 @@
 from fastapi import APIRouter
 
 from app.api.v1.albums import router as albums_router
+from app.api.v1.annual_report import router as annual_report_router
 from app.api.v1.articles import router as articles_router
 from app.api.v1.audit_logs import router as audit_logs_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.capsules import router as capsules_router
 from app.api.v1.dashboard import router as dashboard_router
+from app.api.v1.devices import router as devices_router
 from app.api.v1.events import router as events_router
 from app.api.v1.export import router as export_router
 from app.api.v1.health import router as health_router
+from app.api.v1.listen_library import router as listen_library_router
 from app.api.v1.messages import router as messages_router
+from app.api.v1.memories import router as memories_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.push import router as push_router
 from app.api.v1.privacy import router as privacy_router
 from app.api.v1.search import router as search_router
 from app.api.v1.security import router as security_router
 from app.api.v1.settings import router as settings_router
+from app.api.v1.storage import router as storage_router
 from app.api.v1.timeline import router as timeline_router
+from app.api.v1.totp import router as totp_router
 from app.api.v1.uploads import router as uploads_router
 from app.api.v1.checkins import router as checkins_router
 from app.api.v1.cottage_chat import router as cottage_chat_router
@@ -65,9 +71,12 @@ api_router = APIRouter()
 api_router.include_router(health_router)
 api_router.include_router(auth_router, prefix="/v1")
 api_router.include_router(timeline_router, prefix="/v1")
+api_router.include_router(memories_router, prefix="/v1")
+api_router.include_router(annual_report_router, prefix="/v1")
 api_router.include_router(checkins_router, prefix="/v1")
 api_router.include_router(cottage_listen_router, prefix="/v1")
 api_router.include_router(cottage_listen_ws_router, prefix="/v1")
+api_router.include_router(listen_library_router, prefix="/v1")
 api_router.include_router(cottage_watch_router, prefix="/v1")
 api_router.include_router(cottage_watch_ws_router, prefix="/v1")
 api_router.include_router(cottage_chat_router, prefix="/v1")
@@ -106,3 +115,6 @@ api_router.include_router(dashboard_router, prefix="/v1")
 api_router.include_router(capsules_router, prefix="/v1")
 api_router.include_router(security_router, prefix="/v1")
 api_router.include_router(recycle_bin_router, prefix="/v1")
+api_router.include_router(storage_router, prefix="/v1")
+api_router.include_router(totp_router, prefix="/v1")
+api_router.include_router(devices_router, prefix="/v1")

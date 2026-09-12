@@ -56,6 +56,11 @@
       @clear="onQueueClear"
     />
 
+    <ListenLibraryPanel
+      @append-to-queue="onAppendToQueue"
+      @play-now="onPlayNow"
+    />
+
     <ListenLocalPanel
       @append-to-queue="onAppendToQueue"
       @play-now="onPlayNow"
@@ -83,6 +88,7 @@ import { onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 
 import { useListenPlayer } from "../../../stores/listenPlayer";
+import ListenLibraryPanel from "./ListenLibraryPanel.vue";
 import ListenLocalPanel from "./ListenLocalPanel.vue";
 import ListenLoginPanel from "./ListenLoginPanel.vue";
 import ListenPlayerCard from "./ListenPlayerCard.vue";

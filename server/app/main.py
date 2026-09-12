@@ -680,6 +680,28 @@ async def _app_lifespan(_app: FastAPI):
                 logger.exception("Auto backup scheduler tick failed.")
             await asyncio.sleep(300)
 
+    async def memory_push_loop() -> None:
+        # "回到那一天"回忆推送：每天生成一次（date_key 幂等），失败仅记录不影响其他任务。
+        while True:
+            try:
+                from datetime import date as _date
+
+                from app.services.memories import run_memory_push_tick
+
+                db = SessionLocal()
+                try:
+                    created = await asyncio.to_thread(
+                        run_memory_push_tick, db, today=_date.today()
+                    )
+                    if created:
+                        logger.info("Memory push created %d notification(s).", created)
+                finally:
+                    db.close()
+            except Exception:
+                logger.exception("Memory push scheduler tick failed.")
+            # 每 6 小时检查一次；date_key 去重保证每天只发一次。
+            await asyncio.sleep(6 * 3600)
+
     background_tasks = [
         asyncio.create_task(auto_backup_loop(), name="auto-backup-scheduler"),
         asyncio.create_task(
@@ -689,6 +711,7 @@ async def _app_lifespan(_app: FastAPI):
             ),
             name="notification-scheduler",
         ),
+        asyncio.create_task(memory_push_loop(), name="memory-push-scheduler"),
         asyncio.create_task(auto_pause_loop(), name="listen-auto-pause"),
         asyncio.create_task(health_monitor_loop(), name="health-monitor"),
     ]

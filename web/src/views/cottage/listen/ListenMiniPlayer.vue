@@ -28,7 +28,16 @@
         />
         <span v-else class="listen-mini-cover listen-mini-cover--ph">♪</span>
         <span class="listen-mini-text">
-          <span class="listen-mini-title">{{ current.song_meta?.name || current.song_id }}</span>
+          <span class="listen-mini-title-row">
+            <span class="listen-mini-title">{{ current.song_meta?.name || current.song_id }}</span>
+            <button
+              v-if="current.song_meta"
+              type="button"
+              class="listen-mini-like"
+              :class="{ 'listen-mini-like--active': liked }"
+              @click.stop="onToggleLike"
+            >{{ liked ? "♥" : "♡" }}</button>
+          </span>
           <span class="listen-mini-sub">
             {{ (current.song_meta?.artists || []).join(", ") || t("listenMiniPlayer.defaultSub") }}
           </span>
@@ -58,13 +67,16 @@
  * stores/listenPlayer engine, so audio keeps playing across navigation and the
  * controls here stay in sync with the partner.
  */
-import { computed, ref, watch } from "vue";
+import { computed, inject, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
 import { useListenPlayer } from "../../../stores/listenPlayer";
+import { fetchLikedStatus, toggleLikedTrack } from "../../../lib/api";
+import { parseError } from "../../../utils/helpers";
 
 const { t } = useI18n();
+const showMessage = inject("showMessage", () => {});
 const route = useRoute();
 const router = useRouter();
 
@@ -85,6 +97,36 @@ watch(
     dismissed.value = false;
   }
 );
+
+// ♥ liked-tracks state for the current song, mirroring the full player card.
+// Re-checked whenever the room switches songs.
+const liked = ref(false);
+watch(
+  () => current.value.song_id,
+  async (songId) => {
+    liked.value = false;
+    if (!songId) return;
+    try {
+      const data = await fetchLikedStatus([songId]);
+      liked.value = (data.song_ids || []).includes(songId);
+    } catch {
+      liked.value = false;
+    }
+  },
+  { immediate: true }
+);
+
+async function onToggleLike() {
+  const song = current.value?.song_meta;
+  if (!song) return;
+  try {
+    const data = await toggleLikedTrack(song);
+    liked.value = !!data.liked;
+    showMessage(t(data.liked ? "listenLibrary.likedToastOn" : "listenLibrary.likedToastOff"));
+  } catch (error) {
+    showMessage(parseError(error));
+  }
+}
 
 const isPaused = computed(() => needsResumeGesture.value || current.value.paused);
 
@@ -166,13 +208,46 @@ function togglePlay() {
   flex-direction: column;
   min-width: 0;
 }
+.listen-mini-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
 .listen-mini-title {
+  min-width: 0;
   font-size: 0.86rem;
   font-weight: 600;
   color: #2f3754;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.listen-mini-like {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  background: rgba(255, 255, 255, 0.9);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.listen-mini-like--active {
+  color: #ff5c8a;
+  border-color: rgba(255, 92, 138, 0.45);
+  background: rgba(255, 92, 138, 0.08);
+}
+
+.listen-mini-like:active {
+  transform: scale(0.92);
 }
 .listen-mini-sub {
   font-size: 0.74rem;

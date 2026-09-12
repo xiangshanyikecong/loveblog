@@ -75,6 +75,11 @@ class User(Base):
     session_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False, comment="会话版本号")
     last_login_ip: Mapped[str | None] = mapped_column(String(64), nullable=True, comment="最后登录IP")
 
+    # 两步验证（TOTP）
+    totp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True, comment="TOTP 密钥（base32）")
+    totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否启用两步验证")
+    totp_recovery_codes: Mapped[str | None] = mapped_column(Text, nullable=True, comment="恢复码哈希（JSON 数组）")
+
     moments = relationship("Moment", back_populates="author", cascade="all,delete")
     events = relationship("Event", back_populates="creator", cascade="all,delete")
     articles = relationship("Article", back_populates="author", cascade="all,delete")

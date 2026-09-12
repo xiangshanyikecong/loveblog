@@ -207,6 +207,24 @@ const router = createRouter({
               meta: { requiresPartner: true }
             },
             {
+              path: "memories",
+              name: "cottage-memories",
+              component: () => import("../views/cottage/memories/CottageMemoriesView.vue"),
+              meta: { requiresPartner: true }
+            },
+            {
+              path: "reports/annual",
+              name: "cottage-annual-report",
+              component: () => import("../views/cottage/reports/CottageAnnualReportView.vue"),
+              meta: { requiresPartner: true }
+            },
+            {
+              path: "security",
+              name: "cottage-security",
+              component: () => import("../views/cottage/security/SecurityCenterView.vue"),
+              meta: { requiresPartner: true }
+            },
+            {
               path: "wishlist",
               name: "cottage-wishlist",
               component: () => import("../views/cottage/wishlist/CottageWishlistView.vue"),
@@ -382,6 +400,11 @@ const router = createRouter({
           path: "recycle-bin",
           name: "admin-recycle-bin",
           component: () => import("../views/AdminRecycleBinView.vue")
+        },
+        {
+          path: "storage",
+          name: "admin-storage",
+          component: () => import("../views/AdminStorageView.vue")
         }
       ]
     }

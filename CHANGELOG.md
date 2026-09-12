@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-beta] - 2026-09-12
+
+### Added
+
+- 一起听 · 歌曲收藏「我喜欢」（`listen_liked_tracks` 表）：播放卡片 / 迷你播放器 /
+  搜索结果均可一键红心收藏，音乐库面板按用户隔离展示，支持批量状态查询与整单播放
+- 一起听 · 情侣自建歌单「我们的歌单」（`listen_playlists` / `listen_playlist_tracks`
+  表）：双方共同创建、编辑、加歌/删歌（重复加歌返回 409），支持「播放整个歌单」
+  一键全部入队并实时同步到在线伴侣的播放器
+- 「回到那一天」回忆推送（`memory_push_log` 表幂等去重）：后台调度器每日扫描
+  往年今日的日记 / 相册 / 听歌记录，生成站内通知并走现有 Web Push / FCM 外发；
+  新增小屋回忆页按年分组展示，可直达对应日记与相册
+- 年度报告 `GET /v1/reports/annual`：聚合全年 9 项情侣数据（日记 / 相册 / 照片 /
+  报备 / 悄悄话 / 听歌数与分钟数 / 胶囊 / 完成心愿）、12 个月活动分布、最常一起听
+  Top10 与中文亮点总结；前端报告页含「在一起第 N 天」与每月足迹柱状图
+- 两步验证（2FA）：TOTP（RFC 6238，纯标准库实现，零新增依赖）——
+  `POST /v1/auth/totp/setup|enable|disable|GET status`；开启后登录需输入验证器
+  动态码，登录接口缺失验证码时返回 401 `totp_required` 供前端切换验证步骤；
+  每次开启发放 8 个一次性恢复码（仅哈希存储），验证器丢失时每码可用一次
+- 登录设备管理（`login_devices` 表）：每次成功登录自动记录设备指纹 / 名称 / IP；
+  `GET|DELETE /v1/auth/devices` 列表与撤销，移除设备即提升会话版本号强制
+  所有设备重新登录；操作写入审计日志
+- 存储空间统计 `GET /v1/storage/usage`：磁盘用量（psutil）、上传文件分目录统计
+  （遍历上限 50000 文件）、PostgreSQL 数据库大小；管理后台新增存储面板
+- 前端：小屋新增「回到那一天」「年度报告」「安全中心」入口卡片；
+  「加入歌单」浮层组件在搜索结果与音乐库间复用
+- `server/conftest.py` — 后端测试统一兜底 `DATABASE_URL`（此前测试依赖
+  shell 环境残留变量，无法单独运行任意测试文件）
+
 ## [1.0.3] - 2026-09-12
 
 ### Added

@@ -23,9 +23,9 @@
     </div>
     <article class="glass-card section-block login-block">
       <div class="section-header">
-        <h2>{{ t('auth.loginTitle') }}</h2>
+        <h2>{{ totpStep ? t('loginTotp.title') : t('auth.loginTitle') }}</h2>
       </div>
-      <form class="form-stack" @submit.prevent="login">
+      <form v-if="!totpStep" class="form-stack" @submit.prevent="login">
         <label class="form-field">
           <span>{{ t('auth.username') }}</span>
           <input v-model="loginForm.username" class="input" autocomplete="username" :placeholder="t('auth.usernamePlaceholder')" required />
@@ -37,6 +37,28 @@
         <button class="btn-primary button-with-icon" :disabled="busy.login">
           <LogIn :size="17" :stroke-width="1.8" aria-hidden="true" />
           {{ busy.login ? t('auth.loginSubmitting') : t('auth.loginSubmit') }}
+        </button>
+      </form>
+
+      <form v-else class="form-stack" @submit.prevent="loginWithTotp">
+        <p class="totp-hint">{{ t('loginTotp.desc') }}</p>
+        <label class="form-field">
+          <span>{{ t('loginTotp.title') }}</span>
+          <input
+            v-model="totpCode"
+            class="input totp-input"
+            autocomplete="one-time-code"
+            maxlength="16"
+            :placeholder="t('loginTotp.placeholder')"
+            required
+          />
+        </label>
+        <button class="btn-primary button-with-icon" :disabled="busy.login">
+          <LogIn :size="17" :stroke-width="1.8" aria-hidden="true" />
+          {{ busy.login ? t('auth.loginSubmitting') : t('loginTotp.submit') }}
+        </button>
+        <button class="text-btn totp-back" type="button" @click="backToCredentials">
+          {{ t('loginTotp.back') }}
         </button>
       </form>
 
@@ -103,12 +125,24 @@ const loginForm = reactive({
   password: ""
 });
 
-const showRecovery = ref(false);
-const recoveryForm = reactive({
-  username: "",
-  newPassword: "",
-  bootstrapToken: ""
-});
+const totpStep = ref(false);
+const totpCode = ref("");
+
+function isTotpRequired(error) {
+  return error?.response?.status === 401 && error?.response?.data?.detail === "totp_required";
+}
+
+async function completeLogin(payload) {
+  const { data } = await api.post("/v1/auth/login", payload);
+  setAuthToken(data.access_token, data.role, { newSession: true });
+
+  showMessage(canManageContent.value ? t("auth.loginSuccess") : t("auth.loginSuccessLimited"));
+
+  const redirect = typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
+    ? route.query.redirect
+    : { name: "dashboard" };
+  router.push(redirect);
+}
 
 async function login() {
   busy.login = true;
@@ -118,21 +152,47 @@ async function login() {
       showMessage(t("auth.loginPrevSessionFail"), "error");
       return;
     }
-    const { data } = await api.post("/v1/auth/login", loginForm);
-    setAuthToken(data.access_token, data.role, { newSession: true });
-
-    showMessage(canManageContent.value ? t("auth.loginSuccess") : t("auth.loginSuccessLimited"));
-
-    const redirect = typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
-      ? route.query.redirect
-      : { name: "dashboard" };
-    router.push(redirect);
+    await completeLogin({ ...loginForm });
   } catch (error) {
+    if (isTotpRequired(error)) {
+      totpStep.value = true;
+      totpCode.value = "";
+      return;
+    }
     showMessage(parseError(error), "error");
   } finally {
     busy.login = false;
   }
 }
+
+async function loginWithTotp() {
+  const code = totpCode.value.trim();
+  if (!code) return;
+  busy.login = true;
+  try {
+    await completeLogin({ ...loginForm, totp_code: code });
+  } catch (error) {
+    if (isTotpRequired(error) || error?.response?.status === 401) {
+      showMessage(t("loginTotp.invalid"), "error");
+      return;
+    }
+    showMessage(parseError(error), "error");
+  } finally {
+    busy.login = false;
+  }
+}
+
+function backToCredentials() {
+  totpStep.value = false;
+  totpCode.value = "";
+}
+
+const showRecovery = ref(false);
+const recoveryForm = reactive({
+  username: "",
+  newPassword: "",
+  bootstrapToken: ""
+});
 
 async function submitRecovery() {
   busy.recovery = true;
@@ -200,6 +260,23 @@ async function handleLogout() {
   display: flex;
   justify-content: center;
   margin-top: 0.4rem;
+}
+
+.totp-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.55;
+  margin: 0 0 0.2rem;
+}
+
+.totp-input {
+  text-align: center;
+  letter-spacing: 0.18em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.totp-back {
+  align-self: center;
 }
 
 .recovery-form {

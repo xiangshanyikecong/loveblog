@@ -48,6 +48,7 @@ from app.schemas.auth import (
     VisitorProfile,
 )
 from app.services.audit import write_audit_log
+from app.services.login_devices import record_login_device
 from app.services.security import (
     increment_session_version,
     is_account_frozen,
@@ -56,9 +57,38 @@ from app.services.security import (
     reset_login_attempts,
     get_freeze_remaining_minutes,
 )
+from app.services.totp import (
+    hash_recovery_code,
+    verify_totp,
+)
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _verify_second_factor(db: Session, user: User, code: str) -> bool:
+    """Verify a TOTP code or burn a one-time recovery code.
+
+    Recovery codes win only if the TOTP check failed, and each consumed
+    recovery code is removed from the user's list immediately.
+    """
+    if verify_totp(user.totp_secret or "", code.strip()):
+        return True
+
+    if user.totp_recovery_codes:
+        import json
+
+        try:
+            remaining = json.loads(user.totp_recovery_codes)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            remaining = []
+        code_hash = hash_recovery_code(code)
+        if code_hash in remaining:
+            remaining.remove(code_hash)
+            user.totp_recovery_codes = json.dumps(remaining)
+            db.commit()
+            return True
+    return False
 
 
 def _cookie_is_secure(request: Request) -> bool:
@@ -356,8 +386,32 @@ def login(request: Request, payload: LoginRequest, response: Response, db: Sessi
         )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is banned")
 
+    # ── Second factor (TOTP / recovery code) ─────────────────────────────
+    if user.totp_enabled and user.totp_secret:
+        if not payload.totp_code:
+            # Signal the client to collect a verification code; the password is
+            # already proven so we do NOT count this as a failed attempt.
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="totp_required",
+                headers={"X-2FA-Required": "totp"},
+            )
+        if not _verify_second_factor(db, user, payload.totp_code):
+            write_audit_log(
+                db,
+                action="auth.login",
+                result="failure",
+                actor_username=payload.username,
+                detail={"reason": "invalid_totp"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid verification code",
+            )
+
     # 记录成功的登录
     record_successful_login(db, user)
+    record_login_device(db, user, request)
 
     expires_in = access_token_expires_in_seconds()
     token = create_access_token(
