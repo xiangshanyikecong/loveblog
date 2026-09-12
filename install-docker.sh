@@ -276,12 +276,19 @@ bash ./deploy.sh
 
 # ---- 7. 完成 ----
 DOMAIN_VALUE="$(grep -E '^DOMAIN=' .env.production | head -n1 | cut -d= -f2- || true)"
+BOOTSTRAP_TOKEN="$(grep -E '^BOOTSTRAP_SETUP_TOKEN=' .env.production 2>/dev/null | head -n1 | cut -d= -f2- | tr -d '\r' || true)"
 echo ""
 echo -e "${GREEN}🎉 部署完成！${NC}"
 echo "   访问地址：https://${DOMAIN_VALUE}"
-echo "   首次登录：使用 .env.production 中的 BOOTSTRAP_SETUP_TOKEN 完成初始化"
 echo "   更新版本：./deploy.sh --update"
 echo "   证书管理：已自动申请并配置每周自动续期（日志：nginx/ssl/ssl-renew.log）"
+if [ -n "$BOOTSTRAP_TOKEN" ]; then
+    echo ""
+    echo -e "${YELLOW}🔑 初始化令牌（BOOTSTRAP_SETUP_TOKEN，仅本次显示，请立即记录并妥善保存）：${NC}"
+    echo -e "${YELLOW}   ${BOOTSTRAP_TOKEN}${NC}"
+    echo "   首次访问 https://${DOMAIN_VALUE} 时输入此令牌完成初始化（忘记密码时也可用于重置）"
+    echo "   如需再次查看，可在服务器上执行：grep '^BOOTSTRAP_SETUP_TOKEN=' .env.production"
+fi
 echo ""
 echo "📁 数据保存位置（升级/重装均保留，请定期异地备份 server/backups/）："
 echo "   server/uploads/    上传的媒体文件"
