@@ -1683,6 +1683,7 @@
     "export": "📦 数据导出",
     "security": "🔐 安全管理",
     "recycleBin": "🗑️ 回收站",
+    "storage": "💾 存储空间",
     "backToFrontend": "⬅️ 返回前台",
     "pageTitle": "系统管理",
     "loggedIn": "已登录",

@@ -56,6 +56,9 @@
         <router-link to="/admin/recycle-bin" class="nav-item" active-class="nav-item--active">
           {{ t('adminLayout.recycleBin') }}
         </router-link>
+        <router-link to="/admin/storage" class="nav-item" active-class="nav-item--active">
+          {{ t('adminLayout.storage') }}
+        </router-link>
       </nav>
 
       <div class="sidebar-footer">
