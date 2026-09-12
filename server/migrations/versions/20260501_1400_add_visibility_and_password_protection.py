@@ -57,7 +57,7 @@ def upgrade() -> None:
         UPDATE articles 
         SET visibility = CASE 
             WHEN is_encrypted = TRUE THEN 'partners_only'
-            WHEN status = 'Published' AND is_encrypted = FALSE THEN 'public'
+            WHEN status = 'published' AND is_encrypted = FALSE THEN 'public'
             ELSE 'private'
         END
         WHERE visibility IS NULL
