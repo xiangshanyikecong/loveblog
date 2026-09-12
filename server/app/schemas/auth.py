@@ -77,6 +77,23 @@ class LoginRequest(BaseModel):
         return _normalize_username(value, error_message="Invalid username")
 
 
+class PasswordRecoveryRequest(BaseModel):
+    """Unauthenticated password reset, authorized by the instance bootstrap token."""
+
+    username: str = Field(min_length=3, max_length=32)
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        return _normalize_username(value, error_message="Invalid username")
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        return _validate_password_strength(value)
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

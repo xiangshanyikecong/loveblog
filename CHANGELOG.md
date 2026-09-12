@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 未登录密码找回（自部署应急恢复）：登录页新增「忘记密码？」入口，输入
+  用户名、新密码和部署时生成的 `BOOTSTRAP_SETUP_TOKEN` 即可重置任意
+  伴侣账号密码；重置会吊销该账号全部会话并解除登录冻结。接口限流
+  3 次/分钟，访客账号不支持此方式（由伴侣账号在后台管理），操作写入审计日志
 - `install-docker.sh` — Docker 版一键安装：免 Git，仅下载运行所需文件
   （compose / deploy.sh / nginx 配置），直接拉取 ghcr.io 预构建镜像部署；
   重复执行等于更新部署（数据与配置均保留）

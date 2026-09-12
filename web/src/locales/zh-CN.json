@@ -118,7 +118,16 @@
     "loggedOut": "未登录",
     "loginPrevSessionFail": "上一次退出尚未在服务器完成，请检查网络后重试",
     "loginSuccess": "登录成功",
-    "loginSuccessLimited": "登录成功（非情侣账号，已隐藏管理修改入口）"
+    "loginSuccessLimited": "登录成功（非情侣账号，已隐藏管理修改入口）",
+    "forgotPasswordToggle": "忘记密码？",
+    "forgotPasswordTitle": "重置密码",
+    "forgotPasswordHint": "输入账号用户名与新密码，并填写部署时生成的服务器初始化令牌（.env.production 中的 BOOTSTRAP_SETUP_TOKEN）。重置后该账号的所有登录会话都会失效。",
+    "forgotPasswordNewPassword": "新密码",
+    "forgotPasswordToken": "初始化令牌（BOOTSTRAP_SETUP_TOKEN）",
+    "forgotPasswordSubmit": "重置密码",
+    "forgotPasswordSubmitting": "重置中...",
+    "forgotPasswordSuccess": "密码已重置，请使用新密码登录",
+    "forgotPasswordCancel": "取消"
   },
   "layout": {
     "appName": "恋爱记",

@@ -118,7 +118,16 @@
     "loggedOut": "Not logged in",
     "loginPrevSessionFail": "Previous logout hasn't completed on the server, please check your network and retry",
     "loginSuccess": "Login successful",
-    "loginSuccessLimited": "Login successful (non-partner account, management entry is hidden)"
+    "loginSuccessLimited": "Login successful (non-partner account, management entry is hidden)",
+    "forgotPasswordToggle": "Forgot password?",
+    "forgotPasswordTitle": "Reset password",
+    "forgotPasswordHint": "Enter the account username and a new password, plus the server setup token generated at deployment (BOOTSTRAP_SETUP_TOKEN in .env.production). All existing sessions of the account will be revoked.",
+    "forgotPasswordNewPassword": "New password",
+    "forgotPasswordToken": "Setup token (BOOTSTRAP_SETUP_TOKEN)",
+    "forgotPasswordSubmit": "Reset password",
+    "forgotPasswordSubmitting": "Resetting...",
+    "forgotPasswordSuccess": "Password reset. Please sign in with the new password",
+    "forgotPasswordCancel": "Cancel"
   },
   "layout": {
     "appName": "Love Journal",

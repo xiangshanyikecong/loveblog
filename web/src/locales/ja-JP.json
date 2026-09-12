@@ -118,7 +118,16 @@
     "loggedOut": "未ログイン",
     "loginPrevSessionFail": "前回のログアウトがサーバーで完了していません、ネットワークを確認して再試行してください",
     "loginSuccess": "ログイン成功",
-    "loginSuccessLimited": "ログイン成功（非カップルアカウント、管理画面は非表示）"
+    "loginSuccessLimited": "ログイン成功（非カップルアカウント、管理画面は非表示）",
+    "forgotPasswordToggle": "パスワードをお忘れですか？",
+    "forgotPasswordTitle": "パスワードをリセット",
+    "forgotPasswordHint": "アカウントのユーザー名と新しいパスワード、デプロイ時に生成したサーバー初期化トークン（.env.production の BOOTSTRAP_SETUP_TOKEN）を入力してください。リセット後、このアカウントのすべてのログインセッションは無効になります。",
+    "forgotPasswordNewPassword": "新しいパスワード",
+    "forgotPasswordToken": "初期化トークン（BOOTSTRAP_SETUP_TOKEN）",
+    "forgotPasswordSubmit": "リセット",
+    "forgotPasswordSubmitting": "リセット中...",
+    "forgotPasswordSuccess": "パスワードをリセットしました。新しいパスワードでログインしてください",
+    "forgotPasswordCancel": "キャンセル"
   },
   "layout": {
     "appName": "ラブジャーナル",

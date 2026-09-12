@@ -38,6 +38,7 @@ from app.schemas.auth import (
     LoginRequest,
     PartnerListResponse,
     PartnerRegisterRequest,
+    PasswordRecoveryRequest,
     RegisterRequest,
     TokenResponse,
     UpdatePartnerRequest,
@@ -52,6 +53,7 @@ from app.services.security import (
     is_account_frozen,
     record_failed_login,
     record_successful_login,
+    reset_login_attempts,
     get_freeze_remaining_minutes,
 )
 
@@ -194,6 +196,54 @@ def bootstrap_register(
         detail={"role": user.role.value, "site_name": setting.site_name},
     )
     return user
+
+
+@router.post("/password-recovery")
+@limiter.limit("3/minute")
+def password_recovery(
+    request: Request,
+    payload: PasswordRecoveryRequest,
+    db: Session = Depends(get_db),
+    bootstrap_token: str | None = Header(default=None, alias="X-Bootstrap-Token"),
+) -> dict:
+    """Unauthenticated password reset, authorized by the instance bootstrap token.
+
+    Self-hosted recovery path: the credential is the server-side
+    ``BOOTSTRAP_SETUP_TOKEN`` from ``.env.production`` — only someone with
+    server access (the instance owner) can reset a forgotten password without
+    logging in. The reset revokes all existing sessions of the account and
+    clears any login freeze from earlier failed attempts.
+    """
+    configured_token = settings.bootstrap_setup_token.strip()
+    if not configured_token:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Password recovery is disabled")
+    if not bootstrap_token or not compare_digest(bootstrap_token, configured_token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid recovery token")
+
+    user = db.query(User).filter(User.username == payload.username, User.deleted_at.is_(None)).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if user.role == UserRole.visitor:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Visitor passwords must be managed by a signed-in partner",
+        )
+
+    user.password_hash = get_password_hash(payload.new_password)
+    user.password_changed_at = datetime.now(timezone.utc)
+    increment_session_version(db, user)
+    reset_login_attempts(db, user)
+
+    write_audit_log(
+        db,
+        action="account.password_recovery",
+        actor=user,
+        resource_type="user",
+        resource_id=user.uid,
+        resource_name=user.username,
+        detail={"via": "bootstrap_token", "role": user.role.value},
+    )
+    return {"ok": True}
 
 
 @router.post("/register", response_model=UserProfile, status_code=status.HTTP_201_CREATED)
