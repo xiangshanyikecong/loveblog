@@ -84,14 +84,40 @@ download() {
 }
 
 # ---- 2. Docker（缺失时自动安装，需 root/sudo）----
+# get.docker.com 不支持部分国产发行版（华为 HCE / openEuler，报
+# "Unsupported distribution"），此类系统改用 docker-ce 官方 EL 仓库安装。
+install_docker_hce() {
+    local major
+    case "$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')" in
+        2.0|22.03*) major=8 ;;
+        *)          major=9 ;;
+    esac
+    cat > /etc/yum.repos.d/docker-ce.repo <<EOF
+[docker-ce-stable]
+name=Docker CE Stable
+baseurl=https://repo.huaweicloud.com/docker-ce/linux/centos/${major}/x86_64/stable
+enabled=1
+gpgcheck=1
+gpgkey=https://repo.huaweicloud.com/docker-ce/linux/centos/gpg
+EOF
+    dnf -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+}
+
+install_docker() {
+    if grep -qE '^ID="(hce|openEuler)"' /etc/os-release 2>/dev/null && command -v dnf &>/dev/null; then
+        install_docker_hce
+    else
+        download https://get.docker.com /tmp/get-docker.sh
+        sh /tmp/get-docker.sh
+    fi
+}
+
 if ! command -v docker &> /dev/null; then
     echo -e "${YELLOW}🐳 未检测到 Docker，尝试自动安装...${NC}"
     if [ "$(id -u)" = "0" ]; then
-        curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sh /tmp/get-docker.sh
+        install_docker
     elif command -v sudo &> /dev/null; then
-        sudo curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sudo sh /tmp/get-docker.sh
+        sudo bash -c "$(declare -f install_docker install_docker_hce download); install_docker"
     else
         echo -e "${RED}❌ 未检测到 Docker 且无 root/sudo 权限，请先手动安装 Docker${NC}"
         echo "   参考：https://docs.docker.com/engine/install/"
@@ -127,12 +153,7 @@ for branch in main master; do
     fi
 done
 
-if [ -z "$SRC_DIR" ]; then
-    echo -e "${RED}❌ 下载运行文件失败，请检查网络连接${NC}"
-    exit 1
-fi
-
-# 校验运行文件齐全
+# 运行所需文件清单（用于源码包校验与本地降级检查）
 RUNTIME_FILES=(
     "docker-compose.prod.yml"
     "deploy.sh"
@@ -140,20 +161,42 @@ RUNTIME_FILES=(
     "nginx/nginx.conf"
     "nginx/conf.d/love-journal.conf"
 )
-for f in "${RUNTIME_FILES[@]}"; do
-    if [ ! -f "$SRC_DIR/$f" ]; then
-        echo -e "${RED}❌ 源码包缺少运行文件：$f${NC}"
+
+have_local_runtime_files() {
+    local f
+    for f in "${RUNTIME_FILES[@]}"; do
+        [ -f "$INSTALL_DIR/$f" ] || return 1
+    done
+    return 0
+}
+
+if [ -z "$SRC_DIR" ]; then
+    # 下载失败：本地已有全套运行文件时降级继续（例如手动放置了文件、或
+    # 仓库暂不可匿名访问的服务器环境），否则确实无法继续
+    if have_local_runtime_files; then
+        echo -e "${YELLOW}⚠️  下载运行文件失败（网络问题或仓库访问受限），继续使用本地已有文件${NC}"
+    else
+        echo -e "${RED}❌ 下载运行文件失败，且本地缺少运行文件，无法继续${NC}"
+        echo "   可手动下载运行文件后重试，或检查网络后重新执行本脚本"
         exit 1
     fi
-done
+else
+    # 校验源码包内运行文件齐全
+    for f in "${RUNTIME_FILES[@]}"; do
+        if [ ! -f "$SRC_DIR/$f" ]; then
+            echo -e "${RED}❌ 源码包缺少运行文件：$f${NC}"
+            exit 1
+        fi
+    done
 
-mkdir -p "$INSTALL_DIR/nginx/conf.d"
-cp -f "$SRC_DIR/docker-compose.prod.yml" "$INSTALL_DIR/"
-cp -f "$SRC_DIR/deploy.sh" "$INSTALL_DIR/"
-cp -f "$SRC_DIR/.env.production.example" "$INSTALL_DIR/"
-cp -f "$SRC_DIR/nginx/nginx.conf" "$INSTALL_DIR/nginx/"
-cp -f "$SRC_DIR/nginx/conf.d/love-journal.conf" "$INSTALL_DIR/nginx/conf.d/"
-chmod +x "$INSTALL_DIR/deploy.sh"
+    mkdir -p "$INSTALL_DIR/nginx/conf.d"
+    cp -f "$SRC_DIR/docker-compose.prod.yml" "$INSTALL_DIR/"
+    cp -f "$SRC_DIR/deploy.sh" "$INSTALL_DIR/"
+    cp -f "$SRC_DIR/.env.production.example" "$INSTALL_DIR/"
+    cp -f "$SRC_DIR/nginx/nginx.conf" "$INSTALL_DIR/nginx/"
+    cp -f "$SRC_DIR/nginx/conf.d/love-journal.conf" "$INSTALL_DIR/nginx/conf.d/"
+    chmod +x "$INSTALL_DIR/deploy.sh"
+fi
 cd "$INSTALL_DIR"
 echo -e "${GREEN}✅ 运行文件已就绪：$INSTALL_DIR${NC}"
 

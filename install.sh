@@ -71,14 +71,40 @@ fi
 cd "$INSTALL_DIR"
 
 # ---- 3. Docker（缺失时自动安装，需 root/sudo）----
+# get.docker.com 不支持部分国产发行版（华为 HCE / openEuler，报
+# "Unsupported distribution"），此类系统改用 docker-ce 官方 EL 仓库安装。
+install_docker_hce() {
+    local major
+    case "$(grep -E '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')" in
+        2.0|22.03*) major=8 ;;
+        *)          major=9 ;;
+    esac
+    cat > /etc/yum.repos.d/docker-ce.repo <<EOF
+[docker-ce-stable]
+name=Docker CE Stable
+baseurl=https://repo.huaweicloud.com/docker-ce/linux/centos/${major}/x86_64/stable
+enabled=1
+gpgcheck=1
+gpgkey=https://repo.huaweicloud.com/docker-ce/linux/centos/gpg
+EOF
+    dnf -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+}
+
+install_docker() {
+    if grep -qE '^ID="(hce|openEuler)"' /etc/os-release 2>/dev/null && command -v dnf &>/dev/null; then
+        install_docker_hce
+    else
+        curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+        sh /tmp/get-docker.sh
+    fi
+}
+
 if ! command -v docker &> /dev/null; then
     echo -e "${YELLOW}🐳 未检测到 Docker，尝试自动安装...${NC}"
     if [ "$(id -u)" = "0" ]; then
-        curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sh /tmp/get-docker.sh
+        install_docker
     elif command -v sudo &> /dev/null; then
-        sudo curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sudo sh /tmp/get-docker.sh
+        sudo bash -c "$(declare -f install_docker install_docker_hce); install_docker"
     else
         echo -e "${RED}❌ 未检测到 Docker 且无 root/sudo 权限，请先手动安装 Docker${NC}"
         echo "   参考：https://docs.docker.com/engine/install/"
