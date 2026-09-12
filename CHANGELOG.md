@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `install-docker.sh` — Docker 版一键安装：免 Git，仅下载运行所需文件
+  （compose / deploy.sh / nginx 配置），直接拉取 ghcr.io 预构建镜像部署；
+  重复执行等于更新部署（数据与配置均保留）
+
+### Changed
+
+- `docker-compose.prod.yml` — 生产 Redis 启用 AOF 持久化（`--appendonly yes`），
+  硬重启最多丢约 1 秒写入，避免默认 RDB 快照间隔导致网易云登录 Cookie 等
+  数据在异常重启后丢失
+
 ## [1.0.2] - 2026-09-11
 
 ### Added

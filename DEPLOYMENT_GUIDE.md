@@ -99,7 +99,15 @@ python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 ### 4. 执行部署
 
 **一键安装（推荐）**：全新 Linux 服务器上一条命令完成「安装 Docker（如缺失）→
-拉取代码 → 生成配置（随机密码/密钥）→ 自动申请 SSL → 部署 → 配置证书自动续期」：
+获取运行文件 → 生成配置（随机密码/密钥）→ 自动申请 SSL → 部署 → 配置证书自动续期」。
+
+Docker 版（预构建镜像：免 Git、不在服务器上编译，最快）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiangshanyikecong/loveblog/main/install-docker.sh | sudo bash
+```
+
+源码版（克隆完整仓库，支持服务器本地构建 `./deploy.sh --build`）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/xiangshanyikecong/loveblog/main/install.sh | sudo bash

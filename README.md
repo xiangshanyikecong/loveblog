@@ -227,8 +227,10 @@ npm run dev
 
 生产基于 `docker-compose.prod.yml`（服务：`postgres`、`redis`、`netease`、`backend`、`web`、`nginx`）：
 
-- **Linux 一键安装（推荐）**：`curl -fsSL https://raw.githubusercontent.com/xiangshanyikecong/loveblog/main/install.sh | sudo bash`
-  （自动完成：安装 Docker → 拉取代码 → 生成配置 → 自动申请 SSL → 部署 → 配置证书自动续期）
+- **Linux 一键安装（推荐）**：`curl -fsSL https://raw.githubusercontent.com/xiangshanyikecong/loveblog/main/install-docker.sh | sudo bash`
+  （Docker 版：免 Git，仅下载运行文件，直接拉取 ghcr.io 预构建镜像；自动完成：安装 Docker → 生成配置 → 自动申请 SSL → 部署 → 配置证书自动续期）
+- **Linux 源码版一键安装**：`curl -fsSL https://raw.githubusercontent.com/xiangshanyikecong/loveblog/main/install.sh | sudo bash`
+  （克隆完整源码仓库，支持服务器本地构建 `./deploy.sh --build`）
 - **Linux 手动**：`cp .env.production.example .env.production` 填写后执行 `./deploy.sh`（缺证书时自动申请 SSL）
 - **Windows（Docker Desktop）**：`copy .env.production.example .env.production` 填写后，
   运行 `powershell -ExecutionPolicy Bypass -File deploy.ps1` 或双击 `deploy.bat`

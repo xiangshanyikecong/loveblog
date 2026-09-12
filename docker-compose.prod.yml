@@ -23,7 +23,9 @@ services:
     restart: always
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    # AOF 持久化（everysec）：硬重启最多丢 ~1 秒写入。默认 RDB 快照间隔
+    # 可达分钟级，会导致加密存的网易云 Cookie 等数据在异常重启后丢失。
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
     volumes:
       - redis_data:/data
     networks:
