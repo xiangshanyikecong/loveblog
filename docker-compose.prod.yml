@@ -194,7 +194,7 @@ services:
       - backend
 
   nginx:
-    image: nginx:1.27.4-alpine3.21
+    image: nginx:1.30.4-alpine3.24
     container_name: love-nginx-prod
     restart: always
     logging: *default-logging

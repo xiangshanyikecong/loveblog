@@ -565,7 +565,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | Package | Version | Declared license(s) | License source | Project source |
 | --- | --- | --- | --- | --- |
 | aiohappyeyeballs | 2.7.1 | PSF-2.0 | Not declared | <https://github.com/aio-libs/aiohappyeyeballs> |
-| aiohttp | 3.14.1 | Apache-2.0 AND MIT | Not declared | <https://codecov.io/github/aio-libs/aiohttp> |
+| aiohttp | 3.14.3 | Apache-2.0 AND MIT | Not declared | <https://codecov.io/github/aio-libs/aiohttp> |
 | aiosignal | 1.4.0 | Apache 2.0 | Not declared | <https://codecov.io/github/aio-libs/aiosignal> |
 | alembic | 1.18.5 | MIT | Not declared | <https://github.com/sqlalchemy/alembic/> |
 | annotated-doc | 0.0.4 | MIT | Not declared | <https://github.com/fastapi/annotated-doc> |
@@ -579,7 +579,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | charset-normalizer | 3.4.9 | MIT | Not declared | <https://github.com/jawah/charset_normalizer> |
 | click | 8.3.3 | BSD-3-Clause | Not declared | <https://github.com/pallets/click/> |
 | colorama | 0.4.6 | BSD | Not declared | <https://github.com/tartley/colorama> |
-| cryptography | 49.0.0 | Apache-2.0 OR BSD-3-Clause | Not declared | <https://github.com/pyca/cryptography/> |
+| cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause | Not declared | <https://github.com/pyca/cryptography/> |
 | Deprecated | 1.3.1 | MIT | Not declared | <https://github.com/laurent-laporte-pro/deprecated> |
 | ecdsa | 0.19.2 | MIT | Not declared | <http://github.com/tlsfuzzer/python-ecdsa> |
 | fastapi | 0.139.2 | MIT | Not declared | <https://github.com/fastapi/fastapi> |
@@ -612,7 +612,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | multidict | 6.7.1 | Apache License 2.0 | Not declared | <https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md> |
 | packaging | 26.2 | Apache-2.0 OR BSD-2-Clause | Not declared | <https://github.com/pypa/packaging> |
 | passlib | 1.7.4 | BSD | Not declared | <https://passlib.readthedocs.io> |
-| pillow | 12.2.0 | MIT-CMU | Not declared | <https://github.com/python-pillow/Pillow> |
+| pillow | 12.3.0 | MIT-CMU | Not declared | <https://github.com/python-pillow/Pillow> |
 | propcache | 0.5.2 | Apache-2.0 | Not declared | <https://github.com/aio-libs/.github/blob/master/CODE_OF_CONDUCT.md> |
 | proto-plus | 1.28.1 | Apache 2.0 | Not declared | <https://github.com/googleapis/google-cloud-python> |
 | protobuf | 7.35.1 | 3-Clause BSD License | Not declared | <https://developers.google.com/protocol-buffers/> |
@@ -3149,7 +3149,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ### Text 36
 
-Applies to: aiohttp 3.14.1 (LICENSE)
+Applies to: aiohttp 3.14.3 (LICENSE)
 
 ```text
 MIT License
@@ -3178,7 +3178,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### Text 37
 
-Applies to: aiohttp 3.14.1 (LICENSE.txt)
+Applies to: aiohttp 3.14.3 (LICENSE.txt)
 
 ```text
 Apache License
@@ -25505,7 +25505,7 @@ THE SOFTWARE.
 
 ### Text 110
 
-Applies to: cryptography 49.0.0 (LICENSE)
+Applies to: cryptography 50.0.1 (LICENSE)
 
 ```text
 This software is made available under the terms of *either* of the licenses
@@ -25515,7 +25515,7 @@ under the terms of *both* these licenses.
 
 ### Text 111
 
-Applies to: cryptography 49.0.0 (LICENSE.APACHE)
+Applies to: cryptography 50.0.1 (LICENSE.APACHE)
 
 ```text
 Apache License
@@ -25723,7 +25723,7 @@ Apache License
 
 ### Text 112
 
-Applies to: cryptography 49.0.0 (LICENSE.BSD)
+Applies to: cryptography 50.0.1 (LICENSE.BSD)
 
 ```text
 Copyright (c) Individual contributors.
@@ -32465,7 +32465,7 @@ THE SOFTWARE.
 
 ### Text 271
 
-Applies to: pillow 12.2.0 (LICENSE)
+Applies to: pillow 12.3.0 (LICENSE)
 
 ```text
 The Python Imaging Library (PIL) is

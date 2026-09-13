@@ -13,7 +13,7 @@
 # QEMU 模拟运行（QEMU 模拟 arm64 时 node 易触发 SIGILL 崩溃，且模拟执行极
 # 慢）。依赖全部为纯 JS，node_modules 与平台无关，可直接复制进目标架构
 # （amd64/arm64）的 node 运行镜像。
-FROM --platform=$BUILDPLATFORM node:22.14.0-alpine3.21 AS deps
+FROM --platform=$BUILDPLATFORM node:22.23.2-alpine3.24 AS deps
 
 WORKDIR /app
 
@@ -22,7 +22,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
-FROM node:22.14.0-alpine3.21
+FROM node:22.23.2-alpine3.24
+
+# 构建时刷新 Alpine 安全补丁（理由同后端镜像）：官方镜像重建节奏跟不上
+# Alpine secdb 的安全修复进度，apk upgrade 保证 trivy 门禁可通过。
+# 必须在切换到非 root 的 node 用户之前执行。
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 

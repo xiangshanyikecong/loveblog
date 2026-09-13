@@ -3,7 +3,7 @@
 # QEMU 模拟运行（QEMU 模拟 arm64 时 node 易触发 SIGILL 崩溃，且模拟执行
 # 极慢）。产物 dist 是平台无关的静态文件，可直接复制进目标架构
 # （amd64/arm64）的 nginx 运行镜像。
-FROM --platform=$BUILDPLATFORM node:20.19.4-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM node:20.20-alpine3.22 AS builder
 
 WORKDIR /app
 
@@ -21,7 +21,11 @@ COPY . .
 RUN npm run build
 
 # 生产阶段 - 使用 Nginx
-FROM nginx:1.27.4-alpine3.21
+FROM nginx:1.30.4-alpine3.24
+
+# 构建时刷新 Alpine 安全补丁（理由同后端镜像）：官方镜像重建节奏跟不上
+# Alpine secdb 的安全修复进度，apk upgrade 保证 trivy 门禁可通过。
+RUN apk upgrade --no-cache
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html

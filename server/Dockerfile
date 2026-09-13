@@ -1,4 +1,9 @@
-FROM python:3.12.10-slim-bookworm
+FROM python:3.12.14-slim-bookworm
+
+# 构建时刷新 Debian 安全补丁：官方镜像的固定 tag 只在 Python 补丁版发布时
+# 重建，基础系统包可能落后于 bookworm-security 数月，trivy HIGH/CRITICAL
+# 门禁会因此失败。apt upgrade 确保进入镜像的系统包始终是当前已修复版本。
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
