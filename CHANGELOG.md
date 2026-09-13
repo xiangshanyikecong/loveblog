@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4-beta.2] - 2026-09-13
+
+### Added
+
+- 缩略图生成与使用：后端 `media.py` 新增 400px 缩略图生成并落盘（`thumbnail_url`），
+  三端时间轴与相册优先加载缩略图，仅预览原图时回退；Web 端新增客户端压缩
+  （1600px 降采样 + JPEG 85%），多图上传改并行
+- CI 生产镜像安全门禁：trivy 扫描（HIGH/CRITICAL 且已有修复版本的漏洞使构建
+  失败，`ignore-unfixed` 避免无补丁披露长期阻塞）+ 每镜像 CycloneDX SBOM
+  作为 workflow artifact 留存，便于供应链审计
+- `install.sh` — 部署完成后在 SSH 窗口显示一次初始化令牌，方便用户记录
+
+### Changed
+
+- 事件循环阻塞优化：`auto_backup_loop` / `health_monitor` / 游戏与画板同步落盘
+  改用 `asyncio.to_thread`；`auto_pause` Redis 锁自旋改为异步等待
+- 通知链路：`after_commit` 投递改为后台线程队列异步发送（SMTP/WebPush/FCM），
+  保留重试；notifications 增加 created_at 与 dedupe 复合索引迁移
+- 数据库与查询：articles 列表 `joinedload` 消除 N+1；articles/albums/events/
+  messages 接口分页；搜索改 SQL 层 ILIKE + pg_trgm 预筛；dashboard/月报/年报
+  聚合接入 Redis 缓存；连接池增加 `pool_recycle`/`statement_timeout`
+- 部署安全：nginx 修复 `add_header` 继承问题（所有 HTML 页面正确应用 CSP/HSTS）、
+  启用 `proxy_cache`；compose 增加日志轮转与资源限制防 OOM；netease-api 改
+  非 root 运行；TLS 私钥权限收紧为 600
+- 三端一致性：创建内容默认可见性统一为 PartnersOnly；一起听移除 REST 轮询仅
+  保留 WS 通信（REST 兜底加载增加 `event_seq` 防回退）；Vite 函数式分包、
+  语言包按需懒加载；Android 消息增量同步（`updated_after` 游标 + 24h 全量对账）
+- 生产镜像供应链安全（修复 CI trivy 门禁失败，共清除 64 个已修复漏洞）：
+  - 基础镜像升级：python 3.12.10→3.12.14-slim-bookworm、node 20.19.4→20.20 /
+    22.14.0→22.23.2-alpine3.24、nginx 1.27.4→1.30.4-alpine3.24，三个 Dockerfile
+    构建时刷新 OS 安全补丁（apt/apk upgrade），镜像安全不再依赖官方镜像重建节奏
+  - Python 依赖：aiohttp 3.14.3、cryptography 50.0.1、Pillow 12.3.0（lock 与
+    notices 同步）
+  - NetEase 助手：`npm audit fix` 清除 axios（10 个 HIGH）与 ip-address（3 个
+    HIGH，SSRF 绕过）；运行时镜像移除 node 捆绑的 npm 及其依赖树
+    （tar/pacote/sigstore 等共 11 个 HIGH/CRITICAL），依赖安装在独立构建阶段
+    完成，运行只需 node 本体
+
+### Fixed
+
+- `install.sh` — 华为 HCE / openEuler 安装 Docker 后守护进程不会自启，导致
+  误报权限不足
+- `docker-compose.prod.yml` — `pids_limit` 迁移至 `deploy.resources.limits.pids`
+  （新版 compose 校验失败）
+- CI — trivy-action 版本引用补齐 `v` 前缀并升级至 v0.36.0（v0.34.2 及更早
+  版本受 CVE-2026-33634 供应链攻击影响）
+- Android — 修复 5 处 Kotlin 编译错误与 `btn_clear` 重复资源
+
 ## [1.0.4-beta] - 2026-09-12
 
 ### Added
