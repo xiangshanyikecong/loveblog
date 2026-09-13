@@ -1329,6 +1329,10 @@ def _create_persistent_auto_backup_locked(
     backup_id = str(_uuid_mod.uuid4())
     data = _load_all_data(db)
     manifest = _build_manifest(data, backup_id, operator.uid)
+    # Snapshot is fully in memory now: end the read transaction so the
+    # (potentially minutes-long) archive build never holds a pooled DB
+    # connection open. Later audit/notification writes start a fresh one.
+    db.commit()
 
     export_dir = Path(tempfile.mkdtemp(prefix="love_auto_backup_"))
     try:
@@ -2852,6 +2856,9 @@ def export_all(
     backup_id = str(_uuid_mod.uuid4())
     data = _load_all_data(db)
     manifest = _build_manifest(data, backup_id, current_user.uid)
+    # End the read transaction before the long archive build so a pooled
+    # connection is not held open for the whole request (see auto backup).
+    db.commit()
 
     export_dir = Path(tempfile.mkdtemp(prefix="love_backup_"))
     archive_path = _build_archive(export_dir, data, manifest)

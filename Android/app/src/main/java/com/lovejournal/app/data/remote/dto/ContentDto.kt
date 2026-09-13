@@ -34,7 +34,8 @@ data class EventCreateRequest(
     val type: String = "Countdown",
     val is_important: Boolean = false,
     val is_yearly_repeat: Boolean = false,
-    val visibility: String = "Public",
+    // Unified privacy default across all clients: only the couple can see it.
+    val visibility: String = "PartnersOnly",
     val tags: List<String> = emptyList(),
 )
 

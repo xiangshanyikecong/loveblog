@@ -1,8 +1,23 @@
+# 日志轮转：json-file 默认无限增长，长期运行会占满宿主机磁盘。
+# 统一定义为 anchor，各服务 logging: *default-logging 引用。
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16.8-alpine3.21
     container_name: love-postgres-prod
     restart: always
+    logging: *default-logging
+    # 资源上限：防止单个服务内存失控（泄漏/异常流量）把宿主机 OOM 拖垮，
+    # 连带杀死 postgres 等关键服务。postgres 缓存依赖可用内存，给足余量。
+    deploy:
+      resources:
+        limits:
+          memory: 512m
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-love}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # 必须通过环境变量设置
@@ -21,6 +36,11 @@ services:
     image: redis:7.4.2-alpine3.21
     container_name: love-redis-prod
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 256m
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     # AOF 持久化（everysec）：硬重启最多丢 ~1 秒写入。默认 RDB 快照间隔
@@ -52,6 +72,11 @@ services:
     image: ghcr.io/xiangshanyikecong/loveblog-netease:${IMAGE_TAG:-latest}
     container_name: love-netease-prod
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 256m
     networks:
       - love-network
     healthcheck:
@@ -71,6 +96,14 @@ services:
     image: ghcr.io/xiangshanyikecong/loveblog-backend:${IMAGE_TAG:-latest}
     container_name: love-backend-prod
     restart: always
+    logging: *default-logging
+    # backend 是内存大头（uvicorn + 数据集快照 + 备份构建），给 1 GiB 余量；
+    # pids_limit 防止 fork 炸弹。资源限制防 OOM 拖垮宿主机。
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    pids_limit: 512
     environment:
       APP_NAME: ${APP_NAME:-Love Journal}
       APP_ENV: production
@@ -149,6 +182,11 @@ services:
     image: ghcr.io/xiangshanyikecong/loveblog-web:${IMAGE_TAG:-latest}
     container_name: love-web-prod
     restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 256m
     networks:
       - love-network
     depends_on:
@@ -157,17 +195,24 @@ services:
   nginx:
     image: nginx:1.27.4-alpine3.21
     container_name: love-nginx-prod
+    restart: always
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    pids_limit: 256
     ulimits:
       nofile:
         soft: 65535
         hard: 65535
-    restart: always
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro  # 共享安全头片段（add_header 继承修复）
       - ./nginx/ssl:/etc/nginx/ssl:ro  # SSL 证书目录
       - ./nginx/ssl-challenge:/var/www/certbot:ro  # ACME 挑战目录（certbot webroot 申请/续期）
       - ./server/uploads:/var/www/uploads:ro  # 静态文件服务

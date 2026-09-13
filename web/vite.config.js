@@ -22,6 +22,24 @@ const backendProxyTarget = process.env.BACKEND_PROXY_TARGET || "http://127.0.0.1
 
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    rollupOptions: {
+      output: {
+        // Rolldown-vite only supports the function form of manualChunks: split
+        // heavyweight / stable dependencies into dedicated chunks so app code
+        // changes do not invalidate them and the editor only loads where it is
+        // actually routed to.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/[\\/]node_modules[\\/](vue|@vue|vue-router|vue-i18n)[\\/]/.test(id)) return "vendor-vue";
+          if (/[\\/]node_modules[\\/]axios[\\/]/.test(id)) return "vendor-http";
+          if (/[\\/]node_modules[\\/](marked|dompurify)[\\/]/.test(id)) return "vendor-markdown";
+          if (/[\\/]node_modules[\\/]vditor[\\/]/.test(id)) return "vendor-vditor";
+          return undefined;
+        }
+      }
+    }
+  },
   server: {
     host: "0.0.0.0",
     port: 5173,

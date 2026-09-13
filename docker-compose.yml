@@ -1,8 +1,16 @@
+# 日志轮转：json-file 默认无限增长，长期运行的开发环境同样会占满磁盘。
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16.8-alpine3.21
     container_name: love-postgres
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: love
       POSTGRES_PASSWORD: love
@@ -24,6 +32,7 @@ services:
     image: redis:7.4.2-alpine3.21
     container_name: love-redis
     restart: unless-stopped
+    logging: *default-logging
     # 启用口令并仅绑回环：无认证的 Redis 一旦暴露即可被 dump（含加密的网易云
     # cookie 密文）。dev 用固定弱口令 love，仅供本机；生产见 prod compose 的
     # ${REDIS_PASSWORD}。
@@ -50,6 +59,7 @@ services:
     image: love-netease-enhanced:local
     container_name: love-netease-api
     restart: unless-stopped
+    logging: *default-logging
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
       interval: 15s
@@ -63,6 +73,7 @@ services:
       context: ./server
     container_name: love-node-api
     restart: unless-stopped
+    logging: *default-logging
     environment:
       APP_NAME: Love Node API
       APP_ENV: development
@@ -109,6 +120,7 @@ services:
       context: ./web
     container_name: love-web
     restart: unless-stopped
+    logging: *default-logging
     environment:
       VITE_API_BASE_URL: /api
       BACKEND_PROXY_TARGET: http://backend:8000

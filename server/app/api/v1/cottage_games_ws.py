@@ -331,7 +331,8 @@ async def cottage_games_ws(ws: WebSocket, game_key: str) -> None:
         return
 
     token = _extract_token(ws)
-    user = _resolve_user(token) if token else None
+    # JWT decode + DB lookup: keep off the event loop.
+    user = await asyncio.to_thread(_resolve_user, token) if token else None
     if user is None:
         await ws.close(code=WS_CLOSE_UNAUTHORIZED)
         return
@@ -352,7 +353,8 @@ async def cottage_games_ws(ws: WebSocket, game_key: str) -> None:
     # Initial presence + state snapshot for this socket.
     try:
         await ws.send_json({"type": "PRESENCE_SNAPSHOT", "payload": {"online": manager.online_uids()}})
-        await ws.send_json({"type": "STATE", "payload": game_room.get_snapshot(redis_client)})
+        snapshot = await asyncio.to_thread(game_room.get_snapshot, redis_client)
+        await ws.send_json({"type": "STATE", "payload": snapshot})
     except room.RoomUnavailable:
         try:
             await ws.send_json({"type": "ERROR", "payload": {"message": "游戏服务暂不可用"}})
@@ -394,14 +396,17 @@ async def cottage_games_ws(ws: WebSocket, game_key: str) -> None:
 
             try:
                 if mtype == "NEW_GAME":
-                    other = _other_partner_uid(user.uid)
+                    # DB lookup for the partner UID - off the event loop.
+                    other = await asyncio.to_thread(_other_partner_uid, user.uid)
                     if not other:
                         await ws.send_json(
                             {"type": "ERROR", "payload": {"message": "需要两位伴侣账号才能开始对局"}}
                         )
                         continue
                     size = engine.normalize_size(payload.get("size", engine.DEFAULT_SIZE))
-                    snapshot = game_room.new_game(
+                    # Sync Redis ops (incl. lease spin) run in a worker thread.
+                    snapshot = await asyncio.to_thread(
+                        game_room.new_game,
                         redis_client,
                         requester_uid=user.uid,
                         partner_uid=other,
@@ -410,30 +415,38 @@ async def cottage_games_ws(ws: WebSocket, game_key: str) -> None:
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
 
                 elif mtype == "MOVE":
-                    snapshot = game_room.apply_move(
-                        redis_client, uid=user.uid, x=payload.get("x"), y=payload.get("y")
+                    snapshot = await asyncio.to_thread(
+                        game_room.apply_move,
+                        redis_client,
+                        uid=user.uid,
+                        x=payload.get("x"),
+                        y=payload.get("y"),
                     )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
                     if snapshot.get("phase") == room.PHASE_FINISHED:
-                        _persist_finished_match(snapshot)
+                        await asyncio.to_thread(_persist_finished_match, snapshot)
                         await manager.broadcast({"type": "GAME_OVER", "payload": snapshot})
 
                 elif mtype == "SURRENDER":
-                    snapshot = game_room.surrender(redis_client, uid=user.uid)
+                    snapshot = await asyncio.to_thread(
+                        game_room.surrender, redis_client, uid=user.uid
+                    )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
-                    _persist_finished_match(snapshot)
+                    await asyncio.to_thread(_persist_finished_match, snapshot)
                     await manager.broadcast({"type": "GAME_OVER", "payload": snapshot})
 
                 elif mtype == "UNDO_REQUEST":
-                    snapshot = game_room.request_undo(redis_client, uid=user.uid)
+                    snapshot = await asyncio.to_thread(
+                        game_room.request_undo, redis_client, uid=user.uid
+                    )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
 
                 elif mtype == "UNDO_RESPOND":
                     accept = bool(payload.get("accept"))
-                    pre = game_room.get_snapshot(redis_client)
+                    pre = await asyncio.to_thread(game_room.get_snapshot, redis_client)
                     requester = pre.get("undo_request_by")
-                    snapshot = game_room.respond_undo(
-                        redis_client, uid=user.uid, accept=accept
+                    snapshot = await asyncio.to_thread(
+                        game_room.respond_undo, redis_client, uid=user.uid, accept=accept
                     )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
                     await manager.broadcast(

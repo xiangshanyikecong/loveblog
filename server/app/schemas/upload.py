@@ -23,6 +23,9 @@ _QQ_NUMBER_PATTERN = re.compile(r"^\d{5,12}$")
 
 class UploadResponse(BaseModel):
     url: str
+    # Server-side thumbnail (smaller variant with the ``_thumb`` filename
+    # suffix). ``None`` for non-image uploads or when Pillow is unavailable.
+    thumbnail_url: str | None = None
     file_name: str
     content_type: str | None
     size: int

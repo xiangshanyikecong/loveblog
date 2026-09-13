@@ -80,6 +80,21 @@ class SessionManager @Inject constructor(
         runCatching { com.lovejournal.app.widget.LoveDaysWidget.requestUpdate(context) }
     }
 
+    // Incremental-sync state for messages. Stored in DataStore (not Room) so
+    // logout's clear() also resets them -> the next login does a full sync.
+    val messageSyncCursorFlow: Flow<String?> = ds.data.map { it[MESSAGE_SYNC_CURSOR] }
+    val lastFullSyncAtFlow: Flow<Long?> = ds.data.map { it[MESSAGE_FULL_SYNC_AT] }
+
+    suspend fun setMessageSyncCursor(cursor: String?) {
+        ds.edit { p ->
+            if (cursor != null) p[MESSAGE_SYNC_CURSOR] = cursor else p.remove(MESSAGE_SYNC_CURSOR)
+        }
+    }
+
+    suspend fun setLastFullSyncAt(epochMs: Long) {
+        ds.edit { it[MESSAGE_FULL_SYNC_AT] = epochMs }
+    }
+
     private companion object {
         val LOGGED_IN = booleanPreferencesKey("logged_in")
         val UID = stringPreferencesKey("uid")
@@ -87,5 +102,7 @@ class SessionManager @Inject constructor(
         val ROLE = stringPreferencesKey("role")
         val AVATAR = stringPreferencesKey("avatar")
         val LOVE_DAYS = longPreferencesKey("love_days")
+        val MESSAGE_SYNC_CURSOR = stringPreferencesKey("message_sync_cursor")
+        val MESSAGE_FULL_SYNC_AT = longPreferencesKey("message_full_sync_at")
     }
 }

@@ -663,6 +663,7 @@ async def _app_lifespan(_app: FastAPI):
     from app.services.health_monitor import health_monitor_loop
     from app.services.listen_together.auto_pause import auto_pause_loop
     from app.services.notification_scheduler import notification_scheduler_loop
+    from app.services.retention import run_retention_cleanup
 
     set_event_loop(asyncio.get_running_loop())
 
@@ -671,11 +672,16 @@ async def _app_lifespan(_app: FastAPI):
             try:
                 from app.api.v1.export import run_scheduled_backup_if_due
 
-                db = SessionLocal()
-                try:
-                    run_scheduled_backup_if_due(db)
-                finally:
-                    db.close()
+                # Backup walks the filesystem + hashes files; run it off the
+                # event loop so uploads/WebSockets never stall behind it.
+                def _tick() -> None:
+                    db = SessionLocal()
+                    try:
+                        run_scheduled_backup_if_due(db)
+                    finally:
+                        db.close()
+
+                await asyncio.to_thread(_tick)
             except Exception:
                 logger.exception("Auto backup scheduler tick failed.")
             await asyncio.sleep(300)
@@ -702,6 +708,18 @@ async def _app_lifespan(_app: FastAPI):
             # 每 6 小时检查一次；date_key 去重保证每天只发一次。
             await asyncio.sleep(6 * 3600)
 
+    async def retention_cleanup_loop() -> None:
+        # Daily retention sweep for audit_logs (180d) and notifications (90d).
+        # Batched deletes run off the event loop.
+        while True:
+            try:
+                removed = await asyncio.to_thread(run_retention_cleanup)
+                if any(removed.values()):
+                    logger.info("Retention cleanup removed %s row(s).", removed)
+            except Exception:
+                logger.exception("Retention cleanup tick failed.")
+            await asyncio.sleep(24 * 3600)
+
     background_tasks = [
         asyncio.create_task(auto_backup_loop(), name="auto-backup-scheduler"),
         asyncio.create_task(
@@ -714,6 +732,7 @@ async def _app_lifespan(_app: FastAPI):
         asyncio.create_task(memory_push_loop(), name="memory-push-scheduler"),
         asyncio.create_task(auto_pause_loop(), name="listen-auto-pause"),
         asyncio.create_task(health_monitor_loop(), name="health-monitor"),
+        asyncio.create_task(retention_cleanup_loop(), name="retention-cleanup"),
     ]
     logger.info(
         "Started notification scheduler (interval=%ss, days_ahead=%s)",
@@ -722,6 +741,7 @@ async def _app_lifespan(_app: FastAPI):
     )
     logger.info("Started listen-together auto-pause background task")
     logger.info("Started health monitor background task")
+    logger.info("Started retention cleanup background task")
 
     try:
         yield

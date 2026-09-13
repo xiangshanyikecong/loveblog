@@ -17,6 +17,11 @@
 
 package com.lovejournal.app.data.remote
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.ConnectException
@@ -32,6 +37,8 @@ import javax.net.ssl.SSLHandshakeException
  */
 object NetworkErrors {
 
+    private val json = Json { ignoreUnknownKeys = true }
+
     fun toUserMessage(throwable: Throwable): String {
         val root = throwable.rootCause()
         return when (root) {
@@ -45,17 +52,51 @@ object NetworkErrors {
                 "HTTPS 握手失败。自部署若无 TLS，请改用 http:// 开头"
             is SSLException ->
                 "安全连接失败，请确认协议（http/https）与证书配置是否正确"
-            is HttpException -> when (root.code()) {
-                401 -> "未授权，请检查用户名与密码"
-                403 -> "访问被拒绝"
-                404 -> "服务器可达，但未找到接口（请确认地址含端口 :8000）"
-                else -> "服务器返回错误 (${root.code()})"
+            is HttpException -> root.detailMessage() ?: run {
+                when (root.code()) {
+                    401 -> "未授权，请检查用户名与密码"
+                    403 -> "访问被拒绝"
+                    404 -> "服务器可达，但未找到接口（请确认地址含端口 :8000）"
+                    else -> "服务器返回错误 (${root.code()})"
+                }
             }
             is IOException ->
                 "网络异常：${root.message?.takeIf { it.isNotBlank() } ?: "请检查网络连接"}"
             else ->
                 throwable.message?.takeIf { it.isNotBlank() } ?: "操作失败，请稍后重试"
         }
+    }
+
+    /**
+     * Extracts the `detail` field from a FastAPI error body so the backend
+     * message is surfaced verbatim. Handles both shapes FastAPI emits:
+     * `{"detail": "message"}` and the 422 validation form
+     * `{"detail": [{"loc": [...], "msg": "...", "type": "..."}]}`.
+     * Returns null when the body is unreadable or not JSON, so callers fall
+     * back to the generic per-status messages.
+     */
+    private fun HttpException.detailMessage(): String? = runCatching {
+        val body = response()?.errorBody()?.string().orEmpty()
+        if (body.isBlank()) return@runCatching null
+        val detail = json.parseToJsonElement(body).jsonObject["detail"] ?: return@runCatching null
+        when {
+            detail is JsonPrimitive && detail.isString -> detail.content
+            detail is JsonArray -> detail
+                .filterIsInstance<JsonObject>()
+                .mapNotNull { validationMessage(it) }
+                .joinToString("；")
+                .takeIf { it.isNotBlank() }
+            else -> null
+        }
+    }.getOrNull()
+
+    private fun validationMessage(item: JsonObject): String? {
+        val msg = (item["msg"] as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null
+        val field = (item["loc"] as? JsonArray)
+            ?.filterIsInstance<JsonPrimitive>()
+            ?.mapNotNull { it.takeIf { p -> p.isString }?.content }
+            ?.lastOrNull()
+        return if (field.isNullOrBlank()) msg else "$field: $msg"
     }
 
     private fun Throwable.rootCause(): Throwable {

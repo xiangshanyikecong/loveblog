@@ -115,26 +115,7 @@
     </div>
 
     <div v-if="hasCouple" class="dashboard-grid">
-      <section class="relationship-summary glass-card">
-        <div class="relationship-summary-head">
-          <div>
-            <p class="relationship-summary-label">{{ t('dashboard.togetherLabel') }}</p>
-            <h2>{{ t('dashboard.dayN', { n: dashboard.love_clock.days }) }}</h2>
-          </div>
-          <Heart class="relationship-summary-icon" :size="28" :stroke-width="1.8" fill="currentColor" aria-hidden="true" />
-        </div>
-        <div class="relationship-summary-body">
-          <div class="love-timer">
-            <span class="love-timer-number">{{ pad2(dashboard.love_clock.hours) }}</span>
-            <span class="love-timer-label">{{ t('dashboard.hours') }}</span>
-            <span class="love-timer-number">{{ pad2(dashboard.love_clock.minutes) }}</span>
-            <span class="love-timer-label">{{ t('dashboard.minutes') }}</span>
-            <span class="love-timer-number">{{ pad2(dashboard.love_clock.seconds) }}</span>
-            <span class="love-timer-label">{{ t('dashboard.seconds') }}</span>
-          </div>
-        </div>
-      </section>
-
+      <LoveClockDisplay :initial-clock="dashboard.love_clock" @day-advance="onDayAdvance" />
       <CountdownCard :event="validCountdownEvent" :loading="busy" />
     </div>
 
@@ -271,15 +252,16 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, onUnmounted, reactive, ref } from "vue";
+import { computed, inject, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ArrowUpRight, BookOpen, CalendarHeart, FileText, Heart, House, Image, MessageCircle } from "@lucide/vue";
 import CountdownCard from "../components/CountdownCard.vue";
 import EmptyState from "../components/EmptyState.vue";
+import LoveClockDisplay from "../components/LoveClockDisplay.vue";
 import MessageBoard from "../components/MessageBoard.vue";
 import { fetchDashboard, fetchMemories, resolveAssetUrl } from "../lib/api";
 import { useAuth } from "../stores/auth";
-import { eventGradient, eventStatusText, pad2, parseError } from "../utils/helpers";
+import { eventGradient, eventStatusText, parseError } from "../utils/helpers";
 
 const { t } = useI18n();
 const showMessage = inject("showMessage");
@@ -337,30 +319,13 @@ const validCountdownEvent = computed(() => {
   );
 });
 
-let clockInterval = null;
-
-function tickLoveClock() {
-  if (!dashboard.love_clock) {
-    return;
-  }
-
-  dashboard.love_clock.seconds += 1;
-  if (dashboard.love_clock.seconds >= 60) {
-    dashboard.love_clock.seconds = 0;
-    dashboard.love_clock.minutes += 1;
-    if (dashboard.love_clock.minutes >= 60) {
-      dashboard.love_clock.minutes = 0;
-      dashboard.love_clock.hours += 1;
-      if (dashboard.love_clock.hours >= 24) {
-        dashboard.love_clock.hours = 0;
-        dashboard.love_clock.days += 1;
-      }
-    }
-  }
-}
-
 function getAvatarUrl(path) {
   return resolveAssetUrl(path);
+}
+
+function onDayAdvance() {
+  // Keep the hero "together for N days" copy in sync; fires once per 24h.
+  dashboard.love_clock.days += 1;
 }
 
 async function reloadDashboard() {
@@ -395,13 +360,6 @@ async function loadMemories() {
 onMounted(() => {
   reloadDashboard();
   loadMemories();
-  clockInterval = setInterval(tickLoveClock, 1000);
-});
-
-onUnmounted(() => {
-  if (clockInterval) {
-    clearInterval(clockInterval);
-  }
 });
 </script>
 
@@ -554,47 +512,8 @@ onUnmounted(() => {
   margin: 0 0.15rem;
 }
 
-.relationship-summary {
-  display: grid;
-  gap: 1.15rem;
-  padding: 1.2rem 1.35rem;
-}
-
 .guest-summary {
   border-radius: var(--radius-card);
-}
-
-.relationship-summary-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.relationship-summary-label {
-  margin: 0;
-  color: var(--text-soft);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.relationship-summary h2 {
-  margin: 0.28rem 0 0;
-  color: var(--text-main);
-  font-size: 1.45rem;
-}
-
-.relationship-summary-icon {
-  color: var(--brand);
-}
-
-.relationship-summary-body {
-  display: flex;
-  align-items: baseline;
-}
-
-.relationship-summary .love-timer {
-  margin-top: 0;
 }
 
 .focus-section {

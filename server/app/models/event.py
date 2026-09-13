@@ -50,7 +50,7 @@ class Event(Base):
     is_important: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_yearly_repeat: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     visibility: Mapped[Visibility] = mapped_column(
-        Enum(Visibility, name="visibility"), default=Visibility.public, nullable=False
+        Enum(Visibility, name="visibility"), default=Visibility.partners_only, nullable=False
     )
     tags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

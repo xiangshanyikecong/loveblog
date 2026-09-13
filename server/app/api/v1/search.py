@@ -19,14 +19,14 @@ from datetime import date, datetime, time, timezone
 from typing import Annotated, Iterable
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import get_optional_user
 from app.core.tags import normalize_tags, parse_tag_query
 from app.db.session import get_db
 from app.models.album import Album
-from app.models.article import Article
+from app.models.article import Article, ArticleBlock
 from app.models.event import Event
 from app.models.message import Message
 from app.models.moment import Moment
@@ -152,6 +152,26 @@ def _apply_datetime_window(query, column, date_from: date | None, date_to: date 
     return query
 
 
+def _keyword_prefilter(terms: list[str], *columns):
+    """SQL-level superset pre-filter for the Python keyword check.
+
+    Matches any term in any of the given columns with ILIKE (backed by
+    pg_trgm GIN indexes on PostgreSQL, see migration 20260912_1100), so
+    only a small candidate set is loaded and scored in Python. The exact
+    casefolded AND-semantics check still runs on the candidates, keeping
+    result semantics identical to the previous in-memory filtering.
+    Returns ``None`` when there is nothing to match.
+    """
+    if not terms:
+        return None
+    return or_(*[column.ilike(f"%{term}%") for term in terms for column in columns])
+
+
+def _tags_text_cast(column):
+    """ILIKE-able text expression for a JSON tags column."""
+    return cast(column, String)
+
+
 def _append_result(
     results: list[tuple[int, SearchResultItem]],
     *,
@@ -196,6 +216,19 @@ def search_content(
             .filter(Article.deleted_at.is_(None), VisibilityPolicy.article_query_filter(current_user))
         )
         query = _apply_datetime_window(query, article_date, date_from, date_to)
+        prefilter = _keyword_prefilter(terms, Article.title, Article.excerpt, _tags_text_cast(Article.tags))
+        if prefilter is not None:
+            # Block bodies live in a separate table; any term matching a
+            # block also qualifies the article as a candidate.
+            blocks_clause = (
+                select(ArticleBlock.article_id)
+                .where(
+                    ArticleBlock.article_id == Article.id,
+                    or_(*[ArticleBlock.content.ilike(f"%{term}%") for term in terms]),
+                )
+                .exists()
+            )
+            query = query.filter(or_(prefilter, blocks_clause))
         for article in query.all():
             item_tags = _safe_tags(article.tags)
             block_text = _clean_text(*(block.content for block in article.blocks))
@@ -228,6 +261,9 @@ def search_content(
             .filter(Album.deleted_at.is_(None), VisibilityPolicy.album_query_filter(current_user))
         )
         query = _apply_datetime_window(query, Album.created_at, date_from, date_to)
+        prefilter = _keyword_prefilter(terms, Album.title, Album.description, _tags_text_cast(Album.tags))
+        if prefilter is not None:
+            query = query.filter(prefilter)
         for album in query.all():
             item_tags = _safe_tags(album.tags)
             if not _matches_tags(item_tags, filter_tags, tag_mode):
@@ -261,6 +297,9 @@ def search_content(
             query = query.filter(Event.date >= date_from)
         if date_to is not None:
             query = query.filter(Event.date <= date_to)
+        prefilter = _keyword_prefilter(terms, Event.title, cast(Event.type, String), _tags_text_cast(Event.tags))
+        if prefilter is not None:
+            query = query.filter(prefilter)
         for event in query.all():
             item_tags = _safe_tags(event.tags)
             if not _matches_tags(item_tags, filter_tags, tag_mode):
@@ -291,6 +330,9 @@ def search_content(
             .filter(Moment.deleted_at.is_(None), VisibilityPolicy.moment_query_filter(current_user))
         )
         query = _apply_datetime_window(query, Moment.timestamp, date_from, date_to)
+        prefilter = _keyword_prefilter(terms, Moment.content, Moment.location, _tags_text_cast(Moment.tags))
+        if prefilter is not None:
+            query = query.filter(prefilter)
         for moment in query.all():
             item_tags = _safe_tags(moment.tags)
             if not _matches_tags(item_tags, filter_tags, tag_mode):
@@ -325,6 +367,16 @@ def search_content(
             )
         )
         query = _apply_datetime_window(query, Message.created_at, date_from, date_to)
+        prefilter = _keyword_prefilter(
+            terms, Message.content, Message.visitor_name, _tags_text_cast(Message.tags)
+        )
+        if prefilter is not None:
+            # Author nickname is checked in Python too; cover it via EXISTS
+            # so nickname-only matches are not dropped by the pre-filter.
+            author_clause = Message.author.has(
+                or_(*[User.nickname.ilike(f"%{term}%") for term in terms])
+            )
+            query = query.filter(or_(prefilter, author_clause))
         for message in query.all():
             item_tags = _safe_tags(message.tags)
             author_name = message.author.nickname if message.author else message.visitor_name

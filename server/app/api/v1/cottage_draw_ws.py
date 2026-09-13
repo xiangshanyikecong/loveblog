@@ -85,7 +85,7 @@ async def _push_word_to_drawer(snapshot: dict[str, Any], redis_client) -> None:
     drawer_uid = snapshot.get("drawer_uid")
     if not drawer_uid:
         return
-    word = draw.draw_room.current_word(redis_client)
+    word = await asyncio.to_thread(draw.draw_room.current_word, redis_client)
     if word:
         await manager.send_to_uid(drawer_uid, {"type": "YOUR_WORD", "payload": {"word": word}})
 
@@ -156,7 +156,8 @@ async def cottage_draw_ws(ws: WebSocket) -> None:
         await ws.close(code=WS_CLOSE_FORBIDDEN)
         return
     token = _extract_token(ws)
-    user = _resolve_user(token) if token else None
+    # JWT decode + DB lookup: keep off the event loop.
+    user = await asyncio.to_thread(_resolve_user, token) if token else None
     if user is None:
         await ws.close(code=WS_CLOSE_UNAUTHORIZED)
         return
@@ -173,11 +174,11 @@ async def cottage_draw_ws(ws: WebSocket) -> None:
 
     try:
         await ws.send_json({"type": "PRESENCE_SNAPSHOT", "payload": {"online": manager.online_uids()}})
-        snapshot = draw.draw_room.get_snapshot(redis_client)
+        snapshot = await asyncio.to_thread(draw.draw_room.get_snapshot, redis_client)
         await ws.send_json({"type": "STATE", "payload": snapshot})
         # If this socket belongs to the active drawer, re-hand them the word.
         if snapshot.get("phase") == draw.PHASE_DRAWING and snapshot.get("drawer_uid") == user.uid:
-            word = draw.draw_room.current_word(redis_client)
+            word = await asyncio.to_thread(draw.draw_room.current_word, redis_client)
             if word:
                 await ws.send_json({"type": "YOUR_WORD", "payload": {"word": word}})
     except draw.DrawRoomUnavailable:
@@ -238,7 +239,9 @@ async def cottage_draw_ws(ws: WebSocket) -> None:
             # current drawer is allowed to paint / erase / undo.
             if mtype in ("STROKE", "CLEAR", "UNDO"):
                 try:
-                    snap = draw.draw_room.get_snapshot(redis_client)
+                    # Auth check happens on every stroke relay - must not
+                    # block the event loop (it runs a Redis round-trip).
+                    snap = await asyncio.to_thread(draw.draw_room.get_snapshot, redis_client)
                 except Exception:
                     continue
                 if snap.get("phase") == draw.PHASE_DRAWING and snap.get("drawer_uid") == user.uid:
@@ -255,11 +258,14 @@ async def cottage_draw_ws(ws: WebSocket) -> None:
 
             try:
                 if mtype == "NEW_GAME":
-                    other = _other_partner_uid(user.uid)
+                    # DB lookup for the partner UID - off the event loop.
+                    other = await asyncio.to_thread(_other_partner_uid, user.uid)
                     if not other:
                         await ws.send_json({"type": "ERROR", "payload": {"message": "需要两位伴侣账号才能开始游戏"}})
                         continue
-                    snapshot = draw.draw_room.new_game(
+                    # Sync Redis ops (incl. lease spin) run in a worker thread.
+                    snapshot = await asyncio.to_thread(
+                        draw.draw_room.new_game,
                         redis_client,
                         requester_uid=user.uid,
                         partner_uid=other,
@@ -270,8 +276,11 @@ async def cottage_draw_ws(ws: WebSocket) -> None:
                     await _push_word_to_drawer(snapshot, redis_client)
 
                 elif mtype == "GUESS":
-                    snapshot, correct = draw.draw_room.record_guess(
-                        redis_client, uid=user.uid, text=str(payload.get("text", ""))
+                    snapshot, correct = await asyncio.to_thread(
+                        draw.draw_room.record_guess,
+                        redis_client,
+                        uid=user.uid,
+                        text=str(payload.get("text", "")),
                     )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
                     await manager.broadcast(
@@ -290,24 +299,36 @@ async def cottage_draw_ws(ws: WebSocket) -> None:
                         await manager.broadcast({"type": "ROUND_END", "payload": snapshot})
 
                 elif mtype == "ROUND_TIMEOUT":
-                    snapshot = draw.draw_room.timeout_round(redis_client, uid=user.uid)
+                    snapshot = await asyncio.to_thread(
+                        draw.draw_room.timeout_round, redis_client, uid=user.uid
+                    )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
                     if snapshot.get("phase") == draw.PHASE_ROUND_END:
                         await manager.broadcast({"type": "ROUND_END", "payload": snapshot})
 
                 elif mtype == "NEXT_ROUND":
-                    snapshot = draw.draw_room.next_round(redis_client, uid=user.uid)
+                    snapshot = await asyncio.to_thread(
+                        draw.draw_room.next_round, redis_client, uid=user.uid
+                    )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
                     if snapshot.get("phase") == draw.PHASE_FINISHED:
-                        _persist_finished_match(draw.draw_room.load(redis_client))
+                        await asyncio.to_thread(
+                            _persist_finished_match,
+                            await asyncio.to_thread(draw.draw_room.load, redis_client),
+                        )
                         await manager.broadcast({"type": "GAME_OVER", "payload": snapshot})
                     else:
                         await _push_word_to_drawer(snapshot, redis_client)
 
                 elif mtype == "END_GAME":
-                    snapshot = draw.draw_room.end_game(redis_client, uid=user.uid)
+                    snapshot = await asyncio.to_thread(
+                        draw.draw_room.end_game, redis_client, uid=user.uid
+                    )
                     await manager.broadcast({"type": "STATE", "payload": snapshot})
-                    _persist_finished_match(draw.draw_room.load(redis_client))
+                    await asyncio.to_thread(
+                        _persist_finished_match,
+                        await asyncio.to_thread(draw.draw_room.load, redis_client),
+                    )
                     await manager.broadcast({"type": "GAME_OVER", "payload": snapshot})
 
                 elif mtype == "EMOTE":

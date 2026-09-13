@@ -35,6 +35,7 @@ from app.models.message import Message
 from app.models.site_setting import SiteSetting
 from app.models.user import User
 from app.models.wish import Wish, WishStatus
+from app.services.cache import cache_get_json, cache_set_json
 from app.schemas.annual_report import (
     AnnualReportResponse,
     AnnualStats,
@@ -91,6 +92,13 @@ def annual_report(
 ) -> AnnualReportResponse:
     """Aggregate the couple's calendar-year (UTC) activity into one report."""
     ensure_partner(current_user)
+
+    # ~12 COUNT/GROUP-BY queries per request; the report is partner-only and
+    # changes slowly, so a short cache removes most of that fan-out.
+    cache_key = f"report:annual:v1:{year}"
+    cached = cache_get_json(cache_key)
+    if cached is not None:
+        return AnnualReportResponse.model_validate(cached)
 
     start_dt = datetime(year, 1, 1, tzinfo=timezone.utc)
     end_dt = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
@@ -261,7 +269,7 @@ def annual_report(
         end_day = min(date(year, 12, 31), datetime.now(timezone.utc).date())
         days_together = max(0, (end_day - start_day).days)
 
-    return AnnualReportResponse(
+    response = AnnualReportResponse(
         year=year,
         couple_since=couple_since,
         days_together=days_together,
@@ -270,3 +278,5 @@ def annual_report(
         top_songs=top_songs,
         highlights=_build_highlights(stats),
     )
+    cache_set_json(cache_key, response.model_dump(mode="json"), ttl_seconds=300)
+    return response

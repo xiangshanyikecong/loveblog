@@ -99,10 +99,76 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build backend image
-        run: docker build --file server/Dockerfile server
+        run: docker build --file server/Dockerfile -t love-journal-backend:ci server
 
       - name: Build web image
-        run: docker build --file web/Dockerfile.prod --build-arg VITE_API_BASE_URL=/api web
+        run: docker build --file web/Dockerfile.prod --build-arg VITE_API_BASE_URL=/api -t love-journal-web:ci web
 
       - name: Build NetEase helper image
-        run: docker build --file netease-api/Dockerfile netease-api
+        run: docker build --file netease-api/Dockerfile -t love-journal-netease:ci netease-api
+
+      # Trivy 扫描：HIGH/CRITICAL 且已有修复版本的漏洞会让 CI 失败，
+      # 防止带已知漏洞的镜像进入生产。ignore-unfixed 避免上游暂无补丁
+      # 的披露长期阻塞构建。
+      - name: Scan backend image (trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: love-journal-backend:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Scan web image (trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: love-journal-web:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Scan NetEase helper image (trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: love-journal-netease:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      # SBOM（CycloneDX）：为每个生产镜像生成软件物料清单并作为 workflow
+      # artifact 留存，便于供应链审计与漏洞影响面排查。
+      - name: Generate backend SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: love-journal-backend:ci
+          format: cyclonedx
+          output: backend-sbom.cdx.json
+          scanners: ""
+
+      - name: Generate web SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: love-journal-web:ci
+          format: cyclonedx
+          output: web-sbom.cdx.json
+          scanners: ""
+
+      - name: Generate NetEase helper SBOM (CycloneDX)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: love-journal-netease:ci
+          format: cyclonedx
+          output: netease-sbom.cdx.json
+          scanners: ""
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: "*-sbom.cdx.json"
+          retention-days: 30

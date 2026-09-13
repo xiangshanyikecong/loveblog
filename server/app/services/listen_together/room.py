@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
+import asyncio
 import json
 import logging
 import secrets
@@ -500,3 +501,34 @@ def apply_event(
 ) -> dict[str, Any] | None:
     with _state_lock(redis_client):
         return _apply_event_unlocked(redis_client, type_, payload, origin_uid)
+
+
+# ---------------------------------------------------------------------------
+# Async variants (coroutine callers: WS handlers, background loops)
+# ---------------------------------------------------------------------------
+#
+# Deployment runs a single uvicorn worker, so an in-process asyncio lock
+# provides the same cross-task serialization as the Redis lease without any
+# busy-wait. The Redis round-trips themselves execute in a worker thread via
+# ``asyncio.to_thread`` so the event loop is never blocked.
+
+_async_room_lock = asyncio.Lock()
+
+
+async def get_state_async(redis_client: Redis) -> dict[str, Any]:
+    """Coroutine-safe alternative to :func:`get_state` (no spin-waiting)."""
+    async with _async_room_lock:
+        return await asyncio.to_thread(_get_state_unlocked, redis_client)
+
+
+async def apply_event_async(
+    redis_client: Redis,
+    type_: str,
+    payload: dict[str, Any],
+    origin_uid: str,
+) -> dict[str, Any] | None:
+    """Coroutine-safe alternative to :func:`apply_event` (no spin-waiting)."""
+    async with _async_room_lock:
+        return await asyncio.to_thread(
+            _apply_event_unlocked, redis_client, type_, payload, origin_uid
+        )

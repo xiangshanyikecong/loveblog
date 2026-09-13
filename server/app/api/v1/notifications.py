@@ -25,7 +25,6 @@ from app.db.session import get_db
 from app.models.notification import Notification
 from app.models.user import User
 from app.schemas.notification import NotificationListResponse, NotificationResponse
-from app.services.notifications import ensure_due_notifications_for_user
 
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -53,9 +52,9 @@ def list_notifications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> NotificationListResponse:
-    ensure_due_notifications_for_user(db, current_user)
-    db.commit()
-
+    # Note: due-reminder generation intentionally lives in the background
+    # scheduler (notification_scheduler_loop), not in this read path - it
+    # used to turn every list request into a write transaction.
     query = db.query(Notification).filter(Notification.recipient_id == current_user.id)
     unread_count = (
         db.query(func.count(Notification.id))

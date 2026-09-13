@@ -36,8 +36,15 @@ def _create_engine(database_url: str):
         engine_kwargs["connect_args"] = {"check_same_thread": False}
     else:
         engine_kwargs["pool_pre_ping"] = True
+        # Recycle connections before typical proxy/server idle timeouts
+        # (and PostgreSQL's idle session limits) kill them silently.
+        engine_kwargs["pool_recycle"] = 1800
         if database_url.startswith("postgresql"):
-            engine_kwargs["connect_args"] = {"connect_timeout": 2}
+            engine_kwargs["connect_args"] = {
+                "connect_timeout": 2,
+                # Guard against runaway queries pinning pool connections.
+                "options": "-c statement_timeout=60000",
+            }
 
     return create_engine(database_url, **engine_kwargs)
 

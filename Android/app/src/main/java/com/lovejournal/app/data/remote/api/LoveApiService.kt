@@ -133,7 +133,6 @@ import com.lovejournal.app.data.remote.dto.CanvasArtworkListResponse
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.data.remote.dto.SiteSettingUpdateRequest
-import com.lovejournal.app.data.remote.dto.MomentCreateRequest
 import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.remote.dto.TimelineListResponse
 import okhttp3.MultipartBody
@@ -236,7 +235,13 @@ interface LoveApiService {
     suspend fun commentAlbum(@Path("albId") albId: String, @Body body: CommentCreateRequest): CommentNode
 
     @GET("messages")
-    suspend fun messages(@Query("include_private") includePrivate: Boolean = true): MessageListResponse
+    suspend fun messages(
+        @Query("include_private") includePrivate: Boolean = true,
+        // Incremental-sync cursor: only rows updated after this ISO timestamp
+        // are returned (including tombstones, so local rows can be pruned).
+        @Query("updated_after") updatedAfter: String? = null,
+        @Query("page_size") pageSize: Int? = null,
+    ): MessageListResponse
 
     @POST("messages")
     suspend fun createMessage(

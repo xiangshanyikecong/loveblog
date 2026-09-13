@@ -57,11 +57,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.request.ImageRequest
 import com.lovejournal.app.BuildConfig
 import com.lovejournal.app.data.remote.dto.CommentNodeResponse
 import com.lovejournal.app.data.remote.dto.MomentResponse
@@ -78,6 +81,18 @@ private fun visibilityLabel(value: String): String = when (value) {
 
 private fun mediaUrl(path: String): String =
     if (path.startsWith("http")) path else BuildConfig.MEDIA_BASE_URL + path
+
+private val IMAGE_EXT_REGEX = Regex("""\.(jpe?g|png|webp)(\?.*)?$""", RegexOption.IGNORE_CASE)
+
+/** Derives the server-side `_thumb` variant for /uploads image paths
+ *  (mirrors the web `toThumbnailUrl` helper). Returns the input untouched
+ *  for non-upload paths, GIFs or already-thumbnailed URLs. */
+private fun deriveThumbnailPath(path: String): String {
+    if (!path.contains("/uploads/")) return path
+    if (path.contains("_thumb")) return path
+    if (!IMAGE_EXT_REGEX.containsMatchIn(path)) return path
+    return path.replace(IMAGE_EXT_REGEX, "_thumb$1$2")
+}
 
 @Composable
 fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
@@ -180,10 +195,8 @@ private fun MomentCard(moment: MomentResponse, onDelete: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     moment.media_urls.forEach { path ->
-                        AsyncImage(
-                            model = mediaUrl(path),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
+                        MomentThumb(
+                            path = path,
                             modifier = Modifier
                                 .size(120.dp)
                                 .clip(RoundedCornerShape(8.dp)),
@@ -232,6 +245,24 @@ private fun CommentNode(comment: CommentNodeResponse, depth: Int) {
         )
         comment.replies.forEach { reply -> CommentNode(reply, depth + 1) }
     }
+}
+
+@Composable
+private fun MomentThumb(path: String, modifier: Modifier = Modifier) {
+    // Prefer the 400px server thumbnail; legacy uploads have none and 404,
+    // so fall back to the original image on error (mirrors the web helper).
+    var url by remember(path) { mutableStateOf(mediaUrl(deriveThumbnailPath(path))) }
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        onState = { state ->
+            if (state is AsyncImagePainter.State.Error && url != mediaUrl(path)) {
+                url = mediaUrl(path)
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable

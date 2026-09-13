@@ -75,7 +75,7 @@
               <span v-for="tag in item.tags" :key="tag" class="pill pill--tag">#{{ tag }}</span>
             </div>
             <div v-if="item.media_urls && item.media_urls.length" class="timeline-media">
-              <img v-for="(url, idx) in item.media_urls" :key="idx" :src="resolveAssetUrl(url)" class="timeline-image" loading="lazy" />
+              <img v-for="(url, idx) in item.media_urls" :key="idx" :src="resolveAssetUrl(toThumbnailUrl(url))" class="timeline-image" loading="lazy" @error="onImgFallback($event, url)" />
             </div>
             <audio
               v-if="item.audio_url"
@@ -118,7 +118,7 @@ import { inject, onMounted, reactive, ref } from "vue";
 import ModuleTabs from "../components/ModuleTabs.vue";
 import CommentThread from "../components/CommentThread.vue";
 import MediaCapture from "../components/MediaCapture.vue";
-import { createMoment, fetchTimeline, postComment, resolveAssetUrl, uploadTimelineImage } from "../lib/api";
+import { createMoment, fetchTimeline, postComment, resolveAssetUrl, toThumbnailUrl, uploadTimelineImage } from "../lib/api";
 import { useAuth } from "../stores/auth";
 import { parseError, parseTags } from "../utils/helpers";
 import { useI18n } from "vue-i18n";
@@ -150,6 +150,15 @@ const momentForm = reactive({
 
 function onAudioUpdate(media) {
   momentForm.audio = media;
+}
+
+// Legacy moments may have been uploaded before server-side thumbnails
+// existed; fall back to the original image once the _thumb variant 404s.
+function onImgFallback(e, originalUrl) {
+  const el = e.target;
+  if (el.dataset.fallback) return;
+  el.dataset.fallback = "1";
+  el.src = resolveAssetUrl(originalUrl);
 }
 
 async function loadTimeline(page = 1) {
@@ -196,13 +205,14 @@ async function createMomentItem() {
   }
   busy.value = true;
   try {
-    const mediaUrls = [];
-    for (const item of selectedFiles.value) {
-      const res = await uploadTimelineImage(item.file);
-      mediaUrls.push(res.url);
-    }
+    // Upload all selected images concurrently instead of one-by-one.
+    const mediaUrls = await Promise.all(
+      selectedFiles.value.map(item => uploadTimelineImage(item.file).then(res => res.url))
+    );
 
     await createMoment({
+      // Unified privacy default across all clients: only the couple can see it.
+      visibility: "PartnersOnly",
       content: momentForm.content,
       location: momentForm.location || null,
       tags: parseTags(momentForm.tagsText),

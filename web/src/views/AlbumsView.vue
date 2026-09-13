@@ -144,6 +144,7 @@ const albumForm = reactive({
   tagsText: "",
   coverUrl: "",
   mediaUrl: "",
+  mediaThumbnailUrl: "",
   visibility: "public",
   password: ""
 });
@@ -200,6 +201,8 @@ async function uploadSelectedAlbumFile(file) {
     const data = await uploadAlbumImage(file);
 
     albumForm.mediaUrl = data.url;
+    // Prefer the server-generated thumbnail so grids/lists stay light.
+    albumForm.mediaThumbnailUrl = data.thumbnail_url || data.url;
     if (shouldSyncCover) {
       albumForm.coverUrl = data.url;
     }
@@ -244,7 +247,8 @@ async function createAlbumItem() {
             {
               media_type: "Image",
               file_url: albumForm.mediaUrl,
-              thumbnail_url: albumForm.coverUrl || albumForm.mediaUrl || null
+              // Server-side thumbnail, never the full-size original.
+              thumbnail_url: albumForm.mediaThumbnailUrl || null
             }
           ]
         : []

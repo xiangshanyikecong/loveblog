@@ -98,7 +98,7 @@ private fun AlbumDetailContent(detail: AlbumDetail, mediaUrl: (String?) -> Strin
     var comment by remember(detail.alb_id) { mutableStateOf("") }
     LazyColumn(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") }; Row { IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, "编辑") }; IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除") } } }; Text(detail.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); detail.description?.let { Text(it) } }
-        items(detail.media_items, key = { it.media_id }) { media -> AsyncImage(mediaUrl(media.file_url), null, Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Crop) }
+        items(detail.media_items, key = { it.media_id }) { media -> AsyncImage(mediaUrl(media.thumbnail_url ?: media.file_url), null, Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Crop) }
         item { Text("评论", fontWeight = FontWeight.Bold) }
         items(detail.comments, key = { it.cid }) { Text("${it.author_nickname ?: "用户"}：${it.content}") }
         item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(comment, { comment = it }, label = { Text("写评论") }, modifier = Modifier.weight(1f)); Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text("发送") } } }

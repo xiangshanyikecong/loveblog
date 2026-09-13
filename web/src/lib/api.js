@@ -17,6 +17,7 @@
 
 import axios from "axios";
 import { t } from "../locales";
+import { compressImage } from "../utils/imageCompress";
 
 function isAbsoluteUrl(value) {
   return /^(?:[a-z]+:)?\/\//i.test(value);
@@ -102,6 +103,21 @@ export function resolveApiUrl(path = "") {
 
   const normalizedPath = String(path).replace(/^\/+/, "");
   return apiBaseURL === "/" ? `/${normalizedPath}` : `${apiBaseURL}/${normalizedPath}`;
+}
+
+/**
+ * Derive the server-side thumbnail URL (``_thumb`` suffix) for an uploaded
+ * image. Falls back to the original URL for anything that is not a local
+ * /uploads/ image with a recognizable image extension, for URLs that already
+ * point at a thumbnail, or for encrypted blobs. Callers should keep an
+ * @error fallback to the original URL for legacy files without thumbnails.
+ */
+export function toThumbnailUrl(path = "") {
+  const rawPath = String(path || "").trim();
+  if (!rawPath || !rawPath.includes("/uploads/")) return rawPath;
+  if (rawPath.includes("_thumb")) return rawPath;
+  if (!/\.(jpe?g|png|webp)(\?.*)?$/i.test(rawPath)) return rawPath;
+  return rawPath.replace(/(\.(?:jpe?g|png|webp))(\?.*)?$/i, "_thumb$1$2");
 }
 
 export function resolveAssetUrl(path = "") {
@@ -286,34 +302,28 @@ export async function createAlbum(payload) {
 }
 
 export async function uploadAlbumImage(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const { data } = await api.post("/v1/uploads/albums", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data"
-    }
-  });
-  return data;
+  return uploadImageWithCompression(file, "/v1/uploads/albums");
 }
 
 export async function uploadTimelineImage(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const { data } = await api.post("/v1/uploads/timeline", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data"
-    }
-  });
-  return data;
+  return uploadImageWithCompression(file, "/v1/uploads/timeline");
 }
 
 export async function uploadCheckinImage(file) {
-  const formData = new FormData();
-  formData.append("file", file);
+  return uploadImageWithCompression(file, "/v1/uploads/checkin");
+}
 
-  const { data } = await api.post("/v1/uploads/checkin", formData, {
+/**
+ * Upload an image after client-side compression (1600px longest edge,
+ * JPEG 85% — same as the Android pipeline). Compression is best-effort;
+ * on failure the original file is sent unchanged.
+ */
+async function uploadImageWithCompression(file, endpoint) {
+  const payload = await compressImage(file);
+  const formData = new FormData();
+  formData.append("file", payload);
+
+  const { data } = await api.post(endpoint, formData, {
     headers: {
       "Content-Type": "multipart/form-data"
     }

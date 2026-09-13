@@ -28,12 +28,14 @@ import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.MessageCreateRequest
+import com.lovejournal.app.data.remote.dto.MessageResponse
 import com.lovejournal.app.sync.SyncActions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -51,11 +53,71 @@ class MessageRepository @Inject constructor(
 ) {
     fun observeMessages(): Flow<List<MessageEntity>> = messageDao.observeAll()
 
+    /**
+     * Pulls server messages into the local cache.
+     *
+     * Normally incremental: only rows with `updated_at` newer than the stored
+     * cursor are transferred, and server-side tombstones (is_deleted=true)
+     * prune local copies. The cursor lives in DataStore (not Room) so it
+     * survives restarts and is cleared on logout together with the session.
+     * A full reconciliation re-runs at most once per day to heal drift the
+     * cursor cannot cover (lost prefs, manual data fixes, ...).
+     */
     suspend fun refresh(): Result<Unit> = runCatching {
-        val remote = api.messages(includePrivate = true)
-        messageDao.clearSynced()
-        messageDao.upsert(remote.items.map { it.toEntity() })
+        val now = System.currentTimeMillis()
+        val cursor = session.messageSyncCursorFlow.first()
+        val lastFullSyncAt = session.lastFullSyncAtFlow.first()
+        val needsFullSync = cursor == null ||
+            lastFullSyncAt == null ||
+            now - lastFullSyncAt > 24 * 60 * 60 * 1000L // daily full reconciliation
+
+        if (needsFullSync) {
+            // Full sync: replace every synced row (pending local edits are kept)
+            // and seed the cursor with the freshest server timestamp.
+            val remote = api.messages(includePrivate = true)
+            messageDao.clearSynced()
+            messageDao.upsert(remote.items.map { it.toEntity() })
+            session.setMessageSyncCursor(remote.items.latestUpdatedAt())
+            session.setLastFullSyncAt(now)
+        } else {
+            // Incremental sync. The server orders rows by (updated_at, id) asc,
+            // so the last row of each page carries the newest timestamp and its
+            // raw ISO string is reused verbatim as the next cursor.
+            val pageSize = 200 // matches the server's page-size cap
+            var nextCursor = cursor
+            while (true) {
+                val batch = api.messages(
+                    includePrivate = true,
+                    updatedAfter = nextCursor,
+                    pageSize = pageSize,
+                )
+                if (batch.items.isEmpty()) break
+                db.withTransaction {
+                    batch.items.forEach { item ->
+                        if (item.is_deleted) messageDao.delete(item.msg_id)
+                        else messageDao.upsertOne(item.toEntity())
+                    }
+                }
+                nextCursor = batch.items.last().updated_at ?: break
+                if (batch.items.size < pageSize) break
+            }
+            session.setMessageSyncCursor(nextCursor)
+        }
     }
+
+    /**
+     * Newest `updated_at` among the given responses. Timestamps are parsed to
+     * [Instant] before comparing because ISO strings with differing fractional
+     * precision do not compare correctly as raw text.
+     */
+    private fun List<MessageResponse>.latestUpdatedAt(): String? = this
+        .mapNotNull { item ->
+            item.updated_at?.let { ts ->
+                runCatching { OffsetDateTime.parse(ts).toInstant() }.getOrNull()
+            }
+        }
+        .maxOrNull()
+        ?.toString()
 
     /**
      * Optimistically inserts the message locally (marked pending), enqueues the

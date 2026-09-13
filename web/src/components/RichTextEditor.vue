@@ -94,6 +94,9 @@ onMounted(() => {
   if (!editorRef.value) return;
 
   const options = {
+    // Pin the lazy-loaded assets (Lute, highlight styles) to jsDelivr so they
+    // match the installed vditor@3 semver range; the CSP allows this origin.
+    cdn: 'https://cdn.jsdelivr.net/npm/vditor@3',
     height: props.height,
     placeholder: props.placeholder || t("richTextEditor.placeholder"),
     mode: props.mode,

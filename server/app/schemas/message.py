@@ -76,6 +76,8 @@ class MessageResponse(BaseModel):
     is_deleted: bool
     version: int
     created_at: datetime
+    # Drives the client's incremental-sync cursor (updated_after).
+    updated_at: datetime
     author_uid: str | None
     author_nickname: str | None
     visitor_name: str | None

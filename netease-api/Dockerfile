@@ -30,6 +30,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY server.js ./
 COPY NOTICE THIRD_PARTY_LICENSES.md ./
 
+# Drop root: server.js only listens on 3000 (unprivileged) and needs no
+# writable paths. The `node` user ships with the official node image.
+USER node
+
 EXPOSE 3000
 
 # Quietly probe the running API. wget ships in the alpine base image.

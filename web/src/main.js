@@ -18,7 +18,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import i18n from './locales'
+import i18n, { initLocale } from './locales'
 import { initPwa } from "./lib/pwa";
 import { useAuth } from './stores/auth'
 import './styles.css'
@@ -29,6 +29,11 @@ initAuth()
 const app = createApp(App)
 app.use(router)
 app.use(i18n)
-app.mount('#app')
-
-initPwa(router)
+// Load the active locale chunk (when it is not zh-CN) before mounting so the
+// first paint already uses the user's language.
+initLocale()
+  .catch(() => {})
+  .finally(() => {
+    app.mount('#app')
+    initPwa(router)
+  })

@@ -137,13 +137,13 @@ class ListenViewModel @Inject constructor(
     val state: StateFlow<ListenUiState> = _state.asStateFlow()
 
     private var started = false
-    private var pollJob: Job? = null
     private var tickJob: Job? = null
     private var heartbeatJob: Job? = null
     private var lyricJob: Job? = null
     private var lastLyricSongId: String? = null
     private var lastResolvedSongId: String? = null
     private var lastMediaUrl: String? = null
+    private var lastAppliedEventSeq: Long = -1L
 
     init {
         player.addListener(object : Player.Listener {
@@ -178,7 +178,6 @@ class ListenViewModel @Inject constructor(
         loadLocalTracks()
         loadPlaylists()
         loadDiscover()
-        startPolling()
         startTicking()
         startHeartbeat()
     }
@@ -199,16 +198,6 @@ class ListenViewModel @Inject constructor(
                         loadDiscover()
                     }
                 }
-            }
-        }
-    }
-
-    private fun startPolling() {
-        pollJob?.cancel()
-        pollJob = viewModelScope.launch {
-            while (true) {
-                delay(5000)
-                loadState(silent = true)
             }
         }
     }
@@ -238,6 +227,12 @@ class ListenViewModel @Inject constructor(
             if (!silent) _state.update { it.copy(loading = true, error = null) }
             repo.state()
                 .onSuccess { room ->
+                    // Guard against event_seq regression: a slow REST reply must
+                    // never roll back room state that was already applied from a
+                    // newer WS event. -1L means "nothing applied yet".
+                    val eventSeq = room.current.eventSeq
+                    if (eventSeq < lastAppliedEventSeq) return@onSuccess
+                    lastAppliedEventSeq = eventSeq
                     val remoteDuration = room.current.songMeta?.durationMs ?: 0L
                     _state.update {
                         it.copy(
@@ -660,7 +655,6 @@ class ListenViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        pollJob?.cancel()
         tickJob?.cancel()
         heartbeatJob?.cancel()
         lyricJob?.cancel()

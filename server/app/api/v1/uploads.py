@@ -364,18 +364,22 @@ def _persist_image_bytes(
         stored_file.write_bytes(result.data)
 
         # Save thumbnail alongside original with _thumb suffix
+        thumbnail_url: str | None = None
         if result.thumbnail:
             thumb_file = storage_dir / f"{stem}_thumb{extension}"
             thumb_file.write_bytes(result.thumbnail)
+            thumbnail_url = _build_relative_upload_url(thumb_file)
     else:
         # Pillow unavailable: raw save with original extension
         logger.warning(_pillow_missing)
         suffix = PurePosixPath(original_name or "file").suffix.lower() or ".jpg"
         stored_file = storage_dir / f"{stem}{suffix}"
         stored_file.write_bytes(raw_bytes)
+        thumbnail_url = None
 
     return UploadResponse(
         url=_build_relative_upload_url(stored_file),
+        thumbnail_url=thumbnail_url,
         file_name=original_name or stored_file.name,
         content_type=content_type,
         size=stored_file.stat().st_size,

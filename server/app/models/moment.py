@@ -48,7 +48,7 @@ class Moment(Base):
     audio_duration_sec: Mapped[int | None] = mapped_column(Integer, nullable=True)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     visibility: Mapped[Visibility] = mapped_column(
-        Enum(Visibility, name="moment_visibility"), default=Visibility.public, nullable=False
+        Enum(Visibility, name="moment_visibility"), default=Visibility.partners_only, nullable=False
     )
     tags: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     timestamp: Mapped[datetime] = mapped_column(

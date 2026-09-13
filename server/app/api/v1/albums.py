@@ -15,7 +15,8 @@
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import ensure_partner, get_current_user, get_optional_user
@@ -190,20 +191,29 @@ def create_album(
 
 @router.get("", response_model=AlbumListResponse)
 def list_albums(
+    page: int = Query(default=1, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ) -> AlbumListResponse:
-    items = (
+    filters = [Album.deleted_at.is_(None), VisibilityPolicy.album_query_filter(current_user)]
+    query = (
         db.query(Album)
         .options(joinedload(Album.author), joinedload(Album.media_items))
-        .filter(Album.deleted_at.is_(None), VisibilityPolicy.album_query_filter(current_user))
+        .filter(*filters)
         .order_by(Album.created_at.desc())
-        .all()
     )
+
+    if page_size is not None:
+        total = db.query(func.count(Album.id)).filter(*filters).scalar() or 0
+        items = query.offset((page - 1) * page_size).limit(page_size).all()
+    else:
+        items = query.all()
+        total = len(items)
 
     return AlbumListResponse(
         items=[_album_to_summary(item, current_user) for item in items],
-        total=len(items),
+        total=total,
     )
 
 

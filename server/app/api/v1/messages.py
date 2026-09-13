@@ -13,7 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
@@ -57,6 +60,7 @@ def _to_response(item: Message) -> MessageResponse:
         is_deleted=item.is_deleted,
         version=item.version,
         created_at=item.created_at,
+        updated_at=item.updated_at,
         author_uid=item.author.uid if item.author else None,
         author_nickname=item.author.nickname if item.author else None,
         visitor_name=item.visitor_name,
@@ -141,23 +145,66 @@ def create_message(
 @router.get("", response_model=MessageListResponse)
 def list_messages(
     include_private: bool = Query(default=False),
+    page: int = Query(default=1, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=200),
+    updated_after: datetime | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ) -> MessageListResponse:
-    query = (
-        db.query(Message)
-        .options(joinedload(Message.author))
-        .filter(Message.is_deleted.is_(False))
-        .order_by(Message.created_at.desc())
-    )
-
     if include_private and current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required")
 
-    query = query.filter(VisibilityPolicy.message_query_filter(current_user, include_private=include_private))
-    items = query.all()
+    # Through FastAPI's DI these are plain values; direct unit-test calls see
+    # the raw fastapi.Query() default objects instead, so normalize them to
+    # keep both invocation paths working.
+    if not isinstance(include_private, bool):
+        include_private = False
+    if not isinstance(page, int) or page < 1:
+        page = 1
+    if not isinstance(page_size, int) or page_size < 1:
+        page_size = None
+    if not isinstance(updated_after, datetime):
+        updated_after = None
 
-    return MessageListResponse(items=[_to_response(item) for item in items], total=len(items))
+    # Incremental sync mode: rows are ordered by updated_at ascending so a
+    # client can advance its cursor monotonically, and deleted rows are
+    # included (with is_deleted=True) so the client can prune local copies.
+    if updated_after is not None:
+        incremental_items = (
+            db.query(Message)
+            .options(joinedload(Message.author))
+            .filter(
+                VisibilityPolicy.message_query_filter(current_user, include_private=include_private),
+                Message.updated_at > updated_after,
+            )
+            .order_by(Message.updated_at.asc(), Message.id.asc())
+            .limit(page_size or 200)
+            .all()
+        )
+        return MessageListResponse(
+            items=[_to_response(item) for item in incremental_items],
+            total=len(incremental_items),
+        )
+
+    filters = [
+        Message.is_deleted.is_(False),
+        VisibilityPolicy.message_query_filter(current_user, include_private=include_private),
+    ]
+    query = (
+        db.query(Message)
+        .options(joinedload(Message.author))
+        .filter(*filters)
+        .order_by(Message.created_at.desc())
+    )
+
+    if page_size is not None:
+        total = db.query(func.count(Message.id)).filter(*filters).scalar() or 0
+        items = query.offset((page - 1) * page_size).limit(page_size).all()
+    else:
+        items = query.all()
+        total = len(items)
+
+    return MessageListResponse(items=[_to_response(item) for item in items], total=total)
 
 
 @router.patch("/{msg_id}", response_model=MessageResponse)

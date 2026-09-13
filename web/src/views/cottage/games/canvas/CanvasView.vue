@@ -202,7 +202,12 @@ async function saveToTimeline() {
   try {
     const file = dataUrlToFile(url, `canvas-${Date.now()}.png`);
     const up = await uploadTimelineImage(file);
-    await createMoment({ content: t("cottageGames.canvas.timelineContent"), media_urls: [up.url] });
+    await createMoment({
+      // Unified privacy default across all clients: only the couple can see it.
+      visibility: "PartnersOnly",
+      content: t("cottageGames.canvas.timelineContent"),
+      media_urls: [up.url],
+    });
     showMessage(t("cottageGames.canvas.savedToTimeline"));
   } catch (error) {
     showMessage(parseError(error));

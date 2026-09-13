@@ -35,7 +35,9 @@ class MomentCreateRequest(BaseModel):
     audio_url: str | None = Field(default=None, max_length=512)
     audio_duration_sec: int | None = Field(default=None, ge=0, le=24 * 3600)
     location: str | None = Field(default=None, max_length=255)
-    visibility: Visibility = Visibility.public
+    # Unified privacy default across all clients: couple-only content stays
+    # private unless the author explicitly widens the audience.
+    visibility: Visibility = Visibility.partners_only
     tags: list[str] = Field(default_factory=list)
 
     @field_validator("content")

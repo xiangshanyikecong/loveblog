@@ -17,10 +17,15 @@
 
 import { createI18n } from "vue-i18n";
 import zhCN from "./zh-CN.json";
-import enUS from "./en-US.json";
-import jaJP from "./ja-JP.json";
 
 const STORAGE_KEY = "love-lang";
+
+// zh-CN ships in the initial bundle: it is the default locale AND the
+// fallbackLocale, so it must always be available synchronously. The other
+// locales are code-split into separate chunks and fetched on demand.
+const messages = {
+  "zh-CN": zhCN,
+};
 
 export const supportedLocales = [
   { code: "zh-CN", label: "中文", flag: "🇨🇳" },
@@ -50,14 +55,48 @@ const i18n = createI18n({
   legacy: false,
   locale: getDefaultLocale(),
   fallbackLocale: "zh-CN",
-  messages: {
-    "zh-CN": zhCN,
-    "en-US": enUS,
-    "ja-JP": jaJP,
-  },
+  messages,
 });
 
-export function setLocale(code) {
+const localeImporters = {
+  "en-US": () => import("./en-US.json"),
+  "ja-JP": () => import("./ja-JP.json"),
+};
+
+const loadedLocales = new Set(Object.keys(messages));
+const pendingLoads = new Map();
+
+async function ensureLocaleLoaded(code) {
+  if (loadedLocales.has(code) || !localeImporters[code]) {
+    return;
+  }
+  let pending = pendingLoads.get(code);
+  if (!pending) {
+    pending = localeImporters[code]()
+      .then((mod) => {
+        i18n.global.setLocaleMessage(code, mod.default);
+        loadedLocales.add(code);
+      })
+      .finally(() => pendingLoads.delete(code));
+    pendingLoads.set(code, pending);
+  }
+  await pending;
+}
+
+/**
+ * Loads the locale bundle for the active locale when it is not part of the
+ * initial bundle. The UI stays on zh-CN (the fallback) until the fetch
+ * resolves; vue-i18n's reactive messages then re-render automatically.
+ */
+export async function initLocale() {
+  await ensureLocaleLoaded(i18n.global.locale.value);
+}
+
+export async function setLocale(code) {
+  if (!supportedLocales.some((l) => l.code === code)) {
+    return;
+  }
+  await ensureLocaleLoaded(code);
   i18n.global.locale.value = code;
   browserStorage()?.setItem(STORAGE_KEY, code);
   if (globalThis.document?.documentElement) {

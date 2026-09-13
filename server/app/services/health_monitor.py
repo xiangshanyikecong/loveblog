@@ -308,11 +308,16 @@ async def health_monitor_loop() -> None:
     logger.info("Started health monitor background task (interval=%ss)", MONITOR_INTERVAL_SECONDS)
     while True:
         try:
-            db = SessionLocal()
-            try:
-                record_health_snapshot(db)
-            finally:
-                db.close()
+            # Checks do directory walks, disk probes and DB writes - run the
+            # whole tick off the event loop so requests/WebSockets never stall.
+            def _tick() -> None:
+                db = SessionLocal()
+                try:
+                    record_health_snapshot(db)
+                finally:
+                    db.close()
+
+            await asyncio.to_thread(_tick)
         except Exception:
             logger.exception("Health monitor tick failed.")
         await asyncio.sleep(MONITOR_INTERVAL_SECONDS)

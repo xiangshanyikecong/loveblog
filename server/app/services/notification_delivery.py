@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import json
 import logging
+import queue
 import smtplib
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.message import EmailMessage
@@ -229,6 +231,39 @@ def _prepare_pending_notification_payloads(session: Session, _flush_context) -> 
         session.info.pop(_PENDING_NOTIFICATION_OBJECTS_KEY, None)
 
 
+# External delivery (SMTP/WebPush/FCM) is blocking network IO. Committed
+# payloads are handed to a single background worker thread so request
+# threads and the event loop never wait on external services; failures
+# are later retried by retry_pending_notification_deliveries().
+_DELIVERY_QUEUE: queue.Queue[list[NotificationDeliveryPayload]] = queue.Queue()
+_DELIVERY_WORKER_STARTED = threading.Event()
+_DELIVERY_WORKER_LOCK = threading.Lock()
+
+
+def _delivery_worker() -> None:
+    while True:
+        payloads = _DELIVERY_QUEUE.get()
+        try:
+            deliver_notification_payloads(payloads)
+        except Exception:
+            logger.exception("Failed to deliver committed notifications")
+        finally:
+            _DELIVERY_QUEUE.task_done()
+
+
+def _enqueue_notification_delivery(payloads: list[NotificationDeliveryPayload]) -> None:
+    _DELIVERY_QUEUE.put(payloads)
+    if not _DELIVERY_WORKER_STARTED.is_set():
+        with _DELIVERY_WORKER_LOCK:
+            if not _DELIVERY_WORKER_STARTED.is_set():
+                threading.Thread(
+                    target=_delivery_worker,
+                    name="notification-delivery",
+                    daemon=True,
+                ).start()
+                _DELIVERY_WORKER_STARTED.set()
+
+
 @event.listens_for(Session, "after_commit")
 def _deliver_pending_notifications_after_commit(session: Session) -> None:
     payloads: list[NotificationDeliveryPayload] = list(
@@ -238,9 +273,9 @@ def _deliver_pending_notifications_after_commit(session: Session) -> None:
     if not payloads:
         return
     try:
-        deliver_notification_payloads(payloads)
+        _enqueue_notification_delivery(payloads)
     except Exception:
-        logger.exception("Failed to deliver committed notifications")
+        logger.exception("Failed to enqueue committed notifications for delivery")
 
 
 @event.listens_for(Session, "after_rollback")

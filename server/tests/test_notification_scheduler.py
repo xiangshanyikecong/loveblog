@@ -54,10 +54,27 @@ class NotificationSchedulerTests(unittest.TestCase):
             self.Session,
         )
         self.notification_delivery_sessionlocal_patcher.start()
+        # The production after-commit hook hands payloads to a background
+        # worker thread. That thread would race with these per-test engines
+        # (and sqlite:///:memory: is thread-local anyway), so run the
+        # delivery step synchronously instead: it is exactly the behavior
+        # these tests were written against, while still exercising the full
+        # after-commit hook. The indirection resolves
+        # deliver_notification_payloads at call time so per-test patches of
+        # it (e.g. the scheduler-tick test) keep working.
+        self.notification_delivery_enqueue_patcher = patch.object(
+            notification_delivery,
+            "_enqueue_notification_delivery",
+            side_effect=lambda payloads: notification_delivery.deliver_notification_payloads(
+                payloads
+            ),
+        )
+        self.notification_delivery_enqueue_patcher.start()
         self.db = self.Session()
 
     def tearDown(self) -> None:
         self.db.close()
+        self.notification_delivery_enqueue_patcher.stop()
         self.notification_delivery_sessionlocal_patcher.stop()
         self.engine.dispose()
 

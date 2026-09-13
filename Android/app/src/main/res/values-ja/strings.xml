@@ -365,7 +365,6 @@
     <string name="period_start_date">開始日</string>
     <string name="period_end_date_optional">終了日（任意、空欄で進行中）</string>
     <string name="period_end_date_not_set">未設定</string>
-    <string name="btn_clear">クリア</string>
 
     <!-- ==================== Plans ==================== -->
     <string name="plan_no_plans">まだデート計画がありません。右下のボタンで追加しましょう</string>

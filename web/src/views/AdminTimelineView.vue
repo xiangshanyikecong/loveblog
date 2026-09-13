@@ -35,7 +35,7 @@
         <div class="card-content">
           <p class="content-text">{{ item.content }}</p>
           <div v-if="item.media_urls?.length" class="thumbnail-strip">
-            <img v-for="(url, idx) in item.media_urls" :key="idx" :src="resolveAssetUrl(url)" class="thumbnail" />
+            <img v-for="(url, idx) in item.media_urls" :key="idx" :src="resolveAssetUrl(toThumbnailUrl(url))" class="thumbnail" loading="lazy" @error="onImgFallback($event, url)" />
           </div>
           <div v-if="item.location" class="location">
             📍 {{ item.location }}
@@ -59,13 +59,21 @@
 
 <script setup>
 import { onMounted, ref, inject } from "vue";
-import { fetchTimeline, deleteMoment, resolveAssetUrl } from "../lib/api";
+import { fetchTimeline, deleteMoment, resolveAssetUrl, toThumbnailUrl } from "../lib/api";
 import { confirmDialog } from "../lib/dialog";
 import { t } from "../locales";
 import { parseError } from "../utils/helpers";
 
 const showMessage = inject("showMessage");
 const moments = ref([]);
+
+// Fall back to the original image for legacy media without thumbnails.
+function onImgFallback(e, originalUrl) {
+  const el = e.target;
+  if (el.dataset.fallback) return;
+  el.dataset.fallback = "1";
+  el.src = resolveAssetUrl(originalUrl);
+}
 
 async function load() {
   try {

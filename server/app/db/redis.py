@@ -31,6 +31,10 @@ _pool = redis.ConnectionPool.from_url(
     settings.resolved_redis_url,
     decode_responses=True,
     max_connections=20,
+    # Don't let a wedged Redis connection block a worker forever.
+    socket_timeout=5,
+    socket_connect_timeout=2,
+    health_check_interval=30,
 )
 
 

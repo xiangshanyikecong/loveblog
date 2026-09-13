@@ -365,7 +365,6 @@
     <string name="period_start_date">Start date</string>
     <string name="period_end_date_optional">End date (optional, leave blank if ongoing)</string>
     <string name="period_end_date_not_set">Not set</string>
-    <string name="btn_clear">Clear</string>
 
     <!-- ==================== Plans ==================== -->
     <string name="plan_no_plans">No date plans yet — tap the button to add one</string>

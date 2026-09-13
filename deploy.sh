@@ -268,7 +268,8 @@ run_certbot() {
             certbot "$@" --non-interactive --cert-name love-journal --server "$ACME_SERVER" \
             && cp /etc/letsencrypt/live/love-journal/fullchain.pem /ssl/fullchain.pem \
             && cp /etc/letsencrypt/live/love-journal/privkey.pem /ssl/privkey.pem \
-            && chmod 644 /ssl/fullchain.pem /ssl/privkey.pem
+            && chmod 644 /ssl/fullchain.pem \
+            && chmod 600 /ssl/privkey.pem
         ' sh "$@"
 }
 
@@ -344,6 +345,14 @@ ensure_ssl() {
     mkdir -p nginx/ssl nginx/ssl-challenge nginx/certbot/etc
     local cert="nginx/ssl/fullchain.pem"
     local key="nginx/ssl/privkey.pem"
+
+    # 修正历史遗留的过宽私钥权限（TLS 私钥必须仅属主可读）。
+    if [ -f "$key" ]; then
+        chmod 600 "$key" 2>/dev/null || true
+    fi
+    if [ -f "$cert" ]; then
+        chmod 644 "$cert" 2>/dev/null || true
+    fi
 
     if [ -s "$cert" ] && [ -s "$key" ]; then
         if command -v openssl &> /dev/null && openssl x509 -in "$cert" -noout -checkend 2592000 >/dev/null 2>&1; then
@@ -459,6 +468,66 @@ else
     fi
 fi
 
+# ---------- 部署前数据库备份 ----------
+# 必须在 `up -d` 之前执行：新容器启动即可能跑 Alembic 迁移，一旦迁移不可逆，
+# 只能靠这份快照恢复数据。
+BACKEND_IMAGE_BEFORE=""
+WEB_IMAGE_BEFORE=""
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-backend-prod'; then
+    BACKEND_IMAGE_BEFORE="$(docker inspect --format '{{.Image}}' love-backend-prod 2>/dev/null || true)"
+fi
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-web-prod'; then
+    WEB_IMAGE_BEFORE="$(docker inspect --format '{{.Image}}' love-web-prod 2>/dev/null || true)"
+fi
+
+echo "💾 部署前备份数据库..."
+PREDEPLOY_BACKUP_DIR="backups/predeploy"
+mkdir -p "$PREDEPLOY_BACKUP_DIR"
+PREDEPLOY_DB_FILE="${PREDEPLOY_BACKUP_DIR}/db_$(date +%Y%m%d_%H%M%S).sql.gz"
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-postgres-prod'; then
+    if docker exec love-postgres-prod sh -c \
+        'pg_dump -U "${POSTGRES_USER:-love}" -d "${POSTGRES_DB:-love_node}"' \
+        | gzip > "$PREDEPLOY_DB_FILE"; then
+        echo -e "${GREEN}✅ 数据库已备份到 ${PREDEPLOY_DB_FILE}${NC}"
+    else
+        # 备份失败不直接终止部署（例如 postgres 正处于恢复中的临时状态），
+        # 但必须醒目提示，由用户决定是否继续。
+        rm -f "$PREDEPLOY_DB_FILE"
+        echo -e "${YELLOW}⚠️  数据库备份失败；将继续部署，若随后迁移失败将没有恢复快照${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  postgres 容器未运行，跳过部署前数据库备份（可能是首次部署）${NC}"
+fi
+
+# 部署前数据库备份轮换：仅保留最近 5 份（文件名含时间戳，ls -t 即新到旧）。
+ls -1t "${PREDEPLOY_BACKUP_DIR}"/db_*.sql.gz 2>/dev/null | tail -n +6 | while IFS= read -r old; do
+    echo -e "${YELLOW}🗑️  清理旧数据库备份：$old${NC}"
+    rm -f "$old"
+done
+
+# ---------- 迁移失败回滚 ----------
+# 新镜像启动失败（常见诱因：Alembic 迁移出错/健康检查不过）时，把部署前记录
+# 的镜像重新打回 compose 引用的 tag 并回退启动，尽快恢复服务。数据库不做
+# 自动 downgrade（风险高）：如迁移已部分执行，请用上面的部署前备份恢复。
+rollback_deployment() {
+    echo -e "${RED}↩️  回滚到部署前的镜像版本...${NC}"
+    local backend_tag="ghcr.io/xiangshanyikecong/loveblog-backend:${IMAGE_TAG:-latest}"
+    local web_tag="ghcr.io/xiangshanyikecong/loveblog-web:${IMAGE_TAG:-latest}"
+    local rolled=false
+    if [ -n "$BACKEND_IMAGE_BEFORE" ] && docker tag "$BACKEND_IMAGE_BEFORE" "$backend_tag" 2>/dev/null; then
+        rolled=true
+    fi
+    if [ -n "$WEB_IMAGE_BEFORE" ] && docker tag "$WEB_IMAGE_BEFORE" "$web_tag" 2>/dev/null; then
+        rolled=true
+    fi
+    if [ "$rolled" = true ]; then
+        $COMPOSE -f docker-compose.prod.yml up -d backend web
+        echo -e "${YELLOW}⚠️  已回滚 backend/web 镜像。若数据库迁移已部分执行，请用部署前备份恢复${NC}"
+    else
+        echo -e "${YELLOW}⚠️  未找到部署前运行的镜像（可能是首次部署），无法自动回滚${NC}"
+    fi
+}
+
 # 启动服务
 echo "🚀 启动服务..."
 $COMPOSE -f docker-compose.prod.yml up -d --remove-orphans
@@ -489,6 +558,7 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     echo -e "${RED}❌ Nginx HTTPS 路由或后端服务启动失败${NC}"
     echo "查看日志："
     $COMPOSE -f docker-compose.prod.yml logs nginx backend
+    rollback_deployment
     exit 1
 fi
 
@@ -540,9 +610,14 @@ if [ "$PUB_VERIFY_OK" != "true" ]; then
     echo ""
     echo "  内部服务日志（供排查）："
     $COMPOSE -f docker-compose.prod.yml logs --tail=30 nginx backend
+    rollback_deployment
     exit 1
 fi
 echo -e "${GREEN}✅ 公网 HTTPS、DNS 与证书校验通过${NC}"
+
+# 部署成功后清理悬空镜像层（不用 -a：刚被替换下来的旧版本镜像此刻是
+# dangling，正好清掉；不能误删仍在回滚窗口内有用的 tagged 镜像）。
+docker image prune -f >/dev/null 2>&1 || true
 
 # 显示服务状态
 echo ""

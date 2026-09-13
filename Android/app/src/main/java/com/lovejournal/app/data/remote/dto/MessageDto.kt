@@ -28,6 +28,9 @@ data class MessageResponse(
     val is_deleted: Boolean = false,
     val version: Int = 1,
     val created_at: String,
+    // Drives the incremental-sync cursor (updated_after); older server builds
+    // omit it, hence nullable with a default.
+    val updated_at: String? = null,
     val author_uid: String? = null,
     val author_nickname: String? = null,
     val visitor_name: String? = null,

@@ -41,6 +41,7 @@ from app.schemas.dashboard import (
 )
 from app.schemas.event import EventResponse
 from app.schemas.message import MessageResponse
+from app.services.cache import cache_get_json, cache_set_json
 from app.services.visibility_policy import VisibilityPolicy
 
 
@@ -162,6 +163,21 @@ def get_dashboard(
 ) -> DashboardResponse:
     is_partner = VisibilityPolicy.is_partner(current_user)
 
+    # The dashboard fans out into 8 COUNT/list queries; cache the whole
+    # response briefly (visibility only depends on anon vs partner).
+    cache_key = f"dashboard:v1:{'partner' if is_partner else 'anon'}"
+    cached = cache_get_json(cache_key)
+    if cached is not None:
+        return DashboardResponse.model_validate(cached)
+
+    response = _build_dashboard(db, current_user, is_partner)
+    cache_set_json(cache_key, response.model_dump(mode="json"), ttl_seconds=60)
+    return response
+
+
+def _build_dashboard(
+    db: Session, current_user: User | None, is_partner: bool
+) -> DashboardResponse:
     setting = db.query(SiteSetting).filter(SiteSetting.id == 1).first()
     love_clock = _build_love_clock(setting.love_start_date if setting else None)
     couple = _build_couple_info(db, setting)

@@ -15,7 +15,8 @@
 
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import ensure_partner, get_current_user, get_optional_user
@@ -99,18 +100,27 @@ def create_event(
 
 @router.get("", response_model=EventListResponse)
 def list_events(
+    page: int = Query(default=1, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ) -> EventListResponse:
-    events = (
+    filters = [Event.deleted_at.is_(None), VisibilityPolicy.event_query_filter(current_user)]
+    query = (
         db.query(Event)
         .options(joinedload(Event.creator))
-        .filter(Event.deleted_at.is_(None), VisibilityPolicy.event_query_filter(current_user))
+        .filter(*filters)
         .order_by(Event.is_important.desc(), Event.date.asc(), Event.created_at.asc())
-        .all()
     )
 
-    return EventListResponse(items=[_to_response(item) for item in events], total=len(events))
+    if page_size is not None:
+        total = db.query(func.count(Event.id)).filter(*filters).scalar() or 0
+        items = query.offset((page - 1) * page_size).limit(page_size).all()
+    else:
+        items = query.all()
+        total = len(items)
+
+    return EventListResponse(items=[_to_response(item) for item in items], total=total)
 
 
 @router.put("/{eid}", response_model=EventResponse)

@@ -16,6 +16,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import can_co_edit, ensure_partner, get_current_user, get_optional_user
@@ -266,23 +267,37 @@ def create_article(
 @router.get("", response_model=ArticleListResponse)
 def list_articles(
     only_published: bool = Query(default=True),
+    page: int = Query(default=1, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_user),
 ) -> ArticleListResponse:
+    filters = [Article.deleted_at.is_(None), VisibilityPolicy.article_query_filter(current_user)]
+    if only_published:
+        filters.append(Article.status == ArticleStatus.published)
+
     query = (
         db.query(Article)
-        .options(joinedload(Article.author))
-        .filter(Article.deleted_at.is_(None), VisibilityPolicy.article_query_filter(current_user))
+        .options(
+            # _article_to_summary walks blocks and block authors to collect
+            # collaborator uids; without preloading this is N+1 per article.
+            joinedload(Article.author),
+            joinedload(Article.blocks).joinedload(ArticleBlock.author),
+        )
+        .filter(*filters)
         .order_by(Article.created_at.desc())
     )
 
-    if only_published:
-        query = query.filter(Article.status == ArticleStatus.published)
+    if page_size is not None:
+        total = db.query(func.count(Article.id)).filter(*filters).scalar() or 0
+        items = query.offset((page - 1) * page_size).limit(page_size).all()
+    else:
+        items = query.all()
+        total = len(items)
 
-    visible = query.all()
     return ArticleListResponse(
-        items=[_article_to_summary(item, current_user) for item in visible],
-        total=len(visible),
+        items=[_article_to_summary(item, current_user) for item in items],
+        total=total,
     )
 
 

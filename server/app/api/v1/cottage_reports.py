@@ -39,6 +39,7 @@ from app.schemas.cottage_report import (
     CottageMoodStat,
     CottageReportHighlight,
 )
+from app.services.cache import cache_get_json, cache_set_json
 
 
 router = APIRouter(prefix="/cottage/reports", tags=["cottage-reports"])
@@ -68,6 +69,13 @@ def monthly_report(
     current_user: User = Depends(get_current_user),
 ) -> CottageMonthlyReportResponse:
     ensure_partner(current_user)
+
+    # ~13 COUNT/GROUP-BY queries per request; cache briefly per month.
+    cache_key = f"report:monthly:v1:{year}-{month:02d}"
+    cached = cache_get_json(cache_key)
+    if cached is not None:
+        return CottageMonthlyReportResponse.model_validate(cached)
+
     start_day, end_day, start_dt, end_dt = _month_bounds(year, month)
 
     stats = {
@@ -222,7 +230,7 @@ def monthly_report(
             )
         )
 
-    return CottageMonthlyReportResponse(
+    response = CottageMonthlyReportResponse(
         year=year,
         month=month,
         start_date=start_day.isoformat(),
@@ -232,3 +240,5 @@ def monthly_report(
         top_moods=top_moods,
         highlights=highlights[:6],
     )
+    cache_set_json(cache_key, response.model_dump(mode="json"), ttl_seconds=300)
+    return response

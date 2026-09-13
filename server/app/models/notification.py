@@ -16,7 +16,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -24,6 +24,17 @@ from app.db.base import Base
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        # Covers the dedupe equality lookup in services/notifications.py
+        # (recipient_id + type + source_type + source_id) with one index seek.
+        Index(
+            "ix_notifications_dedupe",
+            "recipient_id",
+            "type",
+            "source_type",
+            "source_id",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     nid: Mapped[str] = mapped_column(
@@ -48,7 +59,7 @@ class Notification(Base):
     delivery_last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     delivery_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

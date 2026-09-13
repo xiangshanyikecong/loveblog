@@ -197,11 +197,11 @@ def process_image(
             img = img.convert("RGBA")
 
         # ── Strip EXIF ────────────────────────────────────────────────────
+        # Decoding + re-encoding already drops metadata; pop the raw EXIF
+        # blob so Pillow never re-attaches it (e.g. via exif_transpose
+        # side effects). Cheap and avoids a full per-pixel image copy.
         if policy.strip_exif:
-            # Create a fresh image without EXIF info attached
-            clean = Image.new(img.mode, img.size)
-            clean.putdata(list(img.get_flattened_data()))
-            img = clean
+            img.info.pop("exif", None)
 
         # ── Re-encode ─────────────────────────────────────────────────────
         buf = io.BytesIO()

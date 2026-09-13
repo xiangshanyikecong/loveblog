@@ -27,7 +27,9 @@ class EventCreateRequest(BaseModel):
     type: EventType = EventType.countdown
     is_important: bool = False
     is_yearly_repeat: bool = False
-    visibility: Visibility = Visibility.public
+    # Unified privacy default across all clients: couple-only content stays
+    # private unless the author explicitly widens the audience.
+    visibility: Visibility = Visibility.partners_only
     tags: list[str] = Field(default_factory=list)
 
     @field_validator("title")
