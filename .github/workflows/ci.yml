@@ -111,7 +111,7 @@ jobs:
       # 防止带已知漏洞的镜像进入生产。ignore-unfixed 避免上游暂无补丁
       # 的披露长期阻塞构建。
       - name: Scan backend image (trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: image
           image-ref: love-journal-backend:ci
@@ -120,7 +120,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan web image (trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: image
           image-ref: love-journal-web:ci
@@ -129,7 +129,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan NetEase helper image (trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: image
           image-ref: love-journal-netease:ci
@@ -140,7 +140,7 @@ jobs:
       # SBOM（CycloneDX）：为每个生产镜像生成软件物料清单并作为 workflow
       # artifact 留存，便于供应链审计与漏洞影响面排查。
       - name: Generate backend SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: image
           image-ref: love-journal-backend:ci
@@ -149,7 +149,7 @@ jobs:
           scanners: ""
 
       - name: Generate web SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: image
           image-ref: love-journal-web:ci
@@ -158,7 +158,7 @@ jobs:
           scanners: ""
 
       - name: Generate NetEase helper SBOM (CycloneDX)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           scan-type: image
           image-ref: love-journal-netease:ci
