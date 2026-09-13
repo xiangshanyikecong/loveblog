@@ -98,12 +98,13 @@ services:
     restart: always
     logging: *default-logging
     # backend 是内存大头（uvicorn + 数据集快照 + 备份构建），给 1 GiB 余量；
-    # pids_limit 防止 fork 炸弹。资源限制防 OOM 拖垮宿主机。
+    # pids 限制防止 fork 炸弹。资源限制防 OOM 拖垮宿主机。
+    # Compose v5 不允许 pids_limit 与 deploy.resources.limits 共存，统一走 deploy。
     deploy:
       resources:
         limits:
           memory: 1g
-    pids_limit: 512
+          pids: 512
     environment:
       APP_NAME: ${APP_NAME:-Love Journal}
       APP_ENV: production
@@ -201,7 +202,7 @@ services:
       resources:
         limits:
           memory: 256m
-    pids_limit: 256
+          pids: 256
     ulimits:
       nofile:
         soft: 65535
