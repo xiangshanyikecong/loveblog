@@ -32,7 +32,9 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
           if (/[\\/]node_modules[\\/](vue|@vue|vue-router|vue-i18n)[\\/]/.test(id)) return "vendor-vue";
-          if (/[\\/]node_modules[\\/]axios[\\/]/.test(id)) return "vendor-http";
+          // axios 不单独拆 chunk：单独拆会把 rolldown 的共享模块辅助函数留在
+          // api chunk，迫使 vendor-http 反向导入 api 形成循环依赖，顶层调用
+          // 尚未初始化的绑定直接抛 "TypeError: e is not a function" 导致白屏。
           if (/[\\/]node_modules[\\/](marked|dompurify)[\\/]/.test(id)) return "vendor-markdown";
           if (/[\\/]node_modules[\\/]vditor[\\/]/.test(id)) return "vendor-vditor";
           return undefined;
