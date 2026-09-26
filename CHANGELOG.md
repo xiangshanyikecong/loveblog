@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4-beta.3] - 2026-09-26
+
 ### Added
 
 - Android 客户端功能补全（对齐 Web 端能力，消除 README 宣称但未接线的缺口）：
@@ -23,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android 单元测试：服务器地址归一化（直连 / 反代两种部署形态）、保险箱加密
   原语（PBKDF2 + AES-GCM 往返、错误口令、篡改拒绝）；`VaultCrypto` 迁移至
   `java.util.Base64`（minSdk 26 原生支持）使加密路径可在 JVM 单测
+
+### Fixed
+
+- Web 端生产构建白屏（所有用户必现，页面无任何界面）：v1.0.4-beta.2 的 Vite
+  函数式分包将 axios 单独拆为 `vendor-http` chunk，rolldown 把共享模块辅助函数
+  提升进 `api` chunk，形成 `api ↔ vendor-http` 循环依赖；`api` chunk 加载途中
+  拉起 `vendor-http`，其顶层调用尚未初始化的导入绑定抛
+  `TypeError: e is not a function`，Vue 应用无法挂载。取消 axios 单独分包
+  （跟随 api chunk，约 17KB gzip），重建后全量 chunk 依赖图经脚本校验为无环，
+  页面恢复正常渲染
+- `install.sh` 一键安装补齐 nginx snippets 安全头片段，修复全新安装时 nginx
+  因缺少引用的配置片段而启动失败
 
 ## [1.0.4-beta.2] - 2026-09-13
 
