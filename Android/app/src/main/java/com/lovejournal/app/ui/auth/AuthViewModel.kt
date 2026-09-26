@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 data class LoginUiState(
@@ -38,6 +40,15 @@ data class LoginUiState(
     val testingConnection: Boolean = false,
     val connectionOk: String? = null,
     val error: String? = null,
+    /** 站点尚未初始化时为 true，登录表单下方展示「首次使用？初始化站点」入口。 */
+    val showBootstrapEntry: Boolean = false,
+)
+
+/** 首次初始化引导弹窗的状态。成功后 [bootstrappedUsername] 用于预填登录用户名。 */
+data class BootstrapUiState(
+    val submitting: Boolean = false,
+    val error: String? = null,
+    val bootstrappedUsername: String? = null,
 )
 
 @HiltViewModel
@@ -51,6 +62,12 @@ class AuthViewModel @Inject constructor(
 
     private val _loginState = MutableStateFlow(LoginUiState())
     val loginState: StateFlow<LoginUiState> = _loginState.asStateFlow()
+
+    private val _bootstrapState = MutableStateFlow(BootstrapUiState())
+    val bootstrapState: StateFlow<BootstrapUiState> = _bootstrapState.asStateFlow()
+
+    /** 上次已检查初始化状态的服务器地址，用于按地址懒加载并缓存结果。 */
+    private var bootstrapCheckedFor: String? = null
 
     fun currentServerAddress(): String = serverConfig.displayAddress()
 
@@ -71,6 +88,106 @@ class AuthViewModel @Inject constructor(
             "https://example.com/api"
         }
 
+    /**
+     * 懒加载检查站点初始化状态（结果按地址缓存）。仅当填写了合法地址且与
+     * 当前生效的服务器一致时才发起请求，避免把请求打到尚未确认的新地址上。
+     */
+    fun checkBootstrapStatus(serverAddress: String) {
+        val invalid = serverAddress.isBlank() ||
+            serverConfig.validateAddressInput(serverAddress) != null ||
+            serverAddress.trim() != serverConfig.displayAddress().trim()
+        if (invalid) {
+            bootstrapCheckedFor = serverAddress
+            hideBootstrapEntry()
+            return
+        }
+        if (bootstrapCheckedFor == serverAddress) return
+        bootstrapCheckedFor = serverAddress
+        viewModelScope.launch {
+            val notBootstrapped = authRepository.bootstrapStatus().getOrNull() == false
+            _loginState.value = _loginState.value.copy(showBootstrapEntry = notBootstrapped)
+        }
+    }
+
+    /**
+     * 提交首次初始化：创建 PartnerA 并写入站点名称 / 恋爱开始日。
+     * 成功后不会自动登录，[BootstrapUiState.bootstrappedUsername] 供登录表单预填。
+     */
+    fun bootstrap(
+        serverAddress: String,
+        bootstrapToken: String,
+        username: String,
+        password: String,
+        nickname: String,
+        siteName: String,
+        loveStartDate: String?,
+    ) {
+        serverConfig.validateAddressInput(serverAddress)?.let { msg ->
+            _bootstrapState.value = BootstrapUiState(error = msg)
+            return
+        }
+        if (bootstrapToken.isBlank()) {
+            _bootstrapState.value = BootstrapUiState(error = "请输入初始化令牌")
+            return
+        }
+        if (!USERNAME_PATTERN.matches(username.trim())) {
+            _bootstrapState.value = BootstrapUiState(error = "用户名需为 3-32 位小写字母、数字或下划线")
+            return
+        }
+        if (password.length < 8 || !password.any { it.isLetter() } || !password.any { it.isDigit() }) {
+            _bootstrapState.value = BootstrapUiState(error = "密码至少 8 位，且需同时包含字母和数字")
+            return
+        }
+        if (nickname.isBlank()) {
+            _bootstrapState.value = BootstrapUiState(error = "请输入昵称")
+            return
+        }
+        val startDateIso = loveStartDate?.trim()?.takeIf { it.isNotEmpty() }?.let { raw ->
+            runCatching { LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant().toString() }
+                .getOrElse {
+                    _bootstrapState.value = BootstrapUiState(error = "恋爱开始日格式应为 yyyy-MM-dd")
+                    return
+                }
+        }
+        serverConfig.setAddress(serverAddress)
+        _bootstrapState.value = BootstrapUiState(submitting = true)
+        viewModelScope.launch {
+            authRepository.bootstrap(
+                bootstrapToken = bootstrapToken,
+                username = username.trim(),
+                password = password,
+                nickname = nickname.trim(),
+                siteName = siteName.trim().ifBlank { null },
+                loveStartDateIso = startDateIso,
+            ).fold(
+                onSuccess = {
+                    _bootstrapState.value = BootstrapUiState(bootstrappedUsername = username.trim())
+                    // 站点已完成初始化，登录页不再显示引导入口。
+                    bootstrapCheckedFor = null
+                    _loginState.value = _loginState.value.copy(
+                        showBootstrapEntry = false,
+                        connectionOk = "初始化成功，请使用新账号登录",
+                        error = null,
+                    )
+                },
+                onFailure = { _bootstrapState.value = BootstrapUiState(error = it.message ?: "初始化失败") },
+            )
+        }
+    }
+
+    /** 关闭引导弹窗时清理其临时状态。 */
+    fun resetBootstrapState() {
+        if (_bootstrapState.value.bootstrappedUsername == null) {
+            _bootstrapState.value = BootstrapUiState()
+        }
+    }
+
+    private fun hideBootstrapEntry() {
+        if (_loginState.value.showBootstrapEntry) {
+            _loginState.value = _loginState.value.copy(showBootstrapEntry = false)
+        }
+    }
+
     fun testConnection(serverAddress: String) {
         serverConfig.validateAddressInput(serverAddress)?.let { msg ->
             _loginState.value = LoginUiState(error = msg)
@@ -82,6 +199,9 @@ class AuthViewModel @Inject constructor(
             _loginState.value = result.fold(
                 onSuccess = {
                     serverConfig.setAddress(serverAddress)
+                    // 地址已生效，重新检查初始化状态（原缓存按旧地址键控）。
+                    bootstrapCheckedFor = null
+                    checkBootstrapStatus(serverConfig.displayAddress())
                     LoginUiState(connectionOk = it)
                 },
                 onFailure = { LoginUiState(error = it.message ?: "连接失败") },
@@ -111,5 +231,10 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch { authRepository.logout() }
+    }
+
+    private companion object {
+        /** 与服务器校验保持一致：3-32 位小写字母、数字或下划线。 */
+        val USERNAME_PATTERN = Regex("^[a-z0-9_]{3,32}$")
     }
 }

@@ -17,7 +17,12 @@
 
 package com.lovejournal.app.ui.timeline
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +34,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -39,12 +46,18 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,11 +68,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -71,6 +87,9 @@ import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.util.formatDateTime
 
 private val VISIBILITY_OPTIONS = listOf("PartnersOnly" to "仅彼此", "Public" to "公开")
+
+/** 发动态时最多可选择的图片张数（与后端单条动态图片上限一致）。 */
+private const val MAX_MEDIA_PER_MOMENT = 9
 
 private fun visibilityLabel(value: String): String = when (value) {
     "Public" -> "公开"
@@ -94,11 +113,15 @@ private fun deriveThumbnailPath(path: String): String {
     return path.replace(IMAGE_EXT_REGEX, "_thumb$1$2")
 }
 
+/** 从 ISO 时间戳提取年份（"2023-10-01T..." -> 2023），解析失败返回 null。 */
+private fun yearOf(iso: String): Int? = iso.take(4).toIntOrNull()
+
 @Composable
 fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     var editorOpen by remember { mutableStateOf(false) }
+    var previewUrl by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -121,48 +144,120 @@ fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
                 )
             }
-            when {
-                state.loading && state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                state.error != null && state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
-                    }
-                state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有动态，点右下角发一条吧")
-                    }
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(state.items, key = { it.mid }) { moment ->
-                        MomentCard(moment = moment, onDelete = { viewModel.delete(moment) })
-                    }
-                }
+            TimelineModeSwitch(
+                selected = state.selectedTab,
+                onSelect = viewModel::selectTab,
+            )
+            when (state.selectedTab) {
+                TimelineTab.MOMENTS -> MomentsContent(
+                    state = state,
+                    onDelete = viewModel::delete,
+                    onComment = { mid, content, parentCid -> viewModel.comment(mid, content, parentCid) },
+                    onPreviewImage = { previewUrl = it },
+                )
+                TimelineTab.MEMORIES -> MemoriesContent(
+                    state = state,
+                    onRetry = viewModel::refresh,
+                    onPreviewImage = { previewUrl = it },
+                )
             }
         }
 
-        FloatingActionButton(
-            onClick = { editorOpen = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp),
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "发动态")
+        if (state.selectedTab == TimelineTab.MOMENTS) {
+            FloatingActionButton(
+                onClick = { editorOpen = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp),
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "发动态")
+            }
         }
     }
 
     if (editorOpen) {
         MomentEditorDialog(
+            posting = state.posting,
             onDismiss = { editorOpen = false },
-            onSave = { content, visibility -> viewModel.post(content, visibility) { editorOpen = false } },
+            onSave = { content, visibility, imageUris ->
+                viewModel.post(content, visibility, imageUris) { editorOpen = false }
+            },
         )
+    }
+
+    previewUrl?.let { url ->
+        FullScreenImageDialog(url = url, onDismiss = { previewUrl = null })
     }
 }
 
+/** 「动态 / 回忆」分段切换。 */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MomentCard(moment: MomentResponse, onDelete: () -> Unit) {
+private fun TimelineModeSwitch(selected: TimelineTab, onSelect: (TimelineTab) -> Unit) {
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        SegmentedButton(
+            selected = selected == TimelineTab.MOMENTS,
+            onClick = { onSelect(TimelineTab.MOMENTS) },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+        ) { Text("动态") }
+        SegmentedButton(
+            selected = selected == TimelineTab.MEMORIES,
+            onClick = { onSelect(TimelineTab.MEMORIES) },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+        ) { Text("回忆") }
+    }
+}
+
+/** 动态流分栏：列表 / 加载 / 错误 / 空态。 */
+@Composable
+private fun MomentsContent(
+    state: TimelineUiState,
+    onDelete: (MomentResponse) -> Unit,
+    onComment: (mid: String, content: String, parentCid: String?) -> Unit,
+    onPreviewImage: (String) -> Unit,
+) {
+    when {
+        state.loading && state.items.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        state.error != null && state.items.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+            }
+        state.items.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("还没有动态，点右下角发一条吧")
+            }
+        else -> LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(state.items, key = { it.mid }) { moment ->
+                MomentCard(
+                    moment = moment,
+                    onDelete = { onDelete(moment) },
+                    onComment = { content, parentCid -> onComment(moment.mid, content, parentCid) },
+                    onPreviewImage = onPreviewImage,
+                )
+            }
+        }
+    }
+}
+
+/** 动态卡片：作者信息、正文（图片 / 语音 / 地点 / 标签）、评论树与评论输入。 */
+@Composable
+private fun MomentCard(
+    moment: MomentResponse,
+    onDelete: () -> Unit,
+    onComment: (content: String, parentCid: String?) -> Unit,
+    onPreviewImage: (String) -> Unit,
+) {
+    // 本卡片的回复目标；点某条评论的「回复」后进入回复模式，随下一条评论提交。
+    var replyTo by remember(moment.mid) { mutableStateOf<CommentNodeResponse?>(null) }
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
@@ -183,98 +278,340 @@ private fun MomentCard(moment: MomentResponse, onDelete: () -> Unit) {
                 }
             }
 
-            moment.content.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(4.dp))
-                Text(it, style = MaterialTheme.typography.bodyMedium)
-            }
+            MomentBody(moment = moment, onPreviewImage = onPreviewImage)
 
-            if (moment.media_urls.isNotEmpty()) {
+            if (moment.comments.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    moment.media_urls.forEach { path ->
-                        MomentThumb(
-                            path = path,
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                        )
-                    }
-                }
-            }
-
-            moment.audio_url?.let {
-                Spacer(Modifier.height(4.dp))
                 Text(
-                    "🎤 语音 ${moment.audio_duration_sec ?: 0}s（网页端可播放）",
+                    "评论 ${moment.comments.size}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
-            moment.location?.takeIf { it.isNotBlank() }?.let {
-                Text("📍 $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            moment.comments.forEach { comment ->
+                CommentNode(comment = comment, depth = 0, onReply = { replyTo = it })
             }
 
-            if (moment.tags.isNotEmpty()) {
-                Text(
-                    moment.tags.joinToString(" ") { "#$it" },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            Spacer(Modifier.height(4.dp))
+            CommentInputBar(
+                replyTo = replyTo,
+                onDismissReply = { replyTo = null },
+                onSend = { text ->
+                    onComment(text, replyTo?.cid)
+                    replyTo = null
+                },
+            )
+        }
+    }
+}
 
-            if (moment.comments.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Text("评论 ${moment.comments.size}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                moment.comments.forEach { comment -> CommentNode(comment, 0) }
+/** 动态正文：文字 + 图片行 + 语音胶囊 + 地点 + 标签，动态卡片与回忆卡片共用。 */
+@Composable
+private fun MomentBody(moment: MomentResponse, onPreviewImage: (String) -> Unit) {
+    moment.content.takeIf { it.isNotBlank() }?.let {
+        Spacer(Modifier.height(4.dp))
+        Text(it, style = MaterialTheme.typography.bodyMedium)
+    }
+
+    if (moment.media_urls.isNotEmpty()) {
+        Spacer(Modifier.height(8.dp))
+        if (moment.media_urls.size == 1) {
+            MomentThumb(
+                path = moment.media_urls.first(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                onClick = { onPreviewImage(mediaUrl(moment.media_urls.first())) },
+            )
+        } else {
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                moment.media_urls.forEach { path ->
+                    MomentThumb(
+                        path = path,
+                        modifier = Modifier
+                            .height(180.dp)
+                            .width(140.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        onClick = { onPreviewImage(mediaUrl(path)) },
+                    )
+                }
+            }
+        }
+    }
+
+    // 语音消息：本轮仅展示胶囊（网页端可播放）。
+    moment.audio_url?.let {
+        Spacer(Modifier.height(6.dp))
+        Surface(
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = RoundedCornerShape(50),
+        ) {
+            Text(
+                "♪ 语音 ${moment.audio_duration_sec ?: 0}s",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
+    }
+
+    moment.location?.takeIf { it.isNotBlank() }?.let {
+        Spacer(Modifier.height(2.dp))
+        Text("📍 $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+
+    if (moment.tags.isNotEmpty()) {
+        Text(
+            moment.tags.joinToString(" ") { "#$it" },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+/** 回忆（往年今日）分栏：只读列表，无发布 / 评论入口。 */
+@Composable
+private fun MemoriesContent(
+    state: TimelineUiState,
+    onRetry: () -> Unit,
+    onPreviewImage: (String) -> Unit,
+) {
+    when {
+        state.memoriesLoading && state.memories.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        state.memoriesError != null && state.memories.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("加载失败：${state.memoriesError}", color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = onRetry) { Text("重试") }
+                }
+            }
+        state.memories.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("还没有往年今日的回忆")
+            }
+        else -> LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                Column {
+                    Text(
+                        "回到那一天 · 往年今日",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "那些同一天里发生过的小事",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            items(state.memories, key = { "memory-${it.mid}" }) { moment ->
+                MemoryCard(moment = moment, onPreviewImage = onPreviewImage)
             }
         }
     }
 }
 
+/** 回忆卡片：年份醒目展示，正文只读（无删除 / 评论输入）。 */
 @Composable
-private fun CommentNode(comment: CommentNodeResponse, depth: Int) {
-    Column(modifier = Modifier.padding(start = (depth * 12).dp, top = 2.dp)) {
+private fun MemoryCard(moment: MomentResponse, onPreviewImage: (String) -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text = yearOf(moment.timestamp)?.toString() ?: "那一年",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Column(modifier = Modifier.padding(bottom = 4.dp)) {
+                    Text(moment.author_nickname, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        "回到那一天 · ${formatDateTime(moment.timestamp)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
+            }
+
+            MomentBody(moment = moment, onPreviewImage = onPreviewImage)
+
+            if (moment.comments.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "评论 ${moment.comments.size} 条（到动态里查看）",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/** 单条评论节点（递归渲染回复树），含作者昵称、时间与「回复」入口。 */
+@Composable
+private fun CommentNode(
+    comment: CommentNodeResponse,
+    depth: Int,
+    onReply: (CommentNodeResponse) -> Unit,
+) {
+    Column(modifier = Modifier.padding(start = (depth * 14).dp, top = 6.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                comment.author_nickname,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                formatDateTime(comment.created_at),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
         Text(
-            "${comment.author_nickname}：${comment.content}",
+            comment.content,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        comment.replies.forEach { reply -> CommentNode(reply, depth + 1) }
+        Text(
+            "回复",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(top = 2.dp)
+                .clickable { onReply(comment) },
+        )
+        comment.replies.forEach { reply -> CommentNode(reply, depth + 1, onReply) }
+    }
+}
+
+/** 评论输入条；[replyTo] 非空时处于回复模式。 */
+@Composable
+private fun CommentInputBar(
+    replyTo: CommentNodeResponse?,
+    onDismissReply: () -> Unit,
+    onSend: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf("") }
+    Column {
+        if (replyTo != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    "正在回复 ${replyTo.author_nickname}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    "取消",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.clickable(onClick = onDismissReply),
+                )
+            }
+            Spacer(Modifier.height(2.dp))
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text(if (replyTo != null) "回复 ${replyTo.author_nickname}…" else "写评论…") },
+                modifier = Modifier.weight(1f),
+                textStyle = MaterialTheme.typography.bodySmall,
+                singleLine = true,
+            )
+            TextButton(
+                onClick = { onSend(text); text = "" },
+                enabled = text.isNotBlank(),
+            ) { Text("发送") }
+        }
     }
 }
 
 @Composable
-private fun MomentThumb(path: String, modifier: Modifier = Modifier) {
+private fun MomentThumb(path: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     // Prefer the 400px server thumbnail; legacy uploads have none and 404,
     // so fall back to the original image on error (mirrors the web helper).
     var url by remember(path) { mutableStateOf(mediaUrl(deriveThumbnailPath(path))) }
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
-        contentDescription = null,
+        contentDescription = "动态图片",
         contentScale = ContentScale.Crop,
         onState = { state ->
             if (state is AsyncImagePainter.State.Error && url != mediaUrl(path)) {
                 url = mediaUrl(path)
             }
         },
-        modifier = modifier,
+        modifier = modifier.clickable(enabled = onClick != null) { onClick?.invoke() },
     )
 }
 
+/** 全屏图片预览：点击任意处或「关闭」退出。 */
+@Composable
+private fun FullScreenImageDialog(url: String, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.92f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
+                contentDescription = "图片预览",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp),
+            ) { Text("关闭", color = Color.White) }
+        }
+    }
+}
+
+/** 发动态对话框：文字 + 可见范围 + 图片多选（最多 9 张，发布时经上传链路换取 URL）。 */
 @Composable
 private fun MomentEditorDialog(
+    posting: Boolean,
     onDismiss: () -> Unit,
-    onSave: (content: String, visibility: String) -> Unit,
+    onSave: (content: String, visibility: String, imageUris: List<Uri>) -> Unit,
 ) {
     var content by remember { mutableStateOf("") }
     var visibility by remember { mutableStateOf("PartnersOnly") }
+    var selectedUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    val picker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(MAX_MEDIA_PER_MOMENT),
+    ) { uris -> selectedUris = uris.take(MAX_MEDIA_PER_MOMENT) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!posting) onDismiss() },
         title = { Text("发一条动态") },
         text = {
             Column {
@@ -284,6 +621,50 @@ private fun MomentEditorDialog(
                     label = { Text("此刻想说的话…") },
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = {
+                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    enabled = !posting && selectedUris.size < MAX_MEDIA_PER_MOMENT,
+                ) {
+                    Text(
+                        if (selectedUris.isEmpty()) "添加图片（最多 $MAX_MEDIA_PER_MOMENT 张）"
+                        else "已选 ${selectedUris.size} 张，继续添加",
+                    )
+                }
+                if (selectedUris.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        selectedUris.forEach { uri ->
+                            Box {
+                                AsyncImage(
+                                    model = uri,
+                                    contentDescription = "待发布图片",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                )
+                                Text(
+                                    "✕",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(3.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.Black.copy(alpha = 0.55f))
+                                        .clickable { selectedUris = selectedUris - uri }
+                                        .padding(horizontal = 5.dp, vertical = 1.dp),
+                                )
+                            }
+                        }
+                    }
+                }
                 Spacer(Modifier.height(12.dp))
                 Text("谁可以看", style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -297,7 +678,12 @@ private fun MomentEditorDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(content, visibility) }) { Text("发布") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(content, visibility, selectedUris) },
+                enabled = !posting && (content.isNotBlank() || selectedUris.isNotEmpty()),
+            ) { Text(if (posting) "发布中…" else "发布") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !posting) { Text("取消") } },
     )
 }

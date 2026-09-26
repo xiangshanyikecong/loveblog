@@ -28,10 +28,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,7 +44,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,9 +66,23 @@ import com.lovejournal.app.ui.components.LoveHeroBrush
 @Composable
 fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
     val state by viewModel.loginState.collectAsStateWithLifecycle()
+    val bootstrapState by viewModel.bootstrapState.collectAsStateWithLifecycle()
     var server by remember { mutableStateOf(viewModel.currentServerAddress()) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showBootstrapDialog by remember { mutableStateOf(false) }
+
+    // 站点初始化状态懒加载检查（结果按地址缓存），仅在未初始化时展示引导入口。
+    LaunchedEffect(server) { viewModel.checkBootstrapStatus(server) }
+    // 初始化成功后预填登录用户名并回到登录表单。
+    LaunchedEffect(bootstrapState.bootstrappedUsername) {
+        bootstrapState.bootstrappedUsername?.let {
+            username = it
+            password = ""
+            showBootstrapDialog = false
+        }
+    }
+
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)))) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.Center) {
             Box(Modifier.align(Alignment.CenterHorizontally).clip(MaterialTheme.shapes.extraLarge).background(LoveHeroBrush).padding(20.dp)) { Icon(Icons.Default.Favorite, null, tint = Color.White) }
@@ -79,8 +98,81 @@ fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
                     state.connectionOk?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
                     state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     Button(onClick = { viewModel.login(server, username, password) }, enabled = !state.loading && !state.testingConnection && username.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) { if (state.loading) CircularProgressIndicator(strokeWidth = 2.dp) else Text("登录") }
+                    if (state.showBootstrapEntry) {
+                        Text(
+                            "这是全新的站点？初始化后即可创建第一个账号",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                        OutlinedButton(onClick = { showBootstrapDialog = true }, enabled = !state.loading && !state.testingConnection, modifier = Modifier.fillMaxWidth()) {
+                            Text("首次使用？初始化站点")
+                        }
+                    }
                 }
             }
         }
     }
+
+    if (showBootstrapDialog) {
+        BootstrapDialog(
+            viewModel = viewModel,
+            serverAddress = server,
+            onDismiss = {
+                showBootstrapDialog = false
+                viewModel.resetBootstrapState()
+            },
+        )
+    }
+}
+
+/**
+ * 首次初始化引导弹窗：持有初始化令牌的一方创建 PartnerA 账号并设置站点信息。
+ * 成功后服务器不会自动登录，直接回到登录表单（用户名已预填）。
+ */
+@Composable
+private fun BootstrapDialog(
+    viewModel: AuthViewModel,
+    serverAddress: String,
+    onDismiss: () -> Unit,
+) {
+    val state by viewModel.bootstrapState.collectAsStateWithLifecycle()
+    var token by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var nickname by remember { mutableStateOf("") }
+    var siteName by remember { mutableStateOf("恋爱记") }
+    var loveStartDate by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("初始化站点") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "每个站点有且仅有两个伴侣名额。首次部署后，请输入服务器部署时生成的初始化令牌，为第一个人开通账号。",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                OutlinedTextField(token, { token = it }, label = { Text("初始化令牌") }, leadingIcon = { Icon(Icons.Default.Key, null) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(username, { username = it }, label = { Text("用户名") }, leadingIcon = { Icon(Icons.Default.Person, null) }, supportingText = { Text("3-32 位小写字母、数字或下划线") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(password, { password = it }, label = { Text("密码") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, visualTransformation = PasswordVisualTransformation(), supportingText = { Text("至少 8 位，且同时包含字母和数字") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(nickname, { nickname = it }, label = { Text("昵称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(siteName, { siteName = it }, label = { Text("站点名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(loveStartDate, { loveStartDate = it }, label = { Text("恋爱开始日（选填）") }, leadingIcon = { Icon(Icons.Default.Event, null) }, placeholder = { Text("yyyy-MM-dd") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { viewModel.bootstrap(serverAddress, token, username, password, nickname, siteName, loveStartDate.ifBlank { null }) },
+                enabled = !state.submitting && token.isNotBlank() && username.isNotBlank() && password.isNotBlank() && nickname.isNotBlank(),
+            ) {
+                if (state.submitting) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("初始化站点")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !state.submitting) { Text("取消") }
+        },
+    )
 }

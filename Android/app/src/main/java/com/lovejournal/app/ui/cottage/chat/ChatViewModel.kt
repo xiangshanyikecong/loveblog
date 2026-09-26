@@ -17,15 +17,19 @@
 
 package com.lovejournal.app.ui.cottage.chat
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.prefs.SessionManager
+import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
 import com.lovejournal.app.data.remote.dto.ChatMediaPanelResponse
 import com.lovejournal.app.data.remote.dto.ChatMemoryCardResponse
 import com.lovejournal.app.data.remote.dto.ChatPinnedQuoteResponse
 import com.lovejournal.app.data.repository.ChatRepository
 import com.lovejournal.app.data.repository.ChatWsEvent
+import com.lovejournal.app.data.repository.UploadRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -53,11 +57,16 @@ data class ChatUiState(
     val future: List<ChatMessageResponse> = emptyList(),
     val mediaPanel: ChatMediaPanelResponse? = null,
     val memoryCard: ChatMemoryCardResponse? = null,
+    /** 图片消息正在上传/发送中，用于附件按钮的转圈与防连点。 */
+    val uploadingImage: Boolean = false,
 )
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val repository: ChatRepository,
+    private val uploadRepository: UploadRepository,
+    private val serverConfig: ServerConfig,
+    private val connectivity: ConnectivityMonitor,
     private val session: SessionManager,
 ) : ViewModel() {
 
@@ -163,6 +172,40 @@ class ChatViewModel @Inject constructor(
                 .onFailure { _toast.tryEmit(it.message ?: "已存入待发送队列") }
         }
     }
+
+    /**
+     * 发送图片消息：先经 [UploadRepository.uploadImage] 压缩上传到
+     * /v1/uploads/checkin，成功后以 type="image" + media_url 发出，
+     * 输入框里已输入的文字作为图片说明（可为空）。
+     *
+     * 仅在线可用：上传依赖网络，失败不会进同步队列（队列按设计只存纯
+     * 文本），一律通过 [toast] 提示用户重试。
+     */
+    fun sendImage(uri: Uri, caption: String) {
+        if (_state.value.uploadingImage) return // 上传中，忽略重复点击
+        if (!connectivity.isOnline()) {
+            _toast.tryEmit("当前离线，图片消息需要联网后发送")
+            return
+        }
+        _state.update { it.copy(uploadingImage = true) }
+        viewModelScope.launch {
+            uploadRepository.uploadImage(uri)
+                .onSuccess { uploaded ->
+                    repository.send(
+                        content = caption.trim(),
+                        type = "image",
+                        mediaUrl = uploaded.url,
+                    )
+                        .onSuccess { messageMap[it.mid] = it; emitMessages() }
+                        .onFailure { _toast.tryEmit(it.message ?: "图片发送失败") }
+                }
+                .onFailure { _toast.tryEmit(it.message ?: "图片上传失败") }
+            _state.update { it.copy(uploadingImage = false) }
+        }
+    }
+
+    /** 把服务端返回的相对媒体路径解析成可加载的绝对 URL（与相册页同一套规则）。 */
+    fun mediaUrl(path: String?): String? = serverConfig.mediaUrl(path)
 
     /** Drives the lightweight TYPING signal: notify once on start, once on stop. */
     fun onInputChanged(text: String) {

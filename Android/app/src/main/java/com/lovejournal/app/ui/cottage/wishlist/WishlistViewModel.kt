@@ -17,10 +17,13 @@
 
 package com.lovejournal.app.ui.cottage.wishlist
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.remote.dto.WishResponse
 import com.lovejournal.app.data.repository.WishlistRepository
+import com.lovejournal.app.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,8 +41,10 @@ data class WishlistUiState(
 
 @HiltViewModel
 class WishlistViewModel @Inject constructor(
+    application: Application,
     private val repository: WishlistRepository,
-) : ViewModel() {
+    private val connectivity: ConnectivityMonitor,
+) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(WishlistUiState())
     val state: StateFlow<WishlistUiState> = _state.asStateFlow()
@@ -75,7 +80,7 @@ class WishlistViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            repository.create(
+            repository.createOfflineAware(
                 title = title.trim(),
                 description = description?.trim()?.ifBlank { null },
                 category = category?.trim()?.ifBlank { null },
@@ -83,7 +88,17 @@ class WishlistViewModel @Inject constructor(
                 priority = 0,
             ).fold(
                 onSuccess = { _message.value = "已添加心愿"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "添加失败" },
+                onFailure = { e ->
+                    if (!connectivity.isOnline()) {
+                        // 离线：请求已由仓库暂存进同步队列，联网后由
+                        // SyncWorker 自动补发，这里按成功收尾避免重复提交。
+                        _message.value = "已离线暂存，联网后自动同步"
+                        onDone()
+                        SyncScheduler.requestSyncNow(getApplication())
+                    } else {
+                        _message.value = e.message ?: "添加失败"
+                    }
+                },
             )
         }
     }

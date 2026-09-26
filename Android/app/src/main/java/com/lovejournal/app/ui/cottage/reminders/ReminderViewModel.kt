@@ -117,6 +117,33 @@ class ReminderViewModel @Inject constructor(
         }
     }
 
+    /** 编辑既有提醒：仓库层只 PATCH 与 [reminder] 相比变化的字段。 */
+    fun update(
+        reminder: ReminderResponse,
+        title: String,
+        note: String?,
+        remindAtIso: String,
+        audience: String,
+        onDone: () -> Unit,
+    ) {
+        if (title.isBlank()) {
+            _message.value = "请填写提醒内容"
+            return
+        }
+        viewModelScope.launch {
+            repository.update(
+                entry = reminder,
+                title = title.trim(),
+                note = note?.trim()?.ifBlank { null },
+                remindAtIso = remindAtIso,
+                audience = audience,
+            ).fold(
+                onSuccess = { _message.value = "已保存"; onDone(); refresh() },
+                onFailure = { _message.value = it.message ?: "保存失败" },
+            )
+        }
+    }
+
     fun delete(reminder: ReminderResponse) {
         viewModelScope.launch {
             repository.delete(reminder.rid).fold(

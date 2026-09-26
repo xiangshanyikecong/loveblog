@@ -17,11 +17,11 @@
 
 package com.lovejournal.app.data.crypto
 
-import android.util.Base64
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.security.SecureRandom
+import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
@@ -72,8 +72,10 @@ class VaultCrypto @Inject constructor(private val json: Json) {
         return cipher.doFinal(decode(ciphertext)).toString(Charsets.UTF_8)
     }
 
-    private fun encode(bytes: ByteArray): String = Base64.encodeToString(bytes, Base64.NO_WRAP)
-    private fun decode(value: String): ByteArray = Base64.decode(value, Base64.DEFAULT)
+    // java.util.Base64 (not android.util) so the crypto path stays unit-testable
+    // on the JVM; java.util.Base64 is available from API 26 = minSdk.
+    private fun encode(bytes: ByteArray): String = Base64.getEncoder().encodeToString(bytes)
+    private fun decode(value: String): ByteArray = Base64.getDecoder().decode(value)
 
     private companion object { const val VERIFIER_TOKEN = "cottage-vault::verify::v1" }
 }

@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Android 客户端功能补全（对齐 Web 端能力，消除 README 宣称但未接线的缺口）：
+  - 时间线：动态支持多图发布与图片预览、评论树（含回复），新增「回忆」页签
+    （`timelineMemories` 往年今日）
+  - 悄悄话：支持发送图片消息（与 Web 一致走 `uploads/checkin` 压缩上传），
+    按类型渲染图片 / 贴纸 / 语音消息，图片全屏预览
+  - 留言板：自己的留言支持编辑（PATCH 仅提交变更字段）、删除（进回收站）、
+    版本历史查看与一键回滚
+  - 情侣账本 / 生理期关怀 / 小屋提醒：补齐条目编辑（PATCH）
+  - 离线队列：报备签到、心愿单创建支持离线暂存与自动重放（Idempotency-Key 幂等）
+  - 首次初始化：App 内 bootstrap 引导页（初始化令牌 + 站点名 + 恋爱起始日），
+    登录后可为另一半开通账号（register）；设置页支持头像上传
+- Android 单元测试：服务器地址归一化（直连 / 反代两种部署形态）、保险箱加密
+  原语（PBKDF2 + AES-GCM 往返、错误口令、篡改拒绝）；`VaultCrypto` 迁移至
+  `java.util.Base64`（minSdk 26 原生支持）使加密路径可在 JVM 单测
+
 ## [1.0.4-beta.2] - 2026-09-13
 
 ### Added

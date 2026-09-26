@@ -20,7 +20,11 @@ package com.lovejournal.app.data.repository
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.PeriodCreateRequest
 import com.lovejournal.app.data.remote.dto.PeriodListResponse
+import com.lovejournal.app.data.remote.dto.PeriodResponse
 import com.lovejournal.app.data.remote.dto.PeriodSummaryResponse
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,5 +50,29 @@ class PeriodRepository @Inject constructor(
         val response = api.deletePeriod(pcid)
         if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
         Unit
+    }
+
+    /**
+     * 编辑既有经期记录（PATCH /cottage/period/{pcid}）。服务端按
+     * ``model_dump(exclude_unset=True)`` 只应用请求体里出现的字段，因此这里与
+     * [entry] 逐项比较，body 只携带真正变化的键；end_date 由非空改为 null 时
+     * 显式传 null 表示「重新进行中」，note 允许显式传 null 清空。全部未变则不发请求。
+     */
+    suspend fun update(
+        entry: PeriodResponse,
+        startDate: String,
+        endDate: String?,
+        note: String?,
+    ): Result<PeriodResponse> = runCatching {
+        val body = buildJsonObject {
+            if (startDate != entry.start_date) put("start_date", startDate)
+            when {
+                endDate != null && endDate != entry.end_date -> put("end_date", endDate)
+                endDate == null && entry.end_date != null -> put("end_date", JsonNull)
+            }
+            if (note.orEmpty() != entry.note.orEmpty()) put("note", note)
+        }
+        if (body.isEmpty()) return@runCatching entry
+        api.patchPeriod(entry.pcid, body)
     }
 }

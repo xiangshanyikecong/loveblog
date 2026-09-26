@@ -33,13 +33,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -71,6 +73,7 @@ import com.lovejournal.app.util.formatDateTime
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -82,11 +85,17 @@ private fun audienceLabel(value: String): String =
 
 private val EDITOR_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
+/** 把服务端 ISO-8601 时间（UTC，Z 或 +00:00 后缀）转成手机本地时间供编辑器预填。 */
+private fun parseLocal(iso: String): LocalDateTime? = runCatching {
+    OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
+}.getOrNull()
+
 @Composable
 fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     var editorOpen by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<ReminderResponse?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(
         Brush.verticalGradient(
@@ -145,6 +154,7 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
                         ReminderCard(
                             reminder = reminder,
                             onToggle = { viewModel.toggleDone(reminder) },
+                            onEdit = { editing = reminder },
                             onDelete = { viewModel.delete(reminder) },
                         )
                     }
@@ -170,12 +180,28 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
             },
         )
     }
+
+    editing?.let { reminder ->
+        ReminderEditorDialog(
+            initial = reminder,
+            onDismiss = { editing = null },
+            onSave = { title, note, remindAtIso, audience ->
+                viewModel.update(reminder, title, note, remindAtIso, audience) { editing = null }
+            },
+        )
+    }
 }
 
 @Composable
-private fun ReminderCard(reminder: ReminderResponse, onToggle: () -> Unit, onDelete: () -> Unit) {
+private fun ReminderCard(
+    reminder: ReminderResponse,
+    onToggle: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
     val done = reminder.is_done
     val due = reminder.is_due && !done
+    var menuOpen by remember { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -219,8 +245,12 @@ private fun ReminderCard(reminder: ReminderResponse, onToggle: () -> Unit, onDel
                     }
                 }
             }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "更多操作")
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
+                DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
             }
         }
     }
@@ -231,19 +261,24 @@ private fun ReminderCard(reminder: ReminderResponse, onToggle: () -> Unit, onDel
 private fun ReminderEditorDialog(
     onDismiss: () -> Unit,
     onSave: (title: String, note: String?, remindAtIso: String, audience: String) -> Unit,
+    // 传入则为编辑模式：用既有提醒预填表单。
+    initial: ReminderResponse? = null,
 ) {
-    var title by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var audience by remember { mutableStateOf("both") }
-    var remindAt by remember {
-        mutableStateOf(LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0))
+    var title by remember(initial?.rid) { mutableStateOf(initial?.title ?: "") }
+    var note by remember(initial?.rid) { mutableStateOf(initial?.note.orEmpty()) }
+    var audience by remember(initial?.rid) { mutableStateOf(initial?.audience ?: "both") }
+    var remindAt by remember(initial?.rid) {
+        mutableStateOf(
+            initial?.remind_at?.let { parseLocal(it) }
+                ?: LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0),
+        )
     }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("加一个提醒") },
+        title = { Text(if (initial == null) "加一个提醒" else "编辑提醒") },
         text = {
             Column {
                 OutlinedTextField(

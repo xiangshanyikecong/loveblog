@@ -33,10 +33,12 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.CheckInResponse
 import com.lovejournal.app.data.repository.CheckinRepository
 import com.lovejournal.app.data.repository.UploadRepository
+import com.lovejournal.app.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlin.coroutines.resume
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,6 +74,7 @@ class CheckinViewModel @Inject constructor(
     private val repository: CheckinRepository,
     private val uploadRepository: UploadRepository,
     private val serverConfig: ServerConfig,
+    private val connectivity: ConnectivityMonitor,
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(CheckinUiState())
@@ -189,7 +192,7 @@ class CheckinViewModel @Inject constructor(
         }
         _draft.value = draft.copy(submitting = true)
         viewModelScope.launch {
-            repository.create(
+            repository.createOfflineAware(
                 content = text,
                 mediaUrls = media,
                 latitude = draft.latitude,
@@ -202,9 +205,18 @@ class CheckinViewModel @Inject constructor(
                     onDone()
                     refresh()
                 },
-                onFailure = {
-                    _draft.value = _draft.value.copy(submitting = false)
-                    _message.value = it.message ?: "报备失败"
+                onFailure = { e ->
+                    if (!connectivity.isOnline()) {
+                        // 离线：请求已由仓库暂存进同步队列，联网后由
+                        // SyncWorker 自动补发，这里按成功收尾避免重复提交。
+                        _draft.value = CheckinDraft()
+                        _message.value = "已离线暂存，联网后自动同步"
+                        onDone()
+                        SyncScheduler.requestSyncNow(getApplication())
+                    } else {
+                        _draft.value = _draft.value.copy(submitting = false)
+                        _message.value = e.message ?: "报备失败"
+                    }
                 },
             )
         }

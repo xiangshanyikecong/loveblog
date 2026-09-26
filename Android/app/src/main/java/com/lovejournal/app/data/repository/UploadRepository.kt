@@ -57,6 +57,13 @@ class UploadRepository @Inject constructor(
 
     suspend fun uploadArticleImage(uri: Uri): Result<UploadResponse> = uploadCompressed(uri, api::uploadArticleImage)
 
+    /**
+     * Uploads a local image (photo picker pick) to the timeline (moments)
+     * endpoint. Shares the same down-sample + JPEG re-encode pipeline as the
+     * album/article uploads so a multi-megapixel pick stays a few hundred KB.
+     */
+    suspend fun uploadTimelineImage(uri: Uri): Result<UploadResponse> = uploadCompressed(uri, api::uploadTimeline)
+
     private suspend fun uploadCompressed(
         uri: Uri,
         uploader: suspend (MultipartBody.Part) -> UploadResponse,

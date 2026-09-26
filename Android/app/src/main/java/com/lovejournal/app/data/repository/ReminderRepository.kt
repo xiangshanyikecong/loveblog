@@ -20,6 +20,10 @@ package com.lovejournal.app.data.repository
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.ReminderCreateRequest
 import com.lovejournal.app.data.remote.dto.ReminderListResponse
+import com.lovejournal.app.data.remote.dto.ReminderResponse
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import java.time.OffsetDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -54,5 +58,37 @@ class ReminderRepository @Inject constructor(
         val response = api.deleteReminder(rid)
         if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
         Unit
+    }
+
+    /**
+     * 编辑既有提醒（PATCH /cottage/reminders/{rid}）。服务端按
+     * ``model_dump(exclude_unset=True)`` 只应用请求体里出现的字段，因此这里与
+     * [entry] 逐项比较，body 只携带真正变化的键；note 允许显式传 null 清空。
+     * 全部未变则不发请求。服务端收到 remind_at 会重置上次通知时间，所以时间点
+     * 未变时严格不发该字段（按时刻比较，而非字符串写法）。
+     */
+    suspend fun update(
+        entry: ReminderResponse,
+        title: String,
+        note: String?,
+        remindAtIso: String,
+        audience: String,
+    ): Result<ReminderResponse> = runCatching {
+        val body = buildJsonObject {
+            if (title != entry.title) put("title", title)
+            if (note.orEmpty() != entry.note.orEmpty()) put("note", note)
+            if (!sameInstant(remindAtIso, entry.remind_at)) put("remind_at", remindAtIso)
+            if (audience != entry.audience) put("audience", audience)
+        }
+        if (body.isEmpty()) return@runCatching entry
+        api.patchReminder(entry.rid, body)
+    }
+
+    /** 比较 ISO-8601 时间点：客户端与服务端的 UTC 后缀（Z / +00:00）写法可能不同。 */
+    private fun sameInstant(a: String, b: String): Boolean {
+        if (a == b) return true
+        return runCatching {
+            OffsetDateTime.parse(a).toInstant() == OffsetDateTime.parse(b).toInstant()
+        }.getOrDefault(false)
     }
 }

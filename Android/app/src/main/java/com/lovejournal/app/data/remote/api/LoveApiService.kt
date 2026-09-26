@@ -292,7 +292,10 @@ interface LoveApiService {
     suspend fun wishes(@Query("status") status: String? = null): WishListResponse
 
     @POST("cottage/wishes")
-    suspend fun createWish(@Body body: WishCreateRequest): WishResponse
+    suspend fun createWish(
+        @Header("Idempotency-Key") idempotencyKey: String? = null,
+        @Body body: WishCreateRequest,
+    ): WishResponse
 
     @PATCH("cottage/wishes/{wid}")
     suspend fun updateWish(@Path("wid") wid: String, @Body body: WishUpdateRequest): WishResponse
@@ -773,7 +776,10 @@ interface LoveApiService {
     ): CheckInListResponse
 
     @POST("checkins")
-    suspend fun createCheckin(@Body body: CheckInCreateRequest): CheckInResponse
+    suspend fun createCheckin(
+        @Header("Idempotency-Key") idempotencyKey: String? = null,
+        @Body body: CheckInCreateRequest,
+    ): CheckInResponse
 
     // ---- 主端·回收站 (recycle bin) ----
 
@@ -803,7 +809,11 @@ interface LoveApiService {
     @GET("health/system") suspend fun systemHealth(): JsonElement
     @GET("audit-logs") suspend fun auditLogs(@Query("page") page: Int = 1, @Query("page_size") pageSize: Int = 50): JsonElement
     @GET("auth/bootstrap-status") suspend fun bootstrapStatus(): JsonElement
-    @POST("auth/bootstrap") suspend fun bootstrap(@Body body: JsonObject): JsonElement
+    @POST("auth/bootstrap")
+    suspend fun bootstrap(
+        @Header("X-Bootstrap-Token") bootstrapToken: String?,
+        @Body body: JsonObject,
+    ): JsonElement
     @POST("auth/register") suspend fun register(@Body body: JsonObject): JsonElement
     @GET("auth/partners") suspend fun partners(): JsonElement
     @PUT("auth/partners/{uid}") suspend fun updatePartner(@Path("uid") uid: String, @Body body: JsonObject): JsonElement

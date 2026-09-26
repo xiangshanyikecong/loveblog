@@ -33,13 +33,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -87,6 +89,7 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     var editorOpen by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<PeriodResponse?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(
         Brush.verticalGradient(
@@ -125,7 +128,11 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
                         item { Text("还没有记录，点右下角记一次吧") }
                     }
                     items(state.items, key = { it.pcid }) { cycle ->
-                        PeriodCard(cycle = cycle, onDelete = { viewModel.delete(cycle) })
+                        PeriodCard(
+                            cycle = cycle,
+                            onEdit = { editing = cycle },
+                            onDelete = { viewModel.delete(cycle) },
+                        )
                     }
                 }
             }
@@ -145,6 +152,16 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
         PeriodEditorDialog(
             onDismiss = { editorOpen = false },
             onSave = { start, end, note -> viewModel.add(start, end, note) { editorOpen = false } },
+        )
+    }
+
+    editing?.let { cycle ->
+        PeriodEditorDialog(
+            initial = cycle,
+            onDismiss = { editing = null },
+            onSave = { start, end, note ->
+                viewModel.update(cycle, start, end, note) { editing = null }
+            },
         )
     }
 }
@@ -177,7 +194,8 @@ private fun PeriodSummaryCard(summary: PeriodSummaryResponse) {
 }
 
 @Composable
-private fun PeriodCard(cycle: PeriodResponse, onDelete: () -> Unit) {
+private fun PeriodCard(cycle: PeriodResponse, onEdit: () -> Unit, onDelete: () -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -201,8 +219,12 @@ private fun PeriodCard(cycle: PeriodResponse, onDelete: () -> Unit) {
                     Text("记录人 ${cycle.author_nickname}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                 }
             }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "更多操作")
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
+                DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
             }
         }
     }
@@ -213,16 +235,22 @@ private fun PeriodCard(cycle: PeriodResponse, onDelete: () -> Unit) {
 private fun PeriodEditorDialog(
     onDismiss: () -> Unit,
     onSave: (startDate: String, endDate: String?, note: String?) -> Unit,
+    // 传入则为编辑模式：用既有记录预填表单。
+    initial: PeriodResponse? = null,
 ) {
-    var startDate by remember { mutableStateOf(LocalDate.now()) }
-    var endDate by remember { mutableStateOf<LocalDate?>(null) }
-    var note by remember { mutableStateOf("") }
+    var startDate by remember(initial?.pcid) {
+        mutableStateOf(initial?.start_date?.takeIf { it.isNotBlank() }?.let(LocalDate::parse) ?: LocalDate.now())
+    }
+    var endDate by remember(initial?.pcid) {
+        mutableStateOf(initial?.end_date?.takeIf { it.isNotBlank() }?.let(LocalDate::parse))
+    }
+    var note by remember(initial?.pcid) { mutableStateOf(initial?.note.orEmpty()) }
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("记录生理期") },
+        title = { Text(if (initial == null) "记录生理期" else "编辑生理期") },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text("开始日期", style = MaterialTheme.typography.labelMedium)

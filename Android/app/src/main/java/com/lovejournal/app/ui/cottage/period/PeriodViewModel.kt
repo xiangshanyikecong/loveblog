@@ -80,6 +80,28 @@ class PeriodViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 编辑既有经期记录：结束日期不能早于开始日期（与后端校验一致）；
+     * 仓库层只 PATCH 与 [cycle] 相比变化的字段，end_date 清空表示恢复「进行中」。
+     */
+    fun update(cycle: PeriodResponse, startDate: String, endDate: String?, note: String?, onDone: () -> Unit) {
+        if (!endDate.isNullOrBlank() && endDate < startDate) {
+            _message.value = "结束日期不能早于开始日期"
+            return
+        }
+        viewModelScope.launch {
+            repository.update(
+                entry = cycle,
+                startDate = startDate,
+                endDate = endDate?.ifBlank { null },
+                note = note?.trim()?.ifBlank { null },
+            ).fold(
+                onSuccess = { _message.value = "已保存"; onDone(); refresh() },
+                onFailure = { _message.value = it.message ?: "保存失败" },
+            )
+        }
+    }
+
     fun delete(cycle: PeriodResponse) {
         viewModelScope.launch {
             repository.delete(cycle.pcid).fold(

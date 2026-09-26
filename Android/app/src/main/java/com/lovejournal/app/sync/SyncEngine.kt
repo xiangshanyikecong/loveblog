@@ -26,9 +26,11 @@ import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.ChatSendRequest
+import com.lovejournal.app.data.remote.dto.CheckInCreateRequest
 import com.lovejournal.app.data.remote.dto.MessageCreateRequest
 import com.lovejournal.app.data.remote.dto.MoodCheckinRequest
 import com.lovejournal.app.data.remote.dto.MomentCreateRequest
+import com.lovejournal.app.data.remote.dto.WishCreateRequest
 import com.lovejournal.app.data.repository.toEntity
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.CancellationException
@@ -103,6 +105,27 @@ class SyncEngine @Inject constructor(
                     SyncActions.MOMENT_CREATE -> {
                         val req = json.decodeFromString<MomentCreateRequest>(item.payload)
                         api.createMoment(
+                            idempotencyKey = item.idempotencyKey,
+                            body = req,
+                        )
+                        syncQueueDao.remove(item.id)
+                    }
+                    SyncActions.CHECKIN_CREATE -> {
+                        // No local Room row to reconcile — the server copy
+                        // arrives via the normal refresh cycle.
+                        val req = json.decodeFromString<CheckInCreateRequest>(item.payload)
+                        api.createCheckin(
+                            idempotencyKey = item.idempotencyKey,
+                            body = req,
+                        )
+                        syncQueueDao.remove(item.id)
+                    }
+                    SyncActions.WISH_CREATE -> {
+                        // Same as CHECKIN_CREATE: no local row to reconcile,
+                        // the authoritative wish comes back with the next
+                        // refresh.
+                        val req = json.decodeFromString<WishCreateRequest>(item.payload)
+                        api.createWish(
                             idempotencyKey = item.idempotencyKey,
                             body = req,
                         )

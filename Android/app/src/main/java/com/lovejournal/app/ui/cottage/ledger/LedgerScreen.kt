@@ -34,13 +34,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -84,6 +86,7 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     var editorOpen by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<LedgerResponse?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(
         Brush.verticalGradient(
@@ -122,7 +125,11 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
                         item { Text("还没有账目，点右下角记一笔吧") }
                     }
                     items(state.items, key = { it.leid }) { entry ->
-                        LedgerCard(entry = entry, onDelete = { viewModel.delete(entry) })
+                        LedgerCard(
+                            entry = entry,
+                            onEdit = { editing = entry },
+                            onDelete = { viewModel.delete(entry) },
+                        )
                     }
                 }
             }
@@ -143,6 +150,20 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
             onDismiss = { editorOpen = false },
             onSave = { title, amount, note, category, payer, splitType, spentOn ->
                 viewModel.add(title, amount, note, category, payer, splitType, spentOn) { editorOpen = false }
+            },
+        )
+    }
+
+    editing?.let { entry ->
+        // 响应里只有 payer_uid，按当前用户换算回「我付 / TA 付」来预填表单。
+        LedgerEditorDialog(
+            initial = entry,
+            initialPayer = if (entry.payer_uid == state.selfUid) "me" else "partner",
+            onDismiss = { editing = null },
+            onSave = { title, amount, note, category, payer, splitType, spentOn ->
+                viewModel.update(entry, title, amount, note, category, payer, splitType, spentOn) {
+                    editing = null
+                }
             },
         )
     }
@@ -188,7 +209,8 @@ private fun LedgerSummaryCard(summary: LedgerSummaryResponse) {
 }
 
 @Composable
-private fun LedgerCard(entry: LedgerResponse, onDelete: () -> Unit) {
+private fun LedgerCard(entry: LedgerResponse, onEdit: () -> Unit, onDelete: () -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -209,8 +231,12 @@ private fun LedgerCard(entry: LedgerResponse, onDelete: () -> Unit) {
                 Text(entry.spent_on, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
             }
             Text(yuan(entry.amount_cents), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "更多操作")
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
+                DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
             }
         }
     }
@@ -221,19 +247,26 @@ private fun LedgerCard(entry: LedgerResponse, onDelete: () -> Unit) {
 private fun LedgerEditorDialog(
     onDismiss: () -> Unit,
     onSave: (title: String, amountYuan: String, note: String?, category: String?, payer: String, splitType: String, spentOn: String) -> Unit,
+    // 传入则为编辑模式：用既有账目预填表单；initialPayer 是换算回「me」/「partner」的付款方。
+    initial: LedgerResponse? = null,
+    initialPayer: String = "me",
 ) {
-    var title by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var payer by remember { mutableStateOf("me") }
-    var splitType by remember { mutableStateOf("aa") }
-    var spentOn by remember { mutableStateOf(LocalDate.now()) }
+    var title by remember(initial?.leid) { mutableStateOf(initial?.title ?: "") }
+    var amount by remember(initial?.leid) {
+        mutableStateOf(initial?.let { "%.2f".format(it.amount_cents / 100.0) } ?: "")
+    }
+    var note by remember(initial?.leid) { mutableStateOf(initial?.note.orEmpty()) }
+    var category by remember(initial?.leid) { mutableStateOf(initial?.category.orEmpty()) }
+    var payer by remember(initial?.leid) { mutableStateOf(initialPayer) }
+    var splitType by remember(initial?.leid) { mutableStateOf(initial?.split_type ?: "aa") }
+    var spentOn by remember(initial?.leid) {
+        mutableStateOf(initial?.spent_on?.takeIf { it.isNotBlank() }?.let(LocalDate::parse) ?: LocalDate.now())
+    }
     var showDatePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("记一笔") },
+        title = { Text(if (initial == null) "记一笔" else "编辑账目") },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(

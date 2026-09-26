@@ -27,6 +27,7 @@ import com.lovejournal.app.data.local.entity.SyncQueueEntity
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
+import com.lovejournal.app.data.remote.dto.ContentVersion
 import com.lovejournal.app.data.remote.dto.MessageCreateRequest
 import com.lovejournal.app.data.remote.dto.MessageResponse
 import com.lovejournal.app.sync.SyncActions
@@ -34,11 +35,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import retrofit2.HttpException
 
 @Singleton
 class MessageRepository @Inject constructor(
@@ -155,6 +159,52 @@ class MessageRepository @Inject constructor(
             )
         }
         return if (connectivity.isOnline()) SendOutcome.QUEUED_ONLINE else SendOutcome.QUEUED_OFFLINE
+    }
+
+    /**
+     * 编辑留言（内容 / 公开可见性）。服务端按 exclude_unset 语义处理 PATCH，
+     * 因此请求体只携带真正发生变化的字段（传 null 表示未修改）。
+     * 成功后用服务器返回的副本刷新本地缓存。
+     */
+    suspend fun edit(
+        msgId: String,
+        newContent: String? = null,
+        isPublic: Boolean? = null,
+    ): Result<MessageResponse> {
+        if (newContent == null && isPublic == null) {
+            return Result.failure(IllegalArgumentException("没有需要保存的修改"))
+        }
+        val body = buildJsonObject {
+            if (newContent != null) put("content", newContent)
+            if (isPublic != null) put("is_public", isPublic)
+        }
+        return runCatching {
+            val updated = api.patchMessage(msgId, body)
+            messageDao.upsertOne(updated.toEntity())
+            updated
+        }
+    }
+
+    /**
+     * 删除留言。服务端是软删除（进入回收站，可在后台恢复），
+     * 成功后同步移除本地缓存；后续增量同步中的墓碑会兜底清理。
+     */
+    suspend fun remove(msgId: String): Result<Unit> = runCatching {
+        val response = api.deleteMessage(msgId)
+        if (!response.isSuccessful) throw HttpException(response)
+        messageDao.delete(msgId)
+    }
+
+    /** 拉取留言的历史版本列表（新版本在前，由服务端排序）。 */
+    suspend fun versions(msgId: String): Result<List<ContentVersion>> = runCatching {
+        api.messageVersions(msgId).items
+    }
+
+    /** 将留言回滚到指定历史版本，并用服务器返回的副本刷新本地缓存。 */
+    suspend fun rollback(msgId: String, version: Int): Result<MessageResponse> = runCatching {
+        val restored = api.rollbackMessage(msgId, version)
+        messageDao.upsertOne(restored.toEntity())
+        restored
     }
 
     enum class SendOutcome { QUEUED_ONLINE, QUEUED_OFFLINE }

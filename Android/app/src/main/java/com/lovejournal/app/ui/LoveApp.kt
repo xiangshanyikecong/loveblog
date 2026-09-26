@@ -176,6 +176,7 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
         MainRoute.LICENSES -> "开源许可证"
         MainRoute.SECURITY -> "账号安全"
         MainRoute.RECYCLE_BIN -> "回收站"
+        MainRoute.ADMIN_TOOLS -> "后台管理"
         Tab.Messages.route -> "留言板"
         "cottage/games/{game}" -> "对局中"
         else -> session.nickname ?: "恋爱记"

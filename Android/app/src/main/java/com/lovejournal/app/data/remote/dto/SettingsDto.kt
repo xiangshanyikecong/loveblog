@@ -32,6 +32,9 @@ data class SiteSettingResponse(
     // ISO-8601 datetime；恋爱开始日，驱动首页恋爱天数。
     val love_start_date: String? = null,
     val allow_registration: Boolean = false,
+    // 两位伴侣的头像（上传后回写的媒体相对路径或 URL），用于设置页预填。
+    val partner_a_avatar: String? = null,
+    val partner_b_avatar: String? = null,
 )
 
 @Serializable
@@ -39,4 +42,8 @@ data class SiteSettingUpdateRequest(
     val site_name: String? = null,
     val love_start_date: String? = null,
     val allow_registration: Boolean? = null,
+    // 头像字段：仅在真正设置时传非 null；null 会被 explicitNulls=false 省略，
+    // 因此"不修改"与"清空"在当前 DTO 上不可区分（移动端只做"设置"）。
+    val partner_a_avatar: String? = null,
+    val partner_b_avatar: String? = null,
 )

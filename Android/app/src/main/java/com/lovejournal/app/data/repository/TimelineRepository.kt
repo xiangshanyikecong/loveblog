@@ -18,14 +18,17 @@
 package com.lovejournal.app.data.repository
 
 import com.lovejournal.app.data.remote.api.LoveApiService
+import com.lovejournal.app.data.remote.dto.CommentCreateRequest
 import com.lovejournal.app.data.remote.dto.MomentCreateRequest
+import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.remote.dto.TimelineListResponse
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 主端·时间线。动态流（含评论树展示）。本期支持列表 / 发纯文字动态 / 删除；
- * 图片、语音上传与评论发布需上传链路，后续补。网络直连。
+ * 主端·时间线。动态流（含评论树展示）。本期支持列表 / 发动态（图片先经
+ * [UploadRepository.uploadTimelineImage] 上传，URL 随 [MomentCreateRequest.media_urls] 提交）/
+ * 评论（支持通过 parent_cid 回复）/ 删除 / 往年今日回忆（只读）；语音上传仍需后续补。网络直连。
  */
 @Singleton
 class TimelineRepository @Inject constructor(
@@ -34,8 +37,23 @@ class TimelineRepository @Inject constructor(
     suspend fun list(page: Int = 1): Result<TimelineListResponse> =
         runCatching { api.timeline(page = page) }
 
-    suspend fun post(content: String, visibility: String): Result<Unit> = runCatching {
-        api.createMoment(MomentCreateRequest(content = content, visibility = visibility))
+    /** 往年今日的动态（回忆视图数据源）。 */
+    suspend fun memories(): Result<List<MomentResponse>> = runCatching { api.timelineMemories() }
+
+    suspend fun post(
+        content: String,
+        visibility: String,
+        mediaUrls: List<String> = emptyList(),
+    ): Result<Unit> = runCatching {
+        api.createMoment(
+            MomentCreateRequest(content = content, media_urls = mediaUrls, visibility = visibility),
+        )
+        Unit
+    }
+
+    /** 发表评论；[parentCid] 非空表示回复某条评论。 */
+    suspend fun comment(mid: String, content: String, parentCid: String? = null): Result<Unit> = runCatching {
+        api.commentMoment(mid, CommentCreateRequest(content = content, parent_cid = parentCid))
         Unit
     }
 

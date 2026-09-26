@@ -100,17 +100,24 @@ class ChatRepository @Inject constructor(
      * the message until that timestamp before releasing it to both partners
      * (the "寄给未来" feature). [idempotencyKey] lets callers retry the
      * send safely across reconnects.
+     *
+     * 媒体消息（图片/贴纸/语音）：[type] 为对应类型时 [mediaUrl] 必填
+     * （服务端约定），[content] 可为空串或图片说明；调用方需先通过
+     * UploadRepository 上传拿到 URL。
      */
     suspend fun send(
         content: String,
         visibleAt: Instant? = null,
         idempotencyKey: String? = null,
+        type: String = "text",
+        mediaUrl: String? = null,
     ): Result<ChatMessageResponse> = runCatching {
         api.sendChatMessage(
             idempotencyKey = idempotencyKey,
             body = ChatSendRequest(
-                type = "text",
+                type = type,
                 content = content,
+                media_url = mediaUrl,
                 visible_at = visibleAt?.toString(),
             ),
         )
@@ -121,21 +128,30 @@ class ChatRepository @Inject constructor(
      * call fails), the request is parked in the SyncQueue so the periodic
      * [SyncWorker] can replay it after reconnect — with the same idempotency
      * key, so a 2xx lost in transit won't duplicate the row.
+     *
+     * 注意：同步队列按设计只支持纯文本消息 —— 媒体消息依赖先上传成功的
+     * media_url，离线时无法补传，因此非 text 类型失败后直接上抛由 UI
+     * 提示重试，绝不入队。
      */
     suspend fun sendOfflineAware(
         content: String,
         visibleAt: Instant? = null,
+        type: String = "text",
+        mediaUrl: String? = null,
     ): Result<ChatMessageResponse> {
         val key = UUID.randomUUID().toString()
         val payload = ChatSendRequest(
-            type = "text",
+            type = type,
             content = content,
+            media_url = mediaUrl,
             visible_at = visibleAt?.toString(),
         )
         return try {
             val resp = api.sendChatMessage(idempotencyKey = key, body = payload)
             Result.success(resp)
         } catch (e: Exception) {
+            // 媒体消息不入同步队列（队列是纯文本设计）。
+            if (type != "text") return Result.failure(e)
             val uid = session.sessionFlow.first().uid
                 ?: return Result.failure(IllegalStateException("登录状态已失效"))
             val scope = serverConfigScope.dataScope(uid)

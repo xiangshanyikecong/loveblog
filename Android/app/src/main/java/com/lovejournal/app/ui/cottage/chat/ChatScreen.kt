@@ -17,16 +17,23 @@
 
 package com.lovejournal.app.ui.cottage.chat
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -39,8 +46,10 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.TextButton
@@ -66,11 +75,16 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.theme.LoveMint
@@ -85,6 +99,15 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
     // for this instant instead of sending immediately. Reset after each send.
     var scheduleAt by remember { mutableStateOf<Instant?>(null) }
     var showScheduleDialog by remember { mutableStateOf(false) }
+    // 点击消息里的图片后进入全屏预览的绝对 URL；null 表示关闭。
+    var previewUrl by remember { mutableStateOf<String?>(null) }
+    // 图片消息：系统相册选择器，选完即以当前输入框文字为说明发送。
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let {
+            viewModel.sendImage(it, draft)
+            draft = ""
+        }
+    }
     if (state.toolsOpen) ChatToolsDialog(state, viewModel::closeTools, viewModel::clearPin)
     if (showScheduleDialog) {
         ScheduleDialog(
@@ -95,6 +118,31 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 showScheduleDialog = false
             },
         )
+    }
+    // 全屏图片预览：点击气泡里的图片打开，点击任意处关闭。
+    previewUrl?.let { url ->
+        Dialog(
+            onDismissRequest = { previewUrl = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.92f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { previewUrl = null },
+                contentAlignment = Alignment.Center,
+            ) {
+                AsyncImage(
+                    model = url,
+                    contentDescription = "图片预览",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -135,7 +183,15 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(state.messages, key = { it.mid }) { msg ->
-                    MessageBubble(msg, isSelf = msg.sender_uid == state.selfUid, onFavorite = { viewModel.toggleFavorite(msg) }, onRecall = { viewModel.recall(msg) }, onPin = { viewModel.pin(msg) })
+                    MessageBubble(
+                        msg,
+                        isSelf = msg.sender_uid == state.selfUid,
+                        mediaUrl = viewModel::mediaUrl,
+                        onImageClick = { previewUrl = it },
+                        onFavorite = { viewModel.toggleFavorite(msg) },
+                        onRecall = { viewModel.recall(msg) },
+                        onPin = { viewModel.pin(msg) },
+                    )
                 }
             }
             Row(
@@ -154,6 +210,24 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                     placeholder = { Text("发条悄悄话…") },
                     modifier = Modifier.weight(1f),
                 )
+                IconButton(
+                    onClick = {
+                        imagePicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                        )
+                    },
+                    enabled = !state.uploadingImage,
+                ) {
+                    if (state.uploadingImage) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(
+                            Icons.Outlined.Image,
+                            contentDescription = "发送图片",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
                 IconButton(onClick = { showScheduleDialog = true }) {
                     Icon(
                         Icons.Filled.Schedule,
@@ -212,37 +286,81 @@ private fun PresenceHeader(nickname: String?, online: Boolean, typing: Boolean, 
     }
 }
 
+/**
+ * 按消息类型渲染气泡：图片/贴纸走 Coil 直接展示媒体（无气泡底色），
+ * 语音展示时长占位（本期不做播放），其余仍为纯文本气泡。
+ * 已撤回或媒体地址缺失时回退到占位文本。
+ */
 @Composable
-private fun MessageBubble(message: ChatMessageResponse, isSelf: Boolean, onFavorite: () -> Unit, onRecall: () -> Unit, onPin: () -> Unit) {
+private fun MessageBubble(
+    message: ChatMessageResponse,
+    isSelf: Boolean,
+    mediaUrl: (String?) -> String?,
+    onImageClick: (String) -> Unit,
+    onFavorite: () -> Unit,
+    onRecall: () -> Unit,
+    onPin: () -> Unit,
+) {
     var menu by remember { mutableStateOf(false) }
-    val text = when {
-        message.is_recalled -> "消息已撤回"
-        message.type == "image" -> "[图片]"
-        message.type == "sticker" -> "[贴纸]"
-        message.type == "voice" -> "[语音]"
-        else -> message.content ?: ""
-    }
+    val bubbleColor = if (isSelf) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val resolvedUrl = if (message.is_recalled) null else mediaUrl(message.media_url)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isSelf) Arrangement.End else Arrangement.Start,
     ) {
         Column {
-        Surface(
-            color = if (isSelf) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth(0.78f),
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                if (!isSelf) {
-                    Text(
-                        message.sender_nickname,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+            when {
+                // 图片消息：圆角大图 + 可选说明文字，点击全屏预览。
+                message.type == "image" && resolvedUrl != null -> {
+                    if (!isSelf) SenderName(message.sender_nickname)
+                    AsyncImage(
+                        model = resolvedUrl,
+                        contentDescription = "图片消息",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .widthIn(max = 240.dp)
+                            .heightIn(max = 280.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onImageClick(resolvedUrl) },
+                    )
+                    message.content?.takeIf { it.isNotBlank() }?.let { caption ->
+                        Text(
+                            caption,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
+                // 贴纸消息：小尺寸表情图，不带气泡底色。
+                message.type == "sticker" && resolvedUrl != null -> {
+                    if (!isSelf) SenderName(message.sender_nickname)
+                    AsyncImage(
+                        model = resolvedUrl,
+                        contentDescription = "贴纸消息",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.widthIn(max = 120.dp).heightIn(max = 120.dp),
                     )
                 }
-                Text(text, style = MaterialTheme.typography.bodyMedium)
+                // 语音消息：仅展示时长占位，不做播放。
+                message.type == "voice" && !message.is_recalled -> ChatBubble(
+                    bubbleColor,
+                    isSelf,
+                    message.sender_nickname,
+                    if (message.audio_duration_sec != null) "♪ 语音消息 · ${message.audio_duration_sec}s" else "♪ 语音消息",
+                )
+                // 文本消息 + 各类兜底（已撤回 / 媒体地址缺失）。
+                else -> ChatBubble(
+                    bubbleColor,
+                    isSelf,
+                    message.sender_nickname,
+                    when {
+                        message.is_recalled -> "消息已撤回"
+                        message.type == "image" -> "[图片]"
+                        message.type == "sticker" -> "[贴纸]"
+                        else -> message.content ?: ""
+                    },
+                )
             }
-        }
         IconButton(onClick = { menu = true }) {
             if (message.is_favorite) {
                 Icon(Icons.Filled.Star, contentDescription = "收藏", tint = Color(0xFFFFD700))
@@ -257,6 +375,31 @@ private fun MessageBubble(message: ChatMessageResponse, isSelf: Boolean, onFavor
         }
         }
     }
+}
+
+/** 纯文本气泡（文本/语音/撤回占位），沿用原有 78% 宽度 + 圆角 + 昵称样式。 */
+@Composable
+private fun ChatBubble(color: Color, isSelf: Boolean, sender: String, text: String) {
+    Surface(
+        color = color,
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth(0.78f),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            if (!isSelf) SenderName(sender)
+            Text(text, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** 对方消息顶部的昵称小字。 */
+@Composable
+private fun SenderName(nickname: String) {
+    Text(
+        nickname,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
+    )
 }
 
 @Composable

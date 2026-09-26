@@ -20,7 +20,10 @@ package com.lovejournal.app.data.repository
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.LedgerCreateRequest
 import com.lovejournal.app.data.remote.dto.LedgerListResponse
+import com.lovejournal.app.data.remote.dto.LedgerResponse
 import com.lovejournal.app.data.remote.dto.LedgerSummaryResponse
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,5 +69,38 @@ class LedgerRepository @Inject constructor(
         val response = api.deleteLedger(leid)
         if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
         Unit
+    }
+
+    /**
+     * 编辑既有账目（PATCH /cottage/ledger/{leid}）。服务端按
+     * ``model_dump(exclude_unset=True)`` 只应用请求体里出现的字段，因此这里与
+     * [entry] 逐项比较，body 只携带真正变化的键；note / category 允许显式传
+     * null 清空。全部未变则不发请求。
+     *
+     * 响应里只有 payer_uid，没有相对调用者的 payer 取值，所以调用方需先按当前
+     * 用户把 payer_uid 换算回 "me"/"partner" 传给 [originalPayer] 参与比较。
+     */
+    suspend fun update(
+        entry: LedgerResponse,
+        title: String,
+        amountCents: Int,
+        note: String?,
+        category: String?,
+        payer: String,
+        originalPayer: String,
+        splitType: String,
+        spentOn: String,
+    ): Result<LedgerResponse> = runCatching {
+        val body = buildJsonObject {
+            if (title != entry.title) put("title", title)
+            if (amountCents != entry.amount_cents) put("amount_cents", amountCents)
+            if (note.orEmpty() != entry.note.orEmpty()) put("note", note)
+            if (category.orEmpty() != entry.category.orEmpty()) put("category", category)
+            if (payer != originalPayer) put("payer", payer)
+            if (splitType != entry.split_type) put("split_type", splitType)
+            if (spentOn != entry.spent_on) put("spent_on", spentOn)
+        }
+        if (body.isEmpty()) return@runCatching entry
+        api.patchLedger(entry.leid, body)
     }
 }

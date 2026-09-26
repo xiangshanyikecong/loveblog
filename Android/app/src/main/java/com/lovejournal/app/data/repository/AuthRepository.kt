@@ -28,6 +28,11 @@ import com.lovejournal.app.data.remote.dto.LoginRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.HttpException
@@ -131,4 +136,92 @@ class AuthRepository @Inject constructor(
     }
 
     fun hasSession(): Boolean = cookieJar.hasSession()
+
+    // ---- 首次初始化引导（bootstrap）与为另一半开通账号（register） ----
+
+    /**
+     * 查询站点是否已完成首次初始化（公开接口，无需登录）。
+     * 成功返回 true / false；无法识别响应或网络失败时返回失败，
+     * 由调用方决定如何呈现（登录页在未知状态下不显示引导入口）。
+     */
+    suspend fun bootstrapStatus(): Result<Boolean> = runCatching {
+        val element = api.bootstrapStatus()
+        element.jsonObject["bootstrapped"]?.let { (it as? JsonPrimitive)?.booleanOrNull }
+            ?: throw IllegalStateException("无法识别站点初始化状态")
+    }.recoverCatching { error ->
+        if (error is IllegalStateException) throw error
+        throw IllegalStateException(NetworkErrors.toUserMessage(error), error)
+    }
+
+    /**
+     * 使用实例初始化令牌创建首个伴侣账号（PartnerA），仅站点未初始化时可用。
+     * 服务器要求：用户名 3-32 位小写字母/数字/下划线，密码 ≥8 位且含字母和数字。
+     * [loveStartDateIso] 传 ISO-8601 日期时间或 null。
+     * 成功后服务器不会自动登录，调用方应引导用户用新账号登录。
+     */
+    suspend fun bootstrap(
+        bootstrapToken: String,
+        username: String,
+        password: String,
+        nickname: String,
+        siteName: String?,
+        loveStartDateIso: String?,
+    ): Result<Unit> = runCatching {
+        val body = buildJsonObject {
+            put("username", username)
+            put("password", password)
+            put("nickname", nickname)
+            put("role", "PartnerA")
+            if (!siteName.isNullOrBlank()) put("site_name", siteName)
+            if (!loveStartDateIso.isNullOrBlank()) put("love_start_date", loveStartDateIso)
+        }
+        api.bootstrap(bootstrapToken, body)
+        Unit
+    }.recoverCatching { error ->
+        throw IllegalStateException(
+            when {
+                error is HttpException -> when (error.code()) {
+                    401 -> "初始化令牌不正确"
+                    403 -> "该站点未启用初始化令牌"
+                    409 -> "该站点已完成初始化或用户名已存在"
+                    else -> NetworkErrors.toUserMessage(error)
+                }
+                else -> NetworkErrors.toUserMessage(error)
+            },
+            error,
+        )
+    }
+
+    /**
+     * 为另一半开通账号：已登录的伴侣填写唯一空缺的对方名额（PartnerA↔PartnerB），
+     * [role] 传调用方的相反角色（"PartnerA" 或 "PartnerB"）。
+     * 服务器不会为新账号建立会话，当前登录保持不变；成功后应提示对方用该账号登录。
+     */
+    suspend fun registerPartner(
+        username: String,
+        password: String,
+        nickname: String,
+        role: String,
+    ): Result<Unit> = runCatching {
+        val body = buildJsonObject {
+            put("username", username)
+            put("password", password)
+            put("nickname", nickname)
+            put("role", role)
+        }
+        api.register(body)
+        Unit
+    }.recoverCatching { error ->
+        throw IllegalStateException(
+            when {
+                error is HttpException -> when (error.code()) {
+                    403 -> "只有伴侣账号才能开通另一半"
+                    409 -> "该名额已存在账号"
+                    else -> NetworkErrors.toUserMessage(error)
+                }
+                else -> NetworkErrors.toUserMessage(error)
+            },
+            error,
+        )
+    }
 }

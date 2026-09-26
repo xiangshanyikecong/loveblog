@@ -21,6 +21,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.local.entity.MessageEntity
+import com.lovejournal.app.data.prefs.SessionManager
+import com.lovejournal.app.data.remote.NetworkErrors
+import com.lovejournal.app.data.remote.dto.ContentVersion
 import com.lovejournal.app.data.repository.MessageRepository
 import com.lovejournal.app.data.repository.MessageRepository.SendOutcome
 import com.lovejournal.app.sync.SyncScheduler
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -37,16 +41,26 @@ import javax.inject.Inject
 class MessagesViewModel @Inject constructor(
     application: Application,
     private val repository: MessageRepository,
+    private val session: SessionManager,
 ) : AndroidViewModel(application) {
 
     val messages: StateFlow<List<MessageEntity>> = repository.observeMessages()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** 当前登录用户的 uid，用于仅对自己的留言展示 编辑/删除/历史版本 操作。 */
+    private val _selfUid = MutableStateFlow<String?>(null)
+    val selfUid: StateFlow<String?> = _selfUid.asStateFlow()
+
+    /** 当前查看的历史版本列表（打开留言的历史版本弹窗时加载）。 */
+    private val _versions = MutableStateFlow<List<ContentVersion>>(emptyList())
+    val versions: StateFlow<List<ContentVersion>> = _versions.asStateFlow()
 
     private val _status = MutableStateFlow<String?>(null)
     val status: StateFlow<String?> = _status.asStateFlow()
 
     init {
         refresh()
+        viewModelScope.launch { _selfUid.value = session.sessionFlow.first().uid }
     }
 
     fun refresh() {
@@ -64,6 +78,78 @@ class MessagesViewModel @Inject constructor(
             // Kick an immediate sync attempt; WorkManager no-ops when offline.
             SyncScheduler.requestSyncNow(getApplication())
         }
+    }
+
+    /**
+     * 保存对留言的编辑。服务端 PATCH 按 exclude_unset 语义处理，
+     * 只有内容或可见性真正变化时才提交对应字段。
+     */
+    fun editMessage(message: MessageEntity, newContent: String, newIsPublic: Boolean) {
+        val content = newContent.trim()
+        if (content.isEmpty()) {
+            _status.value = "留言内容不能为空"
+            return
+        }
+        val contentChanged = content != message.content
+        val visibilityChanged = newIsPublic != message.isPublic
+        if (!contentChanged && !visibilityChanged) {
+            _status.value = "没有需要保存的修改"
+            return
+        }
+        viewModelScope.launch {
+            repository.edit(
+                message.msgId,
+                newContent = if (contentChanged) content else null,
+                isPublic = if (visibilityChanged) newIsPublic else null,
+            ).fold(
+                onSuccess = {
+                    _status.value = "保存成功"
+                    refresh()
+                },
+                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+            )
+        }
+    }
+
+    /** 删除留言（软删除，进入回收站，可在后台恢复）。 */
+    fun deleteMessage(msgId: String) {
+        viewModelScope.launch {
+            repository.remove(msgId).fold(
+                onSuccess = {
+                    _status.value = "已删除"
+                    refresh()
+                },
+                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+            )
+        }
+    }
+
+    /** 加载指定留言的历史版本列表。 */
+    fun loadVersions(msgId: String) {
+        viewModelScope.launch {
+            repository.versions(msgId).fold(
+                onSuccess = { _versions.value = it },
+                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+            )
+        }
+    }
+
+    /** 将留言回滚到指定历史版本。 */
+    fun rollbackMessage(msgId: String, version: Int) {
+        viewModelScope.launch {
+            repository.rollback(msgId, version).fold(
+                onSuccess = {
+                    _status.value = "已回滚到版本 $version"
+                    _versions.value = emptyList()
+                    refresh()
+                },
+                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+            )
+        }
+    }
+
+    fun clearVersions() {
+        _versions.value = emptyList()
     }
 
     fun clearStatus() {

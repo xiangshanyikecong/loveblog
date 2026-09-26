@@ -17,6 +17,10 @@
 
 package com.lovejournal.app.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,12 +30,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,16 +49,21 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSectionTitle
@@ -77,6 +92,11 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val inviteMessage by viewModel.inviteMessage.collectAsStateWithLifecycle()
+
+    val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let(viewModel::uploadAvatar)
+    }
 
     LovePage {
         when {
@@ -93,17 +113,36 @@ fun SettingsScreen(
                     AccountEntryButtons(onOpenSecurity, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses)
                     LogoutButton(onLogout)
                 }
-            else -> SettingsForm(
-                setting = state.setting!!,
-                saving = state.saving,
-                message = message,
-                onSave = { name, dateIso, allowReg -> viewModel.save(name, dateIso, allowReg) },
-                onOpenSecurity = onOpenSecurity,
-                onOpenRecycleBin = onOpenRecycleBin,
-                onOpenAdminTools = onOpenAdminTools,
-                onOpenLicenses = onOpenLicenses,
-                onLogout = onLogout,
-            )
+            else -> {
+                val setting = state.setting!!
+                // 我的头像：站点设置里按角色读取，读不到时退回会话记录的头像。
+                val myAvatarPath = when (state.role) {
+                    "PartnerA" -> setting.partner_a_avatar ?: state.sessionAvatar
+                    "PartnerB" -> setting.partner_b_avatar ?: state.sessionAvatar
+                    else -> state.sessionAvatar
+                }
+                SettingsForm(
+                    setting = setting,
+                    avatarUrl = viewModel.mediaUrl(myAvatarPath),
+                    saving = state.saving,
+                    uploadingAvatar = state.uploadingAvatar,
+                    inviting = state.inviting,
+                    inviteSucceeded = state.inviteSucceeded,
+                    message = message,
+                    inviteMessage = inviteMessage,
+                    onSave = { name, dateIso, allowReg -> viewModel.save(name, dateIso, allowReg) },
+                    onPickAvatar = {
+                        avatarPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    onInvite = { username, password, nickname -> viewModel.invitePartner(username, password, nickname) },
+                    onClearInviteSuccess = { viewModel.clearInviteSuccess() },
+                    onOpenSecurity = onOpenSecurity,
+                    onOpenRecycleBin = onOpenRecycleBin,
+                    onOpenAdminTools = onOpenAdminTools,
+                    onOpenLicenses = onOpenLicenses,
+                    onLogout = onLogout,
+                )
+            }
         }
     }
 }
@@ -112,9 +151,17 @@ fun SettingsScreen(
 @Composable
 private fun SettingsForm(
     setting: SiteSettingResponse,
+    avatarUrl: String?,
     saving: Boolean,
+    uploadingAvatar: Boolean,
+    inviting: Boolean,
+    inviteSucceeded: Boolean,
     message: String?,
+    inviteMessage: String?,
     onSave: (siteName: String?, loveStartDateIso: String?, allowRegistration: Boolean?) -> Unit,
+    onPickAvatar: () -> Unit,
+    onInvite: (username: String, password: String, nickname: String) -> Unit,
+    onClearInviteSuccess: () -> Unit,
     onOpenSecurity: () -> Unit,
     onOpenRecycleBin: () -> Unit,
     onOpenAdminTools: () -> Unit,
@@ -124,7 +171,19 @@ private fun SettingsForm(
     var siteName by remember(setting) { mutableStateOf(setting.site_name) }
     var allowReg by remember(setting) { mutableStateOf(setting.allow_registration) }
     var loveDate by remember(setting) { mutableStateOf(parseDate(setting.love_start_date)) }
+    var inviteUsername by remember { mutableStateOf("") }
+    var invitePassword by remember { mutableStateOf("") }
+    var inviteNickname by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(inviteSucceeded) {
+        if (inviteSucceeded) {
+            inviteUsername = ""
+            invitePassword = ""
+            inviteNickname = ""
+            onClearInviteSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -153,6 +212,24 @@ private fun SettingsForm(
         ) {
             Text(if (saving) "保存中…" else "保存设置")
         }
+        LoveSectionTitle("个人资料", "头像与邀请另一半")
+        AvatarCard(
+            avatarUrl = avatarUrl,
+            uploading = uploadingAvatar,
+            onPickAvatar = onPickAvatar,
+        )
+        InvitePartnerCard(
+            inviting = inviting,
+            inviteSucceeded = inviteSucceeded,
+            inviteMessage = inviteMessage,
+            inviteUsername = inviteUsername,
+            onInviteUsernameChange = { inviteUsername = it },
+            invitePassword = invitePassword,
+            onInvitePasswordChange = { invitePassword = it },
+            inviteNickname = inviteNickname,
+            onInviteNicknameChange = { inviteNickname = it },
+            onInvite = onInvite,
+        )
         LoveSectionTitle("账户与维护")
         LoveSoftCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { AccountEntryButtons(onOpenSecurity, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses) } }
         LogoutButton(onLogout)
@@ -176,6 +253,121 @@ private fun SettingsForm(
             dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("取消") } },
         ) {
             DatePicker(state = dateState)
+        }
+    }
+}
+
+/** 「我的头像」一行：圆形头像预览 + 换头像按钮（系统照片选择器）。 */
+@Composable
+private fun AvatarCard(
+    avatarUrl: String?,
+    uploading: Boolean,
+    onPickAvatar: () -> Unit,
+) {
+    LoveSoftCard(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (avatarUrl.isNullOrBlank()) {
+                Box(
+                    Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            } else {
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = "我的头像",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+            Column(Modifier.weight(1f)) {
+                Text("我的头像", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("上传后对方也会看到你的新头像", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            OutlinedButton(onClick = onPickAvatar, enabled = !uploading) {
+                if (uploading) {
+                    CircularProgressIndicator(Modifier.size(16.dp).padding(2.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("换头像")
+                }
+            }
+        }
+    }
+}
+
+/** 「邀请另一半」：为唯一空缺的对方伴侣名额开通账号。 */
+@Composable
+private fun InvitePartnerCard(
+    inviting: Boolean,
+    inviteSucceeded: Boolean,
+    inviteMessage: String?,
+    inviteUsername: String,
+    onInviteUsernameChange: (String) -> Unit,
+    invitePassword: String,
+    onInvitePasswordChange: (String) -> Unit,
+    inviteNickname: String,
+    onInviteNicknameChange: (String) -> Unit,
+    onInvite: (username: String, password: String, nickname: String) -> Unit,
+) {
+    LoveSoftCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("邀请另一半", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                "站点有且仅有两个伴侣名额。填写下方信息为对方开通账号，开通后 TA 即可用该账号登录。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedTextField(
+                value = inviteUsername,
+                onValueChange = onInviteUsernameChange,
+                label = { Text("对方用户名") },
+                supportingText = { Text("3-32 位小写字母、数字或下划线") },
+                enabled = !inviting,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = invitePassword,
+                onValueChange = onInvitePasswordChange,
+                label = { Text("对方密码") },
+                visualTransformation = PasswordVisualTransformation(),
+                supportingText = { Text("至少 8 位，且同时包含字母和数字") },
+                enabled = !inviting,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = inviteNickname,
+                onValueChange = onInviteNicknameChange,
+                label = { Text("对方昵称") },
+                enabled = !inviting,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            inviteMessage?.let {
+                Text(
+                    it,
+                    color = if (inviteSucceeded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Button(
+                onClick = { onInvite(inviteUsername, invitePassword, inviteNickname) },
+                enabled = !inviting && inviteUsername.isNotBlank() && invitePassword.isNotBlank() && inviteNickname.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (inviting) "开通中…" else "为 TA 开通账号")
+            }
         }
     }
 }
