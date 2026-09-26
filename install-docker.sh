@@ -169,6 +169,7 @@ RUNTIME_FILES=(
     ".env.production.example"
     "nginx/nginx.conf"
     "nginx/conf.d/love-journal.conf"
+    "nginx/snippets/security-headers.conf"
 )
 
 have_local_runtime_files() {
@@ -198,12 +199,13 @@ else
         fi
     done
 
-    mkdir -p "$INSTALL_DIR/nginx/conf.d"
+    mkdir -p "$INSTALL_DIR/nginx/conf.d" "$INSTALL_DIR/nginx/snippets"
     cp -f "$SRC_DIR/docker-compose.prod.yml" "$INSTALL_DIR/"
     cp -f "$SRC_DIR/deploy.sh" "$INSTALL_DIR/"
     cp -f "$SRC_DIR/.env.production.example" "$INSTALL_DIR/"
     cp -f "$SRC_DIR/nginx/nginx.conf" "$INSTALL_DIR/nginx/"
     cp -f "$SRC_DIR/nginx/conf.d/love-journal.conf" "$INSTALL_DIR/nginx/conf.d/"
+    cp -f "$SRC_DIR/nginx/snippets/security-headers.conf" "$INSTALL_DIR/nginx/snippets/"
     chmod +x "$INSTALL_DIR/deploy.sh"
 fi
 cd "$INSTALL_DIR"

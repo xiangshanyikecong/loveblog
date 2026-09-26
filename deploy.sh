@@ -389,6 +389,15 @@ mkdir -p server/uploads/{albums,articles,avatars,timeline,videos}
 mkdir -p server/backups
 mkdir -p nginx/ssl nginx/ssl-challenge nginx/certbot/etc
 mkdir -p nginx/conf.d
+# love-journal.conf include 的片段文件缺失会让 nginx 容器启动即崩溃，且要等
+# 镜像拉取完、健康检查超时后才暴露——这里提前快速失败并给出修复指引。
+for snippet in $(grep -hoE '/etc/nginx/snippets/[A-Za-z0-9._-]+' nginx/conf.d/*.conf 2>/dev/null | sort -u); do
+    if [ ! -f "nginx/snippets/$(basename "$snippet")" ]; then
+        echo -e "${RED}❌ 错误：缺少 nginx/snippets/$(basename "$snippet")（nginx 配置 include 了它，缺失会导致 nginx 启动失败）${NC}"
+        echo "   重新执行 install-docker.sh 可补全运行文件（.env.production 与数据均保留）"
+        exit 1
+    fi
+done
 # Older releases bind-mounted these as individual files at /app. Preserve
 # their state before switching to files inside the already-persistent backups
 # directory. Docker may have created an empty directory at the old path when
