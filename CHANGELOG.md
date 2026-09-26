@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4-beta.4] - 2026-09-26
+
+### Fixed
+
+- 生产环境白屏（第二阶段根因）：nginx CSP 的 script-src 未放行 `'unsafe-eval'`，
+  而 vue-i18n 运行时需以 `new Function` 编译翻译文案，所有调用 `t()` 的组件
+  （初始化向导 / 登录页 / 主界面等）渲染即抛 EvalError，页面只剩不消费 i18n 的
+  壳。beta.2 修复 nginx `add_header` 继承问题后 CSP 真正生效，此问题随之暴露，
+  与 beta.3 修复的 chunk 循环依赖为两个独立缺陷，叠加导致全新安装必然白屏。
+  本次在 CSP 中放行 `'unsafe-eval'`（进入编译器的文案全部来自仓库内静态 JSON，
+  无用户输入，信任面收敛于应用自身产物）；正规替代方案（vue-i18n v11 +
+  unplugin-vue-i18n 构建期预编译）因 v9 运行时与 v11 预编译产物不兼容暂缓，
+  后续升级说明见 `nginx/snippets/security-headers.conf` 注释
+- 修复 zh-CN `notifications.desc` 文案中的字面量 `@` 被当作 linked-message
+  语法导致编译失败（历史遗留：通知页描述在运行时一直渲染失败），转义为
+  `{'@'}` 字面量语法
+
 ## [1.0.4-beta.3] - 2026-09-26
 
 ### Added
