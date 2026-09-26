@@ -684,7 +684,7 @@
   "notifications": {
     "navLabel": "互动模块导航",
     "title": "通知中心",
-    "desc": "评论、@ 提及、纪念日提醒和备份结果都会集中在这里。",
+    "desc": "评论、{'@'} 提及、纪念日提醒和备份结果都会集中在这里。",
     "unreadOnly": "只看未读",
     "refreshing": "刷新中...",
     "refresh": "刷新",
