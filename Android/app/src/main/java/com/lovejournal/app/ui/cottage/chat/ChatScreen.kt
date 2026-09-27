@@ -96,9 +96,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.lovejournal.app.data.chat.ChatMediaDecryptor
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.theme.LoveMint
+import java.nio.ByteBuffer
 
 @Composable
 fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
@@ -110,13 +112,20 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
     // for this instant instead of sending immediately. Reset after each send.
     var scheduleAt by remember { mutableStateOf<Instant?>(null) }
     var showScheduleDialog by remember { mutableStateOf(false) }
-    // 点击消息里的图片后进入全屏预览的绝对 URL；null 表示关闭。
-    var previewUrl by remember { mutableStateOf<String?>(null) }
+    // 点击消息里的图片后进入全屏预览的模型（明文为 URL 字符串，加密图为
+    // 解密后的 ByteBuffer）；null 表示关闭。
+    var previewModel by remember { mutableStateOf<Any?>(null) }
     // 图片消息：系统相册选择器，选完即以当前输入框文字为说明发送。
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let {
-            viewModel.sendImage(it, draft)
-            draft = ""
+            if (state.e2eeInitialized) {
+                // 加密模式不支持图片说明（服务端 schema 禁止明文 content），
+                // 输入框文字保留，由 ViewModel 提示。
+                viewModel.sendImage(it, "")
+            } else {
+                viewModel.sendImage(it, draft)
+                draft = ""
+            }
         }
     }
     if (state.toolsOpen) ChatToolsDialog(state, viewModel::closeTools, viewModel::clearPin)
@@ -145,9 +154,9 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
         )
     }
     // 全屏图片预览：点击气泡里的图片打开，点击任意处关闭。
-    previewUrl?.let { url ->
+    previewModel?.let { model ->
         Dialog(
-            onDismissRequest = { previewUrl = null },
+            onDismissRequest = { previewModel = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
             Box(
@@ -157,11 +166,11 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                    ) { previewUrl = null },
+                    ) { previewModel = null },
                 contentAlignment = Alignment.Center,
             ) {
                 AsyncImage(
-                    model = url,
+                    model = model,
                     contentDescription = "图片预览",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize(),
@@ -231,7 +240,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                     state = state,
                     onQuery = viewModel::updateSearchQuery,
                     mediaUrl = viewModel::mediaUrl,
-                    onImageClick = { previewUrl = it },
+                    onImageClick = { previewModel = it },
                 )
             }
             LazyColumn(
@@ -243,8 +252,10 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                     MessageBubble(
                         msg,
                         isSelf = msg.sender_uid == state.selfUid,
+                        e2eeUnlocked = state.e2eeUnlocked,
+                        decryptor = viewModel.mediaDecryptor,
                         mediaUrl = viewModel::mediaUrl,
-                        onImageClick = { previewUrl = it },
+                        onImageClick = { previewModel = it },
                         onFavorite = { viewModel.toggleFavorite(msg) },
                         onRecall = { viewModel.recall(msg) },
                         onPin = { viewModel.pin(msg) },
@@ -344,16 +355,18 @@ private fun PresenceHeader(nickname: String?, online: Boolean, typing: Boolean, 
 }
 
 /**
- * 按消息类型渲染气泡：图片/贴纸走 Coil 直接展示媒体（无气泡底色），
- * 语音展示时长占位（本期不做播放），其余仍为纯文本气泡。
- * 已撤回或媒体地址缺失时回退到占位文本。
+ * 按消息类型渲染气泡：加密图片走解密管线（[EncryptedChatImage]），明文
+ * 图片/贴纸走 Coil 直接展示媒体（无气泡底色），语音展示时长占位（本期
+ * 不做播放），其余仍为纯文本气泡。已撤回或媒体地址缺失时回退到占位文本。
  */
 @Composable
 private fun MessageBubble(
     message: ChatMessageResponse,
     isSelf: Boolean,
+    e2eeUnlocked: Boolean,
+    decryptor: ChatMediaDecryptor,
     mediaUrl: (String?) -> String?,
-    onImageClick: (String) -> Unit,
+    onImageClick: (Any) -> Unit,
     onFavorite: () -> Unit,
     onRecall: () -> Unit,
     onPin: () -> Unit,
@@ -367,7 +380,23 @@ private fun MessageBubble(
     ) {
         Column {
             when {
-                // 图片消息：圆角大图 + 可选说明文字，点击全屏预览。
+                // 加密图片：下载密文 → 解密 → 显示；点击全屏预览解密后的图。
+                message.type == "image" && message.is_encrypted && !message.is_recalled -> {
+                    if (!isSelf) SenderName(message.sender_nickname)
+                    EncryptedChatImage(
+                        mid = message.mid,
+                        iv = message.iv,
+                        url = resolvedUrl,
+                        unlocked = e2eeUnlocked,
+                        decryptor = decryptor,
+                        modifier = Modifier
+                            .widthIn(max = 240.dp)
+                            .heightIn(max = 280.dp)
+                            .clip(RoundedCornerShape(14.dp)),
+                        onOpen = { bytes -> onImageClick(ByteBuffer.wrap(bytes)) },
+                    )
+                }
+                // 明文图片消息：圆角大图 + 可选说明文字，点击全屏预览。
                 message.type == "image" && resolvedUrl != null -> {
                     if (!isSelf) SenderName(message.sender_nickname)
                     AsyncImage(
@@ -648,7 +677,11 @@ private fun ChatSearchPanel(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(8.dp))
-                                        .clickable { mediaUrl(msg.media_url)?.let(onImageClick) }
+                                        // 加密媒体消息的 media_url 是密文文件，
+                                        // 点开没有意义，不作为图片预览入口。
+                                        .clickable(enabled = !msg.is_encrypted) {
+                                            mediaUrl(msg.media_url)?.let(onImageClick)
+                                        }
                                         .padding(horizontal = 6.dp, vertical = 4.dp),
                                 ) {
                                     Text(

@@ -46,7 +46,7 @@ class UploadRepository @Inject constructor(
      */
     suspend fun uploadImage(uri: Uri): Result<UploadResponse> = withContext(Dispatchers.IO) {
         runCatching {
-            val bytes = compressImage(context.contentResolver, uri)
+            val bytes = compressImage(context.contentResolver, uri, MAX_EDGE, QUALITY)
             val body = bytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
             val part = MultipartBody.Part.createFormData("file", "upload.jpg", body)
             api.uploadCheckinImage(part)
@@ -69,21 +69,44 @@ class UploadRepository @Inject constructor(
         uploader: suspend (MultipartBody.Part) -> UploadResponse,
     ): Result<UploadResponse> = withContext(Dispatchers.IO) {
         runCatching {
-            val bytes = compressImage(context.contentResolver, uri)
+            val bytes = compressImage(context.contentResolver, uri, MAX_EDGE, QUALITY)
             val body = bytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
             uploader(MultipartBody.Part.createFormData("file", "upload.jpg", body))
         }
     }
 
-    private fun compressImage(resolver: ContentResolver, uri: Uri): ByteArray {
+    /**
+     * 压缩本地图片到指定档位，产出 JPEG 字节（E2EE 加密聊天图片在加密前
+     * 调用）。与明文上传共用两遍 decode 管线，档位可调以支持服务端密文
+     * 25MB 上限的降质重压阶梯。
+     */
+    suspend fun compressChatImage(uri: Uri, maxEdge: Int = MAX_EDGE, quality: Int = QUALITY): ByteArray =
+        withContext(Dispatchers.IO) { compressImage(context.contentResolver, uri, maxEdge, quality) }
+
+    /**
+     * 上传密文媒体字节到 /v1/uploads/chat-encrypted-media（application/
+     * octet-stream，.enc 文件名）。密文即随机字节，服务端不做 MIME 白名单
+     * 或图像处理；超限（25MB，HTTP 413）由调用方降档重压后重试。
+     */
+    suspend fun uploadEncryptedChatMedia(cipherBytes: ByteArray): Result<UploadResponse> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val body = cipherBytes.toRequestBody("application/octet-stream".toMediaTypeOrNull())
+                api.uploadChatEncryptedMedia(
+                    MultipartBody.Part.createFormData("file", "image.enc", body),
+                )
+            }
+        }
+
+    private fun compressImage(resolver: ContentResolver, uri: Uri, maxEdge: Int, quality: Int): ByteArray {
         // Pass 1: read just the dimensions so we never allocate the full bitmap.
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
             ?: throw IllegalStateException("无法读取所选图片")
 
-        // Pass 2: decode down-sampled so the longest edge is ~MAX_EDGE.
+        // Pass 2: decode down-sampled so the longest edge is ~maxEdge.
         val decodeOptions = BitmapFactory.Options().apply {
-            inSampleSize = calcInSampleSize(bounds.outWidth, bounds.outHeight, MAX_EDGE)
+            inSampleSize = calcInSampleSize(bounds.outWidth, bounds.outHeight, maxEdge)
         }
         val bitmap = resolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, decodeOptions)
@@ -91,7 +114,7 @@ class UploadRepository @Inject constructor(
 
         return try {
             ByteArrayOutputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, QUALITY, out)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
                 out.toByteArray()
             }
         } finally {

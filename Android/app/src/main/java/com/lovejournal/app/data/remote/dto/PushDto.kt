@@ -40,3 +40,28 @@ data class FcmTokenResponse(
     val app_version: String? = null,
     val is_active: Boolean = true,
 )
+
+@Serializable
+data class FcmTokenListResponse(
+    val items: List<FcmTokenResponse> = emptyList(),
+)
+
+@Serializable
+data class FcmStatus(
+    val enabled: Boolean = false,
+    val configured: Boolean = false,
+    val dependency_available: Boolean = false,
+    val runtime_ready: Boolean = false,
+)
+
+@Serializable
+data class WebPushStatus(
+    val enabled: Boolean = false,
+    val vapid_configured: Boolean = false,
+)
+
+@Serializable
+data class PushStatusResponse(
+    val fcm: FcmStatus = FcmStatus(),
+    val web_push: WebPushStatus = WebPushStatus(),
+)

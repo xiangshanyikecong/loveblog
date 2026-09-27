@@ -91,6 +91,7 @@ fun SettingsScreen(
     onOpenRecycleBin: () -> Unit = {},
     onOpenAdminTools: () -> Unit = {},
     onOpenLicenses: () -> Unit = {},
+    onOpenPushSetup: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -144,6 +145,7 @@ fun SettingsScreen(
                     onOpenRecycleBin = onOpenRecycleBin,
                     onOpenAdminTools = onOpenAdminTools,
                     onOpenLicenses = onOpenLicenses,
+                    onOpenPushSetup = onOpenPushSetup,
                     onLogout = onLogout,
                 )
             }
@@ -171,6 +173,7 @@ private fun SettingsForm(
     onOpenRecycleBin: () -> Unit,
     onOpenAdminTools: () -> Unit,
     onOpenLicenses: () -> Unit,
+    onOpenPushSetup: () -> Unit,
     onLogout: () -> Unit,
 ) {
     var siteName by remember(setting) { mutableStateOf(setting.site_name) }
@@ -236,6 +239,8 @@ private fun SettingsForm(
             onInviteNicknameChange = { inviteNickname = it },
             onInvite = onInvite,
         )
+        LoveSectionTitle("通知与推送", "自托管服务器的消息推送（FCM）")
+        PushStatusCard(onOpenSetup = onOpenPushSetup)
         LoveSectionTitle("账户与维护")
         LoveSoftCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { AccountEntryButtons(onOpenSecurity, onOpenPrivacy, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses) } }
         LogoutButton(onLogout)

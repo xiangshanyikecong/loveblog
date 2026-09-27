@@ -119,6 +119,10 @@ class ChatRepository @Inject constructor(
     fun encryptText(plaintext: String): ChatCrypto.Envelope? =
         _keySession.value?.key?.let { ChatCrypto.encryptString(it, plaintext) }
 
+    /** 加密媒体字节（整文件 AES-GCM），供密文文件直传；未解锁时返回 null。 */
+    fun encryptMedia(plaintext: ByteArray): ChatCrypto.RawEnvelope? =
+        _keySession.value?.key?.let { ChatCrypto.encryptBytesRaw(it, plaintext) }
+
     /** 解密一条 E2EE 消息；未解锁或密文损坏时返回 null（UI 显示占位）。 */
     fun decryptMessage(message: ChatMessageResponse): ChatMessageResponse {
         if (!message.is_encrypted || message.iv == null || message.ciphertext == null) return message
@@ -263,7 +267,11 @@ class ChatRepository @Inject constructor(
         )
     }
 
-    /** 组装发送载荷；[envelope] 非空时正文置 null，与 web 端 E2EE 约定一致。 */
+    /**
+     * 组装发送载荷；[envelope] 非空时正文置 null，与 web 端 E2EE 约定一致。
+     * 内联 ciphertext 仅用于文本消息；加密媒体（image/sticker/voice）的密文
+     * 在 media_url 指向的文件里，服务端 schema 拒绝媒体消息携带 ciphertext。
+     */
     private fun buildSendRequest(
         content: String,
         visibleAt: Instant?,
@@ -278,7 +286,7 @@ class ChatRepository @Inject constructor(
             visible_at = visibleAt?.toString(),
             is_encrypted = true,
             iv = envelope.iv,
-            ciphertext = envelope.ciphertext,
+            ciphertext = if (type == "text") envelope.ciphertext else null,
             algo = ChatCrypto.DEFAULT_ALGO,
         )
     } else {

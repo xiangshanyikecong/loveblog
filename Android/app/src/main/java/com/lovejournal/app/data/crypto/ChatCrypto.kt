@@ -95,6 +95,18 @@ object ChatCrypto {
         return Envelope(iv = base64Encode(iv), ciphertext = base64Encode(encrypted))
     }
 
+    /** 与 [Envelope] 相同的信封，但密文保持原始字节（供密文文件直传，免 base64 往返）。 */
+    class RawEnvelope(val iv: String, val ciphertextBytes: ByteArray)
+
+    /** 加密媒体文件用：与 web `encryptChatRaw` 协议一致（整文件 AES-GCM，iv 走 base64）。 */
+    fun encryptBytesRaw(key: SecretKey, plaintext: ByteArray): RawEnvelope {
+        val iv = ByteArray(12).also { random.nextBytes(it) }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(128, iv))
+        val encrypted = cipher.doFinal(plaintext)
+        return RawEnvelope(iv = base64Encode(iv), ciphertextBytes = encrypted)
+    }
+
     fun decryptBytes(key: SecretKey, ivB64: String, ciphertext: ByteArray): ByteArray {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, base64Decode(ivB64)))

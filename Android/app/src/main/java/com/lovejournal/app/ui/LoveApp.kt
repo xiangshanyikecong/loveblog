@@ -95,6 +95,7 @@ import com.lovejournal.app.ui.privacy.PrivacyScreen
 import com.lovejournal.app.ui.recyclebin.RecycleBinScreen
 import com.lovejournal.app.ui.search.SearchScreen
 import com.lovejournal.app.ui.security.SecurityScreen
+import com.lovejournal.app.ui.settings.PushSetupScreen
 import com.lovejournal.app.ui.settings.SettingsScreen
 import com.lovejournal.app.ui.timeline.TimelineScreen
 import com.lovejournal.app.ui.events.EventsScreen
@@ -122,6 +123,7 @@ private object MainRoute {
     const val PRIVACY = "privacy"
     const val RECYCLE_BIN = "recycle-bin"
     const val ADMIN_TOOLS = "admin-tools"
+    const val PUSH_SETUP = "push-setup"
 }
 
 /**
@@ -354,8 +356,10 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
                     onOpenRecycleBin = { navController.navigate(MainRoute.RECYCLE_BIN) { launchSingleTop = true } },
                     onOpenAdminTools = { navController.navigate(MainRoute.ADMIN_TOOLS) { launchSingleTop = true } },
                     onOpenLicenses = { navController.navigate(MainRoute.LICENSES) { launchSingleTop = true } },
+                    onOpenPushSetup = { navController.navigate(MainRoute.PUSH_SETUP) { launchSingleTop = true } },
                 )
             }
+            composable(MainRoute.PUSH_SETUP) { PushSetupScreen() }
             composable(MainRoute.PRIVACY) { PrivacyScreen() }
             composable(MainRoute.LICENSES) { LicensesScreen() }
             composable(MainRoute.SECURITY) { SecurityScreen() }

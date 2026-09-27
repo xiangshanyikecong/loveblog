@@ -114,8 +114,10 @@ import com.lovejournal.app.data.remote.dto.WishUpdateRequest
 import com.lovejournal.app.data.remote.dto.CottageMonthlyReportResponse
 import com.lovejournal.app.data.remote.dto.FootprintResponse
 import com.lovejournal.app.data.remote.dto.FcmTokenDeleteRequest
+import com.lovejournal.app.data.remote.dto.FcmTokenListResponse
 import com.lovejournal.app.data.remote.dto.FcmTokenResponse
 import com.lovejournal.app.data.remote.dto.FcmTokenUpsertRequest
+import com.lovejournal.app.data.remote.dto.PushStatusResponse
 import com.lovejournal.app.data.remote.dto.LedgerCreateRequest
 import com.lovejournal.app.data.remote.dto.LedgerListResponse
 import com.lovejournal.app.data.remote.dto.LedgerResponse
@@ -195,6 +197,12 @@ interface LoveApiService {
 
     @PUT("push/fcm-tokens")
     suspend fun upsertFcmToken(@Body body: FcmTokenUpsertRequest): FcmTokenResponse
+
+    @GET("push/status")
+    suspend fun pushStatus(): PushStatusResponse
+
+    @GET("push/fcm-tokens")
+    suspend fun fcmTokenList(): FcmTokenListResponse
 
     @HTTP(method = "DELETE", path = "push/fcm-tokens", hasBody = true)
     suspend fun deleteFcmToken(@Body body: FcmTokenDeleteRequest): Response<Unit>
@@ -966,6 +974,8 @@ interface LoveApiService {
     @POST("uploads/avatars/from-qq") suspend fun uploadAvatarFromQq(@Body body: JsonObject): UploadResponse
     @Multipart @POST("uploads/timeline") suspend fun uploadTimeline(@Part file: MultipartBody.Part): UploadResponse
     @Multipart @POST("uploads/chat-audio") suspend fun uploadChatAudio(@Part file: MultipartBody.Part): UploadResponse
+    // E2EE 聊天媒体：请求体是客户端加密后的随机字节，服务端不做 MIME/图像处理。
+    @Multipart @POST("uploads/chat-encrypted-media") suspend fun uploadChatEncryptedMedia(@Part file: MultipartBody.Part): UploadResponse
     @Multipart @POST("uploads/videos") suspend fun uploadVideo(@Part file: MultipartBody.Part): UploadResponse
     @Multipart @POST("uploads/capsule") suspend fun uploadCapsule(@Part file: MultipartBody.Part): UploadResponse
     @GET("uploads/storage-stats") suspend fun storageStats(): JsonElement

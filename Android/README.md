@@ -59,13 +59,15 @@ debug 构建默认 `http://10.0.2.2:8000/v1/`（模拟器访问宿主机 localho
 
 ## 推送（可选）
 
-FCM 默认未启用。启用步骤：
+FCM 默认未启用。**推荐路径：应用内向导，无需重新构建**：
 
-1. 在 Firebase 控制台创建应用（包名 `com.lovejournal.app`），下载 `google-services.json` 放到 `app/`。
-2. 在正式构建环境启用 `com.google.gms.google-services` 插件，让 `google-services.json` 生成 Firebase 资源。
-3. 后端设置 `FCM_PUSH_ENABLED=true`，并配置 `FCM_SERVICE_ACCOUNT_FILE` 或 `FCM_SERVICE_ACCOUNT_JSON`。
+1. 服务端：在 `.env` 设 `FCM_PUSH_ENABLED=true` 并把 Firebase 服务账号 JSON 压成单行填入 `FCM_SERVICE_ACCOUNT_JSON`，重启服务端。
+2. Firebase 控制台添加 Android 应用（包名 `com.lovejournal.app`），下载 `google-services.json`。
+3. 在应用「设置 → 通知与推送 → 配置推送」中导入该文件并向导会自动完成注册；向导也会检测服务端状态并给出缺失步骤。
 
-`google-services.json` 已在 `.gitignore`，请勿提交。
+进阶路径（分发预构建 APK 时）：把 `google-services.json` 放到 `app/` 并在构建环境启用 `com.google.gms.google-services` 插件后自行构建。`google-services.json` 已在 `.gitignore`，请勿提交。
+
+服务端状态可用 `GET /v1/push/status` 查询；详见 `docs/design/FCM_IN_APP_SETUP_DESIGN.md`。
 
 ## 已覆盖范围
 

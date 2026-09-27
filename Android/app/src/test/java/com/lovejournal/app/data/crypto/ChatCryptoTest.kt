@@ -108,10 +108,53 @@ class ChatCryptoTest {
         assertEquals(data.toList(), ChatCrypto.decryptBytes(key, envelope.iv, java.util.Base64.getDecoder().decode(envelope.ciphertext)).toList())
     }
 
+    @Test
+    fun `web media interop known answer vector decrypts raw bytes`() {
+        // E2EE 媒体（图片）互通向量：由 Node WebCrypto 以 web chatCrypto.js
+        // encryptChatRaw 的完整参数离线生成（PBKDF2-SHA-256 210k 派生 + 整文件
+        // AES-GCM），明文含 JPEG 魔数与 UTF-8 中文，锁定跨端字节级一致性。
+        val key = key(MEDIA_KAT_PASSPHRASE, MEDIA_KAT_SALT)
+        val plain = ChatCrypto.decryptBytes(
+            key,
+            MEDIA_KAT_IV,
+            java.util.Base64.getDecoder().decode(MEDIA_KAT_CIPHERTEXT),
+        )
+        assertEquals(MEDIA_KAT_PLAIN.toList(), plain.toList())
+    }
+
+    @Test
+    fun `raw media envelope roundtrip matches web encryptChatRaw contract`() {
+        // encryptBytesRaw（密文文件直传用的原语）必须与 web encryptChatRaw
+        // 返回同一形态：iv 为 base64，密文为原始字节（含 16B GCM tag）。
+        val key = key(MEDIA_KAT_PASSPHRASE, MEDIA_KAT_SALT)
+        val envelope = ChatCrypto.encryptBytesRaw(key, MEDIA_KAT_PLAIN)
+        assertEquals(12, java.util.Base64.getDecoder().decode(envelope.iv).size)
+        assertEquals(
+            MEDIA_KAT_PLAIN.size + 16,
+            envelope.ciphertextBytes.size,
+        )
+        assertEquals(
+            MEDIA_KAT_PLAIN.toList(),
+            ChatCrypto.decryptBytes(key, envelope.iv, envelope.ciphertextBytes).toList(),
+        )
+    }
+
     private companion object {
         // 由 Python cryptography（与 WebCrypto 等价参数）离线生成的固定向量。
         const val KAT_SALT = "AAECAwQFBgcICQoLDA0ODw=="
         const val KAT_IV = "AAECAwQFBgcICQoL"
         const val KAT_CIPHERTEXT = "sAE2xhkEeFbhunxtWd/IpnEjMx0yfSUDJu35jJVl24hWTQatYRJ/6xg="
+
+        // 由 Node WebCrypto（web encryptChatRaw 同参数）生成的媒体互通向量。
+        const val MEDIA_KAT_PASSPHRASE = "interop-passphrase-互通测试-💜"
+        const val MEDIA_KAT_SALT = "vICBxiLZPFD8fqb5WUE1uw=="
+        const val MEDIA_KAT_IV = "h269VbdTCG/3qYqq"
+        const val MEDIA_KAT_CIPHERTEXT =
+            "KdCD84vLc6vg+EmGZOGzKTBb1eSaM5m5gugKjgKCbgiQPmt57CdHMWS//pAjYCfFMpzlUaDRbN6T2Vm2DsC3QCA1FYSFuc94hV8="
+        val MEDIA_KAT_PLAIN: ByteArray = byteArrayOf(
+            0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 0x00, 0x10,
+            0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
+        ) + "love-journal e2ee media interop 互通向量".toByteArray(Charsets.UTF_8) +
+            byteArrayOf(0xFF.toByte(), 0xD9.toByte())
     }
 }

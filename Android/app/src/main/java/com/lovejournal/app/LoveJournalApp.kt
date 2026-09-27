@@ -30,6 +30,7 @@ import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.remote.AuthCookieJar
 import com.lovejournal.app.data.remote.SessionEventBus
 import com.lovejournal.app.data.repository.PushRepository
+import com.lovejournal.app.push.FirebaseRuntimeConfig
 import com.lovejournal.app.push.NotificationChannels
 import com.lovejournal.app.sync.SyncScheduler
 import dagger.hilt.EntryPoint
@@ -67,6 +68,9 @@ class LoveJournalApp : Application(), Configuration.Provider, ImageLoaderFactory
     lateinit var pushRepository: PushRepository
 
     @Inject
+    lateinit var firebaseRuntimeConfig: FirebaseRuntimeConfig
+
+    @Inject
     lateinit var database: LoveDatabase
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -81,6 +85,8 @@ class LoveJournalApp : Application(), Configuration.Provider, ImageLoaderFactory
 
     override fun onCreate() {
         super.onCreate()
+        // 应用内导入的 FCM 配置：优先于任何 push 调用完成手动初始化。
+        firebaseRuntimeConfig.initializeFromPersistedConfig()
         NotificationChannels.register(this)
         SyncScheduler.schedulePeriodicSync(this)
         observeSessionExpiry()

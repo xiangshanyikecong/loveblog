@@ -21,6 +21,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.ConnectivityMonitor
+import com.lovejournal.app.data.chat.ChatMediaDecryptor
+import com.lovejournal.app.data.crypto.ChatCrypto
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
@@ -41,6 +43,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 data class ChatUiState(
@@ -79,6 +82,7 @@ class ChatViewModel @Inject constructor(
     private val serverConfig: ServerConfig,
     private val connectivity: ConnectivityMonitor,
     private val session: SessionManager,
+    val mediaDecryptor: ChatMediaDecryptor,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatUiState())
@@ -109,7 +113,9 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             repository.keySession.collect { session ->
                 _state.update { it.copy(e2eeUnlocked = session != null) }
-                // 解锁/上锁都影响已渲染的密文，重新解密一遍。
+                // 解锁/上锁都影响已渲染的密文，重新解密一遍；已解密的媒体
+                // 缓存同样作废（换口令后旧明文不再代表当前可读状态）。
+                mediaDecryptor.clear()
                 emitMessages()
             }
         }
@@ -303,40 +309,100 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
-     * 发送图片消息：先经 [UploadRepository.uploadImage] 压缩上传到
-     * /v1/uploads/checkin，成功后以 type="image" + media_url 发出，
-     * 输入框里已输入的文字作为图片说明（可为空）。
+     * 发送图片消息。未启用 E2EE 时走明文链路：经 [UploadRepository.uploadImage]
+     * 压缩上传到 /v1/uploads/checkin，输入框里已输入的文字作为图片说明。
+     *
+     * 已启用 E2EE 时与网页端协议一致（见 docs/design/E2EE_CHAT_IMAGE_DESIGN.md）：
+     * 压缩 → AES-GCM 整文件加密 → 密文上传 /v1/uploads/chat-encrypted-media →
+     * 消息只携带 iv。服务端 schema 禁止加密媒体携带明文说明与内联密文，
+     * 因此 [caption] 在加密模式下不发送（UI 保留输入框文字并提示）。
      *
      * 仅在线可用：上传依赖网络，失败不会进同步队列（队列按设计只存纯
      * 文本），一律通过 [toast] 提示用户重试。
      */
     fun sendImage(uri: Uri, caption: String) {
         if (_state.value.uploadingImage) return // 上传中，忽略重复点击
-        // E2EE 图片链路尚未实现：加密已启用时放行明文图片会绕过端到端加密，
-        // 与网页端行为不一致，因此直接拦截提示。
-        if (_state.value.e2eeInitialized) {
-            _toast.tryEmit("加密聊天暂不支持图片消息")
+        // 加密状态未知时不放行：与 send() 同理，避免对方刚启用加密后，
+        // 明文图片在重放时被服务端永久拒绝（error.encrypted_chat_no_plaintext）。
+        if (!_state.value.e2eeReady) {
+            _toast.tryEmit("正在同步加密设置，请稍候再发送")
+            refreshKeyState() // 顺带重试拉取加密状态
             return
         }
         if (!connectivity.isOnline()) {
             _toast.tryEmit("当前离线，图片消息需要联网后发送")
             return
         }
+        if (_state.value.e2eeInitialized && !_state.value.e2eeUnlocked) {
+            _toast.tryEmit("聊天已加密，请先输入共享口令解锁")
+            return
+        }
         _state.update { it.copy(uploadingImage = true) }
         viewModelScope.launch {
-            uploadRepository.uploadImage(uri)
-                .onSuccess { uploaded ->
+            try {
+                if (_state.value.e2eeInitialized) {
+                    sendEncryptedImage(uri, caption)
+                } else {
+                    sendPlaintextImage(uri, caption)
+                }
+            } finally {
+                _state.update { it.copy(uploadingImage = false) }
+            }
+        }
+    }
+
+    private suspend fun sendPlaintextImage(uri: Uri, caption: String) {
+        uploadRepository.uploadImage(uri)
+            .onSuccess { uploaded ->
+                repository.send(
+                    content = caption.trim(),
+                    type = "image",
+                    mediaUrl = uploaded.url,
+                )
+                    .onSuccess { messageMap[it.mid] = it; emitMessages() }
+                    .onFailure { _toast.tryEmit(it.message ?: "图片发送失败") }
+            }
+            .onFailure { _toast.tryEmit(it.message ?: "图片上传失败") }
+    }
+
+    /**
+     * 加密图片链路：压缩 → 加密 → 密文上传 → 发送（消息只带 iv）。
+     * 服务端密文文件上限 25MB，收到 413 时按 [UPLOAD_TIERS] 降质重压重试。
+     */
+    private suspend fun sendEncryptedImage(uri: Uri, caption: String) {
+        if (caption.isNotBlank()) {
+            _toast.tryEmit("加密模式下图片不支持附带文字")
+        }
+        for ((maxEdge, quality) in UPLOAD_TIERS) {
+            val plain = runCatching { uploadRepository.compressChatImage(uri, maxEdge, quality) }
+                .getOrElse { _toast.tryEmit(it.message ?: "图片处理失败"); return }
+            val envelope = repository.encryptMedia(plain) ?: run {
+                _toast.tryEmit("聊天已加密，请先输入共享口令解锁")
+                return
+            }
+            val uploaded = uploadRepository.uploadEncryptedChatMedia(envelope.ciphertextBytes)
+            val error = uploaded.exceptionOrNull()
+            when {
+                error == null -> {
+                    // 媒体消息不内联密文：信封只取 iv（密文在 media_url 文件里）。
                     repository.send(
-                        content = caption.trim(),
+                        content = "",
                         type = "image",
-                        mediaUrl = uploaded.url,
+                        mediaUrl = uploaded.getOrThrow().url,
+                        envelope = ChatCrypto.Envelope(iv = envelope.iv, ciphertext = ""),
                     )
                         .onSuccess { messageMap[it.mid] = it; emitMessages() }
                         .onFailure { _toast.tryEmit(it.message ?: "图片发送失败") }
+                    return
                 }
-                .onFailure { _toast.tryEmit(it.message ?: "图片上传失败") }
-            _state.update { it.copy(uploadingImage = false) }
+                (error as? HttpException)?.code() == 413 -> Unit // 超限，降档重压后重试
+                else -> {
+                    _toast.tryEmit(error.message ?: "图片上传失败")
+                    return
+                }
+            }
         }
+        _toast.tryEmit("图片过大，压缩后仍无法上传，请换一张试试")
     }
 
     /** 把服务端返回的相对媒体路径解析成可加载的绝对 URL（与相册页同一套规则）。 */
@@ -391,5 +457,10 @@ class ChatViewModel @Inject constructor(
     override fun onCleared() {
         repository.disconnect()
         super.onCleared()
+    }
+
+    private companion object {
+        /** 加密图片压缩档位（最长边 px to JPEG 质量）：超服务端 25MB 密文上限时逐档降级。 */
+        val UPLOAD_TIERS = listOf(1600 to 85, 1280 to 70, 1024 to 55)
     }
 }
