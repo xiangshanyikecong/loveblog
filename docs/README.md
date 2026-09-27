@@ -15,3 +15,9 @@
 - 单人和双人模式说明
 - 健康检查：`HEALTH_CHECK_ARCHITECTURE.md`、`HEALTH_CHECK_PARAMETERS.md`
 - 一起听自动暂停：`AUTO_PAUSE_DESIGN.md`
+
+## `design/` - 功能设计稿
+
+- Web 端离线与弱网（IndexedDB 草稿 + 离线写入队列 + 只读缓存）：`WEB_OFFLINE_WEAK_NETWORK_DESIGN.md`
+- E2EE 聊天图片支持（Android 补齐，与 Web 互通）：`E2EE_CHAT_IMAGE_DESIGN.md`
+- FCM 推送应用内引导式配置（自托管友好）：`FCM_IN_APP_SETUP_DESIGN.md`
