@@ -118,6 +118,50 @@ class PushApiTests(unittest.TestCase):
         self.assertTrue(body["enabled"])
         self.assertEqual(body["public_key"], "public")
 
+    def test_push_status_defaults_to_disabled(self) -> None:
+        resp = self.client.get("/v1/push/status")
+
+        self.assertEqual(resp.status_code, 200, msg=resp.text)
+        body = resp.json()
+        self.assertFalse(body["fcm"]["enabled"])
+        self.assertFalse(body["fcm"]["configured"])
+        self.assertFalse(body["fcm"]["runtime_ready"])
+        self.assertFalse(body["web_push"]["enabled"])
+
+    def test_push_status_reflects_fcm_configuration(self) -> None:
+        with patch.object(settings, "fcm_push_enabled", True), patch.object(
+            settings, "fcm_service_account_json", '{"project_id":"demo"}'
+        ), patch(
+            "app.api.v1.push.fcm_runtime_ready",
+            return_value=True,
+        ), patch(
+            "app.api.v1.push.fcm_dependency_available",
+            return_value=True,
+        ):
+            resp = self.client.get("/v1/push/status")
+
+        self.assertEqual(resp.status_code, 200, msg=resp.text)
+        body = resp.json()
+        self.assertTrue(body["fcm"]["enabled"])
+        self.assertTrue(body["fcm"]["configured"])
+        self.assertTrue(body["fcm"]["dependency_available"])
+        self.assertTrue(body["fcm"]["runtime_ready"])
+
+    def test_push_status_skips_runtime_probe_when_unconfigured(self) -> None:
+        with patch.object(settings, "fcm_push_enabled", True), patch.object(
+            settings, "fcm_service_account_json", ""
+        ), patch(
+            "app.api.v1.push.fcm_runtime_ready",
+            side_effect=AssertionError("runtime probe must be skipped"),
+        ):
+            resp = self.client.get("/v1/push/status")
+
+        self.assertEqual(resp.status_code, 200, msg=resp.text)
+        body = resp.json()
+        self.assertTrue(body["fcm"]["enabled"])
+        self.assertFalse(body["fcm"]["configured"])
+        self.assertFalse(body["fcm"]["runtime_ready"])
+
     def test_subscription_lifecycle(self) -> None:
         payload = {
             "endpoint": "https://push.example.test/subscription",

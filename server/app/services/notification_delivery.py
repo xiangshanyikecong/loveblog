@@ -352,6 +352,10 @@ def _fcm_enabled() -> bool:
     return settings.fcm_push_enabled and settings.fcm_configured and firebase_admin is not None
 
 
+def fcm_dependency_available() -> bool:
+    return firebase_admin is not None
+
+
 def fcm_runtime_ready() -> bool:
     return _fcm_app() is not None and messaging is not None
 

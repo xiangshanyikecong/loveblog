@@ -25,6 +25,10 @@ from app.models.comment import Comment, CommentTargetType
 from app.models.moment import Moment
 from app.models.user import User
 from app.schemas.comment import CommentCreateRequest, CommentNodeResponse
+from app.services.idempotency import (
+    find_created_resource_id,
+    remember_created_resource,
+)
 from app.services.notifications import create_notification
 from app.services.visibility_policy import VisibilityPolicy
 
@@ -131,8 +135,20 @@ def create_comment(
     target_id: str,
     payload: CommentCreateRequest,
     current_user: User,
+    idempotency_key: str | None = None,
 ) -> CommentNodeResponse:
-    """创建评论"""
+    """创建评论。携带 ``idempotency_key`` 时重放返回首次创建的评论。"""
+    if idempotency_key is not None:
+        existing_cid = find_created_resource_id(db, current_user, "comment", idempotency_key)
+        if existing_cid is not None:
+            existing = (
+                db.query(Comment)
+                .options(joinedload(Comment.author), joinedload(Comment.parent))
+                .filter(Comment.cid == existing_cid, Comment.deleted_at.is_(None))
+                .first()
+            )
+            if existing is not None:
+                return _comment_to_node(existing, {})
     # 验证目标是否存在并检查权限
     target_owner: User | None = None
     notification_link = "/"
@@ -201,6 +217,11 @@ def create_comment(
     comment.set_mention_uids(_unique_str_values(mention_uids))
 
     db.add(comment)
+    # flush 让 cid 列默认值（uuid）先生成，幂等记录才能引用到它；
+    # 随后与评论行同事务提交，重放永远不会观察到悬空引用。
+    db.flush()
+    if idempotency_key is not None:
+        remember_created_resource(db, current_user, "comment", idempotency_key, comment.cid)
     db.commit()
 
     # 重新加载评论以获取关联数据

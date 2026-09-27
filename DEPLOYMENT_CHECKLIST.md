@@ -224,6 +224,11 @@ df -h
 
 ---
 
+## 推送通知（可选）📣
+
+- [ ] 如需 Android 推送：`FCM_PUSH_ENABLED=true` 与 `FCM_SERVICE_ACCOUNT_JSON` 已配置，`GET /v1/push/status` 返回 `fcm.runtime_ready=true`
+- [ ] Android 客户端已通过应用内向导（设置 → 通知与推送）导入 google-services.json 并注册设备
+
 ## 文档记录 📝
 
 ### 部署信息

@@ -22,6 +22,7 @@ from app.models.chat_key import ChatKey
 from app.models.chat_message import ChatMessage
 from app.models.chat_message_meta import ChatMessageFavorite, ChatPinnedQuote
 from app.models.checkin import CheckIn
+from app.models.idempotency_record import IdempotencyRecord
 from app.models.comment import Comment
 from app.models.content_visibility import ContentVisibility
 from app.models.content_version import ContentVersion

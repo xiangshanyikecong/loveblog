@@ -8,7 +8,8 @@
 4. [SSL/HTTPS 配置](#sslhttps-配置)
 5. [备份与恢复](#备份与恢复)
 6. [监控与维护](#监控与维护)
-7. [常见问题](#常见问题)
+7. [推送通知（可选）](#推送通知可选)
+8. [常见问题](#常见问题)
 
 ---
 
@@ -430,6 +431,43 @@ du -sh server/uploads/*
 # 查看数据库连接数
 docker-compose -f docker-compose.prod.yml exec postgres psql -U love love_node -c "SELECT count(*) FROM pg_stat_activity;"
 ```
+
+---
+
+## 推送通知（可选）
+
+站点支持两种推送通道：浏览器 Web Push（网页端）与 FCM（Android 客户端）。两者相互独立，都不配置时站内通知仍然可用。
+
+### 服务端配置（FCM / Android）
+
+1. 在 [Firebase 控制台](https://console.firebase.google.com/) 创建项目 → 项目设置 → 服务账号 → 生成新的私钥，得到 `serviceAccountKey.json`。
+2. 把私钥 JSON 压成单行：
+   ```bash
+   # Linux / macOS
+   python3 -c "import json,sys;print(json.dumps(json.load(open(sys.argv[1])),separators=(',',':')))" serviceAccountKey.json
+
+   # Windows PowerShell
+   (Get-Content serviceAccountKey.json -Raw | ConvertFrom-Json | ConvertTo-Json -Compress -Depth 100)
+   ```
+3. 编辑 `.env`（与 `docker-compose.prod.yml` 同目录）：
+   ```env
+   FCM_PUSH_ENABLED=true
+   FCM_SERVICE_ACCOUNT_JSON=<上一步得到的单行 JSON>
+   ```
+4. 重启：`docker compose -f docker-compose.prod.yml up -d`
+5. 验证：登录后访问 `GET /v1/push/status`，`fcm.runtime_ready` 应为 `true`。
+
+> ⚠️ 服务账号私钥是敏感凭据，只放在服务器上；`FCM_SERVICE_ACCOUNT_FILE` 需要把文件挂载进容器，生产 compose 默认只透传 `FCM_SERVICE_ACCOUNT_JSON`。
+
+### Android 客户端配置
+
+**推荐：应用内向导（免重新构建）**——在 Android 应用「设置 → 通知与推送 → 配置推送」中按引导完成：Firebase 控制台添加 Android 应用（包名 `com.lovejournal.app`）→ 下载 `google-services.json` → 应用内导入。配置状态（服务端/客户端缺哪一端）由向导自动检测。
+
+**进阶：构建期集成**——在 Firebase 控制台下载 `google-services.json` 放入 `Android/app/`，并在构建环境启用 `com.google.gms.google-services` 插件后自行构建。该文件已在 `.gitignore`，请勿提交。
+
+### Web Push（网页端，可选）
+
+设置 `WEB_PUSH_ENABLED=true` 与 VAPID 公私钥对后，网页端「通知中心」即可开启推送。
 
 ---
 

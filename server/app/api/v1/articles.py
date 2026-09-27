@@ -40,6 +40,11 @@ from app.schemas.version import ContentVersionListResponse
 from app.services.audit import write_audit_log
 from app.services.comments import build_comment_tree, create_comment, get_comments_for_target
 from app.services.content_access import grant_content_access, has_content_access
+from app.services.idempotency import (
+    find_created_resource_id,
+    normalize_idempotency_key,
+    remember_created_resource,
+)
 from app.services.upload_references import delete_upload_references_for, sync_article_upload_references
 from app.services.versioning import (
     apply_article_snapshot,
@@ -197,8 +202,24 @@ def create_article(
     payload: ArticleCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> ArticleDetailResponse:
     ensure_partner(current_user)
+
+    # Offline write-queue replays: return the article created under this key
+    # instead of duplicating it (see app/services/idempotency.py).
+    idempotency_key = normalize_idempotency_key(idempotency_key)
+    if idempotency_key is not None:
+        existing_aid = find_created_resource_id(db, current_user, "article", idempotency_key)
+        if existing_aid is not None:
+            existing = (
+                db.query(Article)
+                .options(joinedload(Article.author), joinedload(Article.blocks).joinedload(ArticleBlock.author))
+                .filter(Article.aid == existing_aid, Article.deleted_at.is_(None))
+                .first()
+            )
+            if existing is not None:
+                return _article_to_detail(existing, current_user, db)
 
     password_hash = _password_hash_for_visibility(
         visibility=payload.visibility,
@@ -221,6 +242,10 @@ def create_article(
     )
     db.add(article)
     db.flush()
+    if idempotency_key is not None:
+        # Same transaction as the article row: the record only exists if the
+        # creation does, so replays can never observe a dangling reference.
+        remember_created_resource(db, current_user, "article", idempotency_key, article.aid)
 
     blocks: list[ArticleBlock] = []
     for item in payload.blocks:
@@ -643,6 +668,14 @@ def create_article_comment(
     payload: CommentCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> CommentNodeResponse:
     """为文章创建评论"""
-    return create_comment(db, CommentTargetType.article, aid, payload, current_user)
+    return create_comment(
+        db,
+        CommentTargetType.article,
+        aid,
+        payload,
+        current_user,
+        idempotency_key=normalize_idempotency_key(idempotency_key),
+    )

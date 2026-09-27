@@ -30,12 +30,19 @@ from app.schemas.push import (
     FcmTokenResponse,
     FcmTokenUpsertRequest,
     PushPublicKeyResponse,
+    PushStatusResponse,
     PushSubscriptionDeleteRequest,
     PushSubscriptionListResponse,
     PushSubscriptionResponse,
     PushSubscriptionUpsertRequest,
+    WebPushStatusInfo,
+    FcmStatusInfo,
 )
-from app.services.notification_delivery import web_push_runtime_ready
+from app.services.notification_delivery import (
+    fcm_dependency_available,
+    fcm_runtime_ready,
+    web_push_runtime_ready,
+)
 
 router = APIRouter(prefix="/push", tags=["push"])
 
@@ -46,6 +53,29 @@ def get_push_public_key() -> PushPublicKeyResponse:
     return PushPublicKeyResponse(
         enabled=enabled,
         public_key=settings.web_push_vapid_public_key if enabled else None,
+    )
+
+
+@router.get("/status", response_model=PushStatusResponse)
+def get_push_status() -> PushStatusResponse:
+    """推送配置状态（仅布尔值）：供 Android 应用内 FCM 配置向导判断缺哪一端。"""
+    fcm_ready = False
+    if settings.fcm_push_enabled and settings.fcm_configured:
+        # 仅在开关与凭据齐备时探测运行时（避免未配置时反复尝试初始化刷日志）。
+        fcm_ready = fcm_runtime_ready()
+    return PushStatusResponse(
+        fcm=FcmStatusInfo(
+            enabled=settings.fcm_push_enabled,
+            configured=settings.fcm_configured,
+            dependency_available=fcm_dependency_available(),
+            runtime_ready=fcm_ready,
+        ),
+        web_push=WebPushStatusInfo(
+            enabled=settings.web_push_enabled
+            and settings.web_push_configured
+            and web_push_runtime_ready(),
+            vapid_configured=settings.web_push_configured,
+        ),
     )
 
 

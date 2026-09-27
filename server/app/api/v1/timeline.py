@@ -29,6 +29,11 @@ from app.models.moment import Moment
 from app.models.user import User
 from app.schemas.comment import CommentCreateRequest, CommentNodeResponse
 from app.schemas.moment import MomentCreateRequest, MomentResponse, TimelineListResponse, TimelineSort
+from app.services.idempotency import (
+    find_created_resource_id,
+    normalize_idempotency_key,
+    remember_created_resource,
+)
 from app.services.notifications import create_notification
 from app.services.upload_references import delete_upload_references_for, sync_moment_upload_references
 from app.services.visibility_policy import VisibilityPolicy
@@ -259,7 +264,20 @@ def create_comment(
     payload: CommentCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> CommentNodeResponse:
+    idempotency_key = normalize_idempotency_key(idempotency_key)
+    if idempotency_key is not None:
+        existing_cid = find_created_resource_id(db, current_user, "comment", idempotency_key)
+        if existing_cid is not None:
+            existing = (
+                db.query(Comment)
+                .options(joinedload(Comment.author), joinedload(Comment.parent))
+                .filter(Comment.cid == existing_cid, Comment.deleted_at.is_(None))
+                .first()
+            )
+            if existing is not None:
+                return _comment_to_node(existing, {})
     moment = db.query(Moment).filter(Moment.mid == mid, Moment.deleted_at.is_(None)).first()
     if not moment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Moment not found")
@@ -295,6 +313,9 @@ def create_comment(
     comment.set_mention_uids(_unique_str_values(mention_uids))
 
     db.add(comment)
+    db.flush()
+    if idempotency_key is not None:
+        remember_created_resource(db, current_user, "comment", idempotency_key, comment.cid)
     db.commit()
 
     created = (

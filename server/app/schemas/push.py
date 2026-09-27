@@ -63,6 +63,25 @@ class PushPublicKeyResponse(BaseModel):
     public_key: str | None
 
 
+class FcmStatusInfo(BaseModel):
+    """FCM 推送配置状态（仅布尔值，供 Android 应用内配置向导探测）。"""
+
+    enabled: bool
+    configured: bool
+    dependency_available: bool
+    runtime_ready: bool
+
+
+class WebPushStatusInfo(BaseModel):
+    enabled: bool
+    vapid_configured: bool
+
+
+class PushStatusResponse(BaseModel):
+    fcm: FcmStatusInfo
+    web_push: WebPushStatusInfo
+
+
 class PushSubscriptionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
