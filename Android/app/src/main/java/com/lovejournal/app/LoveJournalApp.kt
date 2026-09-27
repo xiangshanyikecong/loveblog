@@ -161,6 +161,19 @@ class LoveJournalApp : Application(), Configuration.Provider, ImageLoaderFactory
             .mediaClient()
         return ImageLoader.Builder(this)
             .okHttpClient(mediaClient)
+            // 相册 / 时间线 / 聊天图片量大：显式设定内存缓存占比与磁盘缓存
+            // 上限，避免长列表滑动时反复解码大图导致掉帧或占满存储。
+            .memoryCache {
+                coil.memory.MemoryCache.Builder(this)
+                    .maxSizePercent(0.20)
+                    .build()
+            }
+            .diskCache {
+                coil.disk.DiskCache.Builder()
+                    .maxSizeBytes(256L * 1024 * 1024)
+                    .build()
+            }
+            .crossfade(120)
             .build()
     }
 }

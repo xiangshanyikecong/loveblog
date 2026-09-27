@@ -19,6 +19,7 @@ package com.lovejournal.app.data.repository
 
 import androidx.room.withTransaction
 import com.lovejournal.app.data.ConnectivityMonitor
+import com.lovejournal.app.data.crypto.ChatCrypto
 import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.local.dao.SyncQueueDao
 import com.lovejournal.app.data.local.entity.SyncQueueEntity
@@ -27,6 +28,10 @@ import com.lovejournal.app.data.remote.CottageWebSocket
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.ChatHistoryResponse
+import com.lovejournal.app.data.remote.dto.ChatKeyMetaResponse
+import com.lovejournal.app.data.remote.dto.ChatKeySetupRequest
+import com.lovejournal.app.data.remote.dto.ChatKeyRekeyRequest
+import com.lovejournal.app.data.remote.dto.ChatKeyVerifyRequest
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
 import com.lovejournal.app.data.remote.dto.ChatSendRequest
 import com.lovejournal.app.data.remote.dto.ChatStateResponse
@@ -35,11 +40,15 @@ import com.lovejournal.app.data.remote.dto.ChatMemoryCardResponse
 import com.lovejournal.app.data.remote.dto.ChatPinnedQuoteRequest
 import com.lovejournal.app.data.remote.dto.ChatPinnedQuoteResponse
 import com.lovejournal.app.data.remote.dto.ChatKeywordsResponse
+import com.lovejournal.app.data.remote.dto.ChatSearchResponse
 import com.lovejournal.app.data.remote.dto.PokeRequest
 import com.lovejournal.app.sync.SyncActions
 import com.lovejournal.app.sync.SyncScheduler
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.encodeToString
@@ -54,6 +63,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import java.time.Instant
 import java.util.UUID
+import javax.crypto.SecretKey
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -88,6 +98,140 @@ class ChatRepository @Inject constructor(
     fun connect() = socket.connect()
     fun disconnect() = socket.close()
 
+    // ---- E2EE 密钥会话（仅进程内存，与 web 端「冷启动需重新解锁」策略一致）----
+
+    private val _keySession = MutableStateFlow<ChatCrypto.ChatKeySession?>(null)
+    val keySession: StateFlow<ChatCrypto.ChatKeySession?> = _keySession.asStateFlow()
+
+    val isUnlocked: Boolean get() = _keySession.value != null
+
+    /** 服务端是否已初始化共享密钥（设置过口令）。 */
+    var e2eeInitialized: Boolean = false
+        private set
+
+    /**
+     * 解密结果缓存（mid@iv → 明文）。历史列表每次刷新都会全量重发，
+     * 缓存保证每条密文只做一次 AES-GCM 解密，避免长会话中随消息数
+     * 线性增长的重复解密开销。未解锁前密文不解，与 web 行为一致。
+     */
+    private val plaintextCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    fun encryptText(plaintext: String): ChatCrypto.Envelope? =
+        _keySession.value?.key?.let { ChatCrypto.encryptString(it, plaintext) }
+
+    /** 解密一条 E2EE 消息；未解锁或密文损坏时返回 null（UI 显示占位）。 */
+    fun decryptMessage(message: ChatMessageResponse): ChatMessageResponse {
+        if (!message.is_encrypted || message.iv == null || message.ciphertext == null) return message
+        val cacheKey = "${message.mid}@${message.iv}"
+        plaintextCache[cacheKey]?.let { return message.copy(content = it) }
+        val key = _keySession.value?.key ?: return message
+        val plain = runCatching { ChatCrypto.decryptString(key, message.iv, message.ciphertext) }.getOrNull()
+            ?: return message
+        plaintextCache[cacheKey] = plain
+        return message.copy(content = plain)
+    }
+
+    fun decryptAll(messages: List<ChatMessageResponse>): List<ChatMessageResponse> =
+        if (_keySession.value == null) messages else messages.map(::decryptMessage)
+
+    suspend fun keyMeta(): Result<ChatKeyMetaResponse> = runCatching {
+        api.chatKeyMeta().also { e2eeInitialized = it.initialized }
+    }
+
+    /**
+     * 一次性设置共享口令：本地派生密钥、生成 verifier，上传公开 KDF 参数。
+     * 口令本身与派生密钥都不离开本机。
+     */
+    suspend fun setupKey(passphrase: CharArray): Result<ChatKeyMetaResponse> = runCatching {
+        val salt = ChatCrypto.generateSalt()
+        val key = ChatCrypto.deriveKey(passphrase, salt)
+        val verifier = ChatCrypto.encryptString(key, ChatCrypto.VERIFIER_TOKEN)
+        val meta = api.setupChatKey(
+            ChatKeySetupRequest(
+                salt = salt,
+                iterations = ChatCrypto.DEFAULT_ITERATIONS,
+                verifier_iv = verifier.iv,
+                verifier_cipher = verifier.ciphertext,
+                verifier_hash = ChatCrypto.sha256Hex(verifier.ciphertext),
+            ),
+        )
+        e2eeInitialized = true
+        _keySession.value = ChatCrypto.ChatKeySession(
+            key = key,
+            salt = salt,
+            iterations = ChatCrypto.DEFAULT_ITERATIONS,
+            kdf = meta.kdf ?: ChatCrypto.DEFAULT_KDF,
+            kdfHash = meta.kdf_hash ?: ChatCrypto.DEFAULT_KDF_HASH,
+            algo = meta.algo ?: ChatCrypto.DEFAULT_ALGO,
+        )
+        meta
+    }
+
+    /** 用口令解锁密钥：本地 verifier 校验 + 向服务端上报 proof（兼容 web 流程）。 */
+    suspend fun unlockKey(passphrase: CharArray): Result<Unit> = runCatching {
+        val meta = api.chatKeyMeta()
+        e2eeInitialized = meta.initialized
+        val salt = meta.salt ?: throw IllegalStateException("服务器未启用加密聊天")
+        val verifierIv = meta.verifier_iv ?: throw IllegalStateException("服务器未启用加密聊天")
+        val verifierCipher = meta.verifier_cipher ?: throw IllegalStateException("服务器未启用加密聊天")
+        if (!ChatCrypto.verifyPassphrase(passphrase, salt, meta.iterations ?: ChatCrypto.DEFAULT_ITERATIONS, verifierIv, verifierCipher)) {
+            throw IllegalArgumentException("口令不正确")
+        }
+        val key = ChatCrypto.deriveKey(passphrase, salt, meta.iterations ?: ChatCrypto.DEFAULT_ITERATIONS)
+        // 与 web 相同：解锁后发送一次性 proof（服务端仅作记录，不参与密钥校验）。
+        val proof = ChatCrypto.encryptString(key, "${ChatCrypto.VERIFIER_TOKEN}::proof::${System.currentTimeMillis()}")
+        runCatching {
+            api.verifyChatKey(ChatKeyVerifyRequest(proof_iv = proof.iv, proof_cipher = proof.ciphertext))
+            Unit
+        }
+        _keySession.value = ChatCrypto.ChatKeySession(
+            key = key,
+            salt = salt,
+            iterations = meta.iterations ?: ChatCrypto.DEFAULT_ITERATIONS,
+            kdf = meta.kdf ?: ChatCrypto.DEFAULT_KDF,
+            kdfHash = meta.kdf_hash ?: ChatCrypto.DEFAULT_KDF_HASH,
+            algo = meta.algo ?: ChatCrypto.DEFAULT_ALGO,
+        )
+    }
+
+    /**
+     * 更换共享口令（轮换 salt）。服务端 `ChatKeyRekeyRequest` 在 setup 字段
+     * 之外还要求 new_salt / new_verifier_* 四个字段（web 端两处都填新值）；
+     * 成功后按返回的新 meta 重建本机会话（与 web「重新解锁」一致）。
+     */
+    suspend fun rekeyKey(newPassphrase: CharArray): Result<ChatKeyMetaResponse> = runCatching {
+        val salt = ChatCrypto.generateSalt()
+        val key = ChatCrypto.deriveKey(newPassphrase, salt)
+        val verifier = ChatCrypto.encryptString(key, ChatCrypto.VERIFIER_TOKEN)
+        val verifierHash = ChatCrypto.sha256Hex(verifier.ciphertext)
+        val meta = api.rekeyChatKey(
+            ChatKeyRekeyRequest(
+                salt = salt,
+                iterations = ChatCrypto.DEFAULT_ITERATIONS,
+                verifier_iv = verifier.iv,
+                verifier_cipher = verifier.ciphertext,
+                verifier_hash = verifierHash,
+                new_salt = salt,
+                new_verifier_iv = verifier.iv,
+                new_verifier_cipher = verifier.ciphertext,
+                new_verifier_hash = verifierHash,
+            ),
+        )
+        e2eeInitialized = true
+        _keySession.value = ChatCrypto.ChatKeySession(
+            key = key,
+            salt = meta.salt ?: salt,
+            iterations = meta.iterations ?: ChatCrypto.DEFAULT_ITERATIONS,
+            kdf = meta.kdf ?: ChatCrypto.DEFAULT_KDF,
+            kdfHash = meta.kdf_hash ?: ChatCrypto.DEFAULT_KDF_HASH,
+            algo = meta.algo ?: ChatCrypto.DEFAULT_ALGO,
+        )
+        meta
+    }
+
+    suspend fun search(keyword: String, limit: Int = 20): Result<ChatSearchResponse> =
+        runCatching { api.searchChatMessages(q = keyword, limit = limit) }
+
     fun sendTyping(isTyping: Boolean) {
         socket.send("""{"type":"TYPING","payload":{"is_typing":$isTyping}}""")
     }
@@ -111,15 +255,38 @@ class ChatRepository @Inject constructor(
         idempotencyKey: String? = null,
         type: String = "text",
         mediaUrl: String? = null,
+        envelope: ChatCrypto.Envelope? = null,
     ): Result<ChatMessageResponse> = runCatching {
         api.sendChatMessage(
             idempotencyKey = idempotencyKey,
-            body = ChatSendRequest(
-                type = type,
-                content = content,
-                media_url = mediaUrl,
-                visible_at = visibleAt?.toString(),
-            ),
+            body = buildSendRequest(content, visibleAt, type, mediaUrl, envelope),
+        )
+    }
+
+    /** 组装发送载荷；[envelope] 非空时正文置 null，与 web 端 E2EE 约定一致。 */
+    private fun buildSendRequest(
+        content: String,
+        visibleAt: Instant?,
+        type: String,
+        mediaUrl: String?,
+        envelope: ChatCrypto.Envelope?,
+    ) = if (envelope != null) {
+        ChatSendRequest(
+            type = type,
+            content = null,
+            media_url = mediaUrl,
+            visible_at = visibleAt?.toString(),
+            is_encrypted = true,
+            iv = envelope.iv,
+            ciphertext = envelope.ciphertext,
+            algo = ChatCrypto.DEFAULT_ALGO,
+        )
+    } else {
+        ChatSendRequest(
+            type = type,
+            content = content,
+            media_url = mediaUrl,
+            visible_at = visibleAt?.toString(),
         )
     }
 
@@ -131,21 +298,18 @@ class ChatRepository @Inject constructor(
      *
      * 注意：同步队列按设计只支持纯文本消息 —— 媒体消息依赖先上传成功的
      * media_url，离线时无法补传，因此非 text 类型失败后直接上抛由 UI
-     * 提示重试，绝不入队。
+     * 提示重试，绝不入队。E2EE 消息在入队前已完成加密（信封随载荷存
+     * 进队列），重放时无需再次解锁。
      */
     suspend fun sendOfflineAware(
         content: String,
         visibleAt: Instant? = null,
         type: String = "text",
         mediaUrl: String? = null,
+        envelope: ChatCrypto.Envelope? = null,
     ): Result<ChatMessageResponse> {
         val key = UUID.randomUUID().toString()
-        val payload = ChatSendRequest(
-            type = type,
-            content = content,
-            media_url = mediaUrl,
-            visible_at = visibleAt?.toString(),
-        )
+        val payload = buildSendRequest(content, visibleAt, type, mediaUrl, envelope)
         return try {
             val resp = api.sendChatMessage(idempotencyKey = key, body = payload)
             Result.success(resp)

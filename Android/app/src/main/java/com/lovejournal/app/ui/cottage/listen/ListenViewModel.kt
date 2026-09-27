@@ -35,6 +35,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.ListenHistoryItem
+import com.lovejournal.app.data.remote.dto.MyPlaylistDetail
+import com.lovejournal.app.data.remote.dto.LikedTrackItem
 import com.lovejournal.app.data.remote.dto.LyricLine
 import com.lovejournal.app.data.remote.dto.PartnerLoginState
 import com.lovejournal.app.data.remote.dto.PlaylistItem
@@ -71,6 +73,7 @@ enum class ListenLibraryTab(val title: String) {
     Charts("榜单"),
     History("历史"),
     Local("本地"),
+    Mine("我的"),
     Queue("队列"),
 }
 
@@ -106,6 +109,13 @@ data class ListenUiState(
     val localTracks: List<SongMeta> = emptyList(),
     val localLoading: Boolean = false,
     val localUploading: Boolean = false,
+    // 我的音乐库（收藏 + 自建歌单）
+    val likedTracks: List<SongMeta> = emptyList(),
+    val likedLoading: Boolean = false,
+    val likedSongIds: Set<String> = emptySet(),
+    val myPlaylists: List<MyPlaylistDetail> = emptyList(),
+    val myPlaylistsLoading: Boolean = false,
+    val selectedMyPlaylist: MyPlaylistDetail? = null,
     val message: String? = null,
     val error: String? = null,
 ) {
@@ -323,6 +333,151 @@ class ListenViewModel @Inject constructor(
 
     fun updateSearchKeyword(keyword: String) {
         _state.update { it.copy(searchKeyword = keyword) }
+    }
+
+    // ---- 我的音乐库 ----
+
+    /** 把收藏条目转成可直接播放的 [SongMeta]。 */
+    private fun LikedTrackItem.toSongMeta() = SongMeta(
+        songId = songId,
+        name = name,
+        artists = artists,
+        album = album,
+        durationMs = durationMs,
+        coverUrl = coverUrl,
+    )
+
+    fun loadLiked() {
+        viewModelScope.launch {
+            _state.update { it.copy(likedLoading = true) }
+            repo.likedTracks()
+                .onSuccess { resp ->
+                    _state.update {
+                        it.copy(
+                            likedTracks = resp.items.map { item -> item.toSongMeta() },
+                            likedSongIds = resp.items.map { item -> item.songId }.toSet(),
+                            likedLoading = false,
+                        )
+                    }
+                }
+                .onFailure { err ->
+                    _state.update { it.copy(likedLoading = false, message = friendlyError(err)) }
+                }
+        }
+    }
+
+    /** 收藏/取消收藏；成功后刷新本地集合，保持红心状态一致。 */
+    fun toggleLiked(song: SongMeta) {
+        viewModelScope.launch {
+            val liked = song.songId in _state.value.likedSongIds
+            val result = if (liked) repo.removeLiked(song.songId) else repo.toggleLiked(song)
+            result
+                .onSuccess {
+                    val ids = _state.value.likedSongIds.toMutableSet()
+                    if (liked) ids.remove(song.songId) else ids.add(song.songId)
+                    _state.update {
+                        it.copy(
+                            likedSongIds = ids,
+                            likedTracks = if (liked) it.likedTracks.filterNot { s -> s.songId == song.songId }
+                            else listOf(song) + it.likedTracks.filterNot { s -> s.songId == song.songId },
+                            message = if (liked) "已取消收藏" else "已收藏到「我喜欢」",
+                        )
+                    }
+                }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
+    }
+
+    fun isLiked(songId: String): Boolean = songId in _state.value.likedSongIds
+
+    fun loadMyPlaylists() {
+        viewModelScope.launch {
+            _state.update { it.copy(myPlaylistsLoading = true) }
+            repo.myPlaylists()
+                .onSuccess { lists -> _state.update { it.copy(myPlaylists = lists, myPlaylistsLoading = false) } }
+                .onFailure { err -> _state.update { it.copy(myPlaylistsLoading = false, message = friendlyError(err)) } }
+        }
+    }
+
+    fun openMyPlaylist(pid: String) {
+        viewModelScope.launch {
+            repo.myPlaylist(pid)
+                .onSuccess { detail -> _state.update { it.copy(selectedMyPlaylist = detail) } }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
+    }
+
+    fun closeMyPlaylist() {
+        _state.update { it.copy(selectedMyPlaylist = null) }
+    }
+
+    fun createMyPlaylist(name: String) {
+        val clean = name.trim()
+        if (clean.isEmpty()) return
+        viewModelScope.launch {
+            repo.createMyPlaylist(clean)
+                .onSuccess {
+                    _state.update { it.copy(message = "歌单已创建") }
+                    loadMyPlaylists()
+                }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
+    }
+
+    fun deleteMyPlaylist(pid: String) {
+        viewModelScope.launch {
+            repo.deleteMyPlaylist(pid)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            myPlaylists = it.myPlaylists.filterNot { p -> p.pid == pid },
+                            selectedMyPlaylist = it.selectedMyPlaylist?.takeIf { p -> p.pid != pid },
+                            message = "歌单已删除",
+                        )
+                    }
+                }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
+    }
+
+    fun addCurrentToMyPlaylist(pid: String, song: SongMeta) {
+        viewModelScope.launch {
+            repo.addTrackToMyPlaylist(pid, song)
+                .onSuccess { _state.update { it.copy(message = "已加入歌单") } }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
+    }
+
+    fun removeTrackFromMyPlaylist(pid: String, songId: String) {
+        viewModelScope.launch {
+            repo.removeTrackFromMyPlaylist(pid, songId)
+                .onSuccess {
+                    _state.update { st ->
+                        st.copy(
+                            selectedMyPlaylist = st.selectedMyPlaylist?.let { detail ->
+                                detail.copy(
+                                    tracks = detail.tracks.filterNot { s -> s.songId == songId },
+                                    trackCount = (detail.trackCount - 1).coerceAtLeast(0),
+                                )
+                            },
+                            message = "已从歌单移除",
+                        )
+                    }
+                }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
+    }
+
+    /** 把我的歌单投递到共同队列播放（对齐网页端「播放我的歌单」）。 */
+    fun playMyPlaylist(pid: String) {
+        viewModelScope.launch {
+            repo.playMyPlaylist(pid)
+                .onSuccess {
+                    _state.update { it.copy(message = "歌单已加入共同队列") }
+                    loadState(silent = true)
+                }
+                .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
+        }
     }
 
     fun search(keyword: String = _state.value.searchKeyword) {

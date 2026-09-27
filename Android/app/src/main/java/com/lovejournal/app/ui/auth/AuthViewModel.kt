@@ -23,6 +23,7 @@ import com.lovejournal.app.BuildConfig
 import com.lovejournal.app.data.prefs.SessionState
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.repository.AuthRepository
+import com.lovejournal.app.data.repository.SecurityRepository
 import com.lovejournal.app.util.isEmulator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,9 +52,16 @@ data class BootstrapUiState(
     val bootstrappedUsername: String? = null,
 )
 
+data class RecoveryUiState(
+    val submitting: Boolean = false,
+    val success: Boolean = false,
+    val error: String? = null,
+)
+
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val securityRepository: SecurityRepository,
     private val serverConfig: ServerConfig,
 ) : ViewModel() {
 
@@ -231,6 +239,38 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch { authRepository.logout() }
+    }
+
+    // ---- 忘记密码自助找回（需服务器 BOOTSTRAP_SETUP_TOKEN）----
+
+    private val _recoveryState = MutableStateFlow(RecoveryUiState())
+    val recoveryState: StateFlow<RecoveryUiState> = _recoveryState.asStateFlow()
+
+    fun recoverPassword(serverAddress: String, username: String, newPassword: String, bootstrapToken: String) {
+        serverConfig.validateAddressInput(serverAddress)?.let { msg ->
+            _recoveryState.value = RecoveryUiState(error = msg)
+            return
+        }
+        if (username.isBlank() || bootstrapToken.isBlank()) {
+            _recoveryState.value = RecoveryUiState(error = "请填写用户名与恢复令牌")
+            return
+        }
+        if (newPassword.length < 8 || newPassword.none { it.isLetter() } || newPassword.none { it.isDigit() }) {
+            _recoveryState.value = RecoveryUiState(error = "新密码至少 8 位，且需同时包含字母和数字")
+            return
+        }
+        serverConfig.setAddress(serverAddress)
+        _recoveryState.value = RecoveryUiState(submitting = true)
+        viewModelScope.launch {
+            securityRepository.passwordRecovery(username, newPassword, bootstrapToken).fold(
+                onSuccess = { _recoveryState.value = RecoveryUiState(success = true) },
+                onFailure = { _recoveryState.value = RecoveryUiState(error = it.message ?: "找回失败") },
+            )
+        }
+    }
+
+    fun resetRecoveryState() {
+        _recoveryState.value = RecoveryUiState()
     }
 
     private companion object {

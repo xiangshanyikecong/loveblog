@@ -91,6 +91,7 @@ import com.lovejournal.app.ui.checkins.CheckinScreen
 import com.lovejournal.app.ui.dashboard.DashboardScreen
 import com.lovejournal.app.ui.licenses.LicensesScreen
 import com.lovejournal.app.ui.notifications.NotificationScreen
+import com.lovejournal.app.ui.privacy.PrivacyScreen
 import com.lovejournal.app.ui.recyclebin.RecycleBinScreen
 import com.lovejournal.app.ui.search.SearchScreen
 import com.lovejournal.app.ui.security.SecurityScreen
@@ -118,6 +119,7 @@ private object MainRoute {
     const val SETTINGS = "settings"
     const val LICENSES = "licenses"
     const val SECURITY = "security"
+    const val PRIVACY = "privacy"
     const val RECYCLE_BIN = "recycle-bin"
     const val ADMIN_TOOLS = "admin-tools"
 }
@@ -130,6 +132,7 @@ private val SECONDARY_ROUTES = setOf(
     MainRoute.SETTINGS,
     MainRoute.LICENSES,
     MainRoute.SECURITY,
+    MainRoute.PRIVACY,
     MainRoute.RECYCLE_BIN,
     MainRoute.ADMIN_TOOLS,
 )
@@ -175,6 +178,7 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
         MainRoute.SETTINGS -> "设置"
         MainRoute.LICENSES -> "开源许可证"
         MainRoute.SECURITY -> "账号安全"
+        MainRoute.PRIVACY -> "隐私中心"
         MainRoute.RECYCLE_BIN -> "回收站"
         MainRoute.ADMIN_TOOLS -> "后台管理"
         Tab.Messages.route -> "留言板"
@@ -310,11 +314,13 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
                 SettingsScreen(
                     onLogout = { authViewModel.logout() },
                     onOpenSecurity = { navController.navigate(MainRoute.SECURITY) { launchSingleTop = true } },
+                    onOpenPrivacy = { navController.navigate(MainRoute.PRIVACY) { launchSingleTop = true } },
                     onOpenRecycleBin = { navController.navigate(MainRoute.RECYCLE_BIN) { launchSingleTop = true } },
                     onOpenAdminTools = { navController.navigate(MainRoute.ADMIN_TOOLS) { launchSingleTop = true } },
                     onOpenLicenses = { navController.navigate(MainRoute.LICENSES) { launchSingleTop = true } },
                 )
             }
+            composable(MainRoute.PRIVACY) { PrivacyScreen() }
             composable(MainRoute.LICENSES) { LicensesScreen() }
             composable(MainRoute.SECURITY) { SecurityScreen() }
             composable(MainRoute.RECYCLE_BIN) { RecycleBinScreen() }

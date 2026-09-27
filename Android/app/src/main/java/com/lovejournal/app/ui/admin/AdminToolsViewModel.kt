@@ -35,6 +35,9 @@ data class AdminToolsUiState(
     val users: String = "",
     val storage: String = "",
     val backup: String = "",
+    val storageUsage: String = "",
+    val healthHistory: String = "",
+    val remediating: Boolean = false,
     val message: String? = null,
 )
 
@@ -60,5 +63,43 @@ class AdminToolsViewModel @Inject constructor(private val repository: AdminRepos
         )
     }
     fun runBackup() = viewModelScope.launch { repository.runBackup().fold(onSuccess = { _state.value = _state.value.copy(message = "备份任务已执行：$it"); refresh() }, onFailure = { _state.value = _state.value.copy(message = it.message ?: "备份失败") }) }
+
+    fun loadMore() = viewModelScope.launch {
+        val usage = async { repository.storageUsage() }
+        val history = async { repository.healthHistory() }
+        _state.value = _state.value.copy(
+            storageUsage = usage.await().fold(
+                { resp ->
+                    val mb = { b: Long -> "%.1f MB".format(b / 1024.0 / 1024.0) }
+                    buildString {
+                        appendLine("磁盘：${mb(resp.disk.used_bytes)} / ${mb(resp.disk.total_bytes)}（${"%.1f".format(resp.disk.percent)}%）")
+                        appendLine("上传目录：${mb(resp.uploads.total_bytes)}（${resp.uploads.file_count} 个文件）")
+                        resp.database.size_bytes?.let { appendLine("数据库：${mb(it)}") }
+                        appendLine("分类明细：")
+                        resp.breakdown.forEach { appendLine("  · ${it.category}: ${mb(it.bytes)}（${it.file_count} 个）") }
+                    }
+                },
+                { it.message ?: "无权限或加载失败" },
+            ),
+            healthHistory = history.await().fold(
+                { it.toString().take(1500) },
+                { it.message ?: "无权限或加载失败" },
+            ),
+        )
+    }
+
+    fun remediateNow() = viewModelScope.launch {
+        _state.value = _state.value.copy(remediating = true)
+        repository.remediate().fold(
+            onSuccess = { el ->
+                _state.value = _state.value.copy(remediating = false, message = "已尝试自动修复：$el".take(400))
+                refresh()
+            },
+            onFailure = {
+                _state.value = _state.value.copy(remediating = false, message = it.message ?: "修复失败")
+            },
+        )
+    }
+
     fun clearMessage() { _state.value = _state.value.copy(message = null) }
 }

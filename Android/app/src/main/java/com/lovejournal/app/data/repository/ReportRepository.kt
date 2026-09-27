@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.repository
 
 import com.lovejournal.app.data.remote.api.LoveApiService
+import com.lovejournal.app.data.remote.dto.AnnualReportResponse
 import com.lovejournal.app.data.remote.dto.CottageMonthlyReportResponse
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,4 +30,7 @@ class ReportRepository @Inject constructor(
 ) {
     suspend fun monthly(year: Int, month: Int): Result<CottageMonthlyReportResponse> =
         runCatching { api.monthlyReport(year, month) }
+    /** 恋爱年报。 */
+    suspend fun annual(year: Int): Result<AnnualReportResponse> = runCatching { api.annualReport(year) }
+
 }

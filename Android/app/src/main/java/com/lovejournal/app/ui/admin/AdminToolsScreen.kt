@@ -33,7 +33,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,11 +54,19 @@ fun AdminToolsScreen(viewModel: AdminToolsViewModel = hiltViewModel()) {
         if (state.loading) CircularProgressIndicator()
         AdminCard("系统健康", state.health)
         AdminCard("存储统计", state.storage)
+        AdminCard("存储用量明细", state.storageUsage)
+        AdminCard("健康检查历史（近 24 小时）", state.healthHistory)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = viewModel::remediateNow, enabled = !state.remediating, modifier = Modifier.weight(1f)) {
+                if (state.remediating) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("自动修复健康问题")
+            }
+        }
         AdminCard("备份计划与历史", state.backup)
         Button(onClick = viewModel::runBackup, modifier = Modifier.fillMaxWidth()) { Text("立即执行自动备份") }
         AdminCard("安全用户", state.users)
         AdminCard("审计日志", state.audit)
         OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth()) { Text("刷新") }
+        LaunchedEffect(Unit) { viewModel.loadMore() }
         }
     }
 }

@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.repository
 
 import com.lovejournal.app.data.remote.api.LoveApiService
+import com.lovejournal.app.data.remote.dto.StorageUsageResponse
 import kotlinx.serialization.json.JsonElement
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,4 +31,15 @@ class AdminRepository @Inject constructor(private val api: LoveApiService) {
     suspend fun storage(): Result<JsonElement> = runCatching { api.storageStats() }
     suspend fun backupInfo(): Result<Pair<JsonElement, JsonElement>> = runCatching { api.exportSchedule() to api.exportHistory() }
     suspend fun runBackup(): Result<JsonElement> = runCatching { api.runAutoExport() }
+
+    /** 存储用量明细（对齐网页端管理 · 存储页）。 */
+    suspend fun storageUsage(): Result<StorageUsageResponse> = runCatching { api.storageUsage() }
+
+    /** 系统健康检查历史。 */
+    suspend fun healthHistory(hours: Int = 24, limit: Int = 50): Result<JsonElement> =
+        runCatching { api.healthHistory(hours, limit) }
+
+    /** 一键自动修复健康问题。 */
+    suspend fun remediate(): Result<JsonElement> = runCatching { api.healthRemediate() }
 }
+

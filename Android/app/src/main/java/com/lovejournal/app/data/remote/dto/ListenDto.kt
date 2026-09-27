@@ -102,6 +102,84 @@ data class LocalTracksResponse(
     val items: List<SongMeta> = emptyList(),
 )
 
+// ---- 我的音乐库（收藏歌曲 + 自建歌单，对齐网页端「我喜欢」/「我的歌单」）----
+
+@Serializable
+data class LikedTrackItem(
+    @SerialName("song_id") val songId: String = "",
+    val name: String = "",
+    val artists: List<String> = emptyList(),
+    val album: String? = null,
+    @SerialName("duration_ms") val durationMs: Long? = null,
+    @SerialName("cover_url") val coverUrl: String? = null,
+    @SerialName("liked_at") val likedAt: String = "",
+)
+
+@Serializable
+data class LikedTracksResponse(
+    val items: List<LikedTrackItem> = emptyList(),
+    val total: Int = 0,
+)
+
+@Serializable
+data class LikedStatusResponse(
+    @SerialName("song_ids") val songIds: List<String> = emptyList(),
+    val total: Int = 0,
+)
+
+@Serializable
+data class LikedToggleRequest(
+    @SerialName("song_id") val songId: String,
+    val name: String,
+    val artists: List<String> = emptyList(),
+    val album: String? = null,
+    @SerialName("duration_ms") val durationMs: Long? = null,
+    @SerialName("cover_url") val coverUrl: String? = null,
+)
+
+@Serializable
+data class LikedToggleResponse(
+    val liked: Boolean = false,
+    val total: Int = 0,
+)
+
+@Serializable
+data class MyPlaylistCreateRequest(
+    val name: String,
+    val description: String? = null,
+    @SerialName("cover_url") val coverUrl: String? = null,
+)
+
+@Serializable
+data class MyPlaylistUpdateRequest(
+    val name: String? = null,
+    val description: String? = null,
+    @SerialName("cover_url") val coverUrl: String? = null,
+)
+
+@Serializable
+data class MyPlaylistTrackAddRequest(
+    @SerialName("song_id") val songId: String,
+    val name: String,
+    val artists: List<String> = emptyList(),
+    val album: String? = null,
+    @SerialName("duration_ms") val durationMs: Long? = null,
+    @SerialName("cover_url") val coverUrl: String? = null,
+)
+
+@Serializable
+data class MyPlaylistDetail(
+    val pid: String = "",
+    val name: String = "",
+    val description: String? = null,
+    @SerialName("cover_url") val coverUrl: String? = null,
+    @SerialName("created_by_uid") val createdByUid: String = "",
+    @SerialName("track_count") val trackCount: Int = 0,
+    @SerialName("created_at") val createdAt: String = "",
+    @SerialName("updated_at") val updatedAt: String = "",
+    val tracks: List<SongMeta> = emptyList(),
+)
+
 @Serializable
 data class SongUrlResponse(
     @SerialName("song_id") val songId: String = "",

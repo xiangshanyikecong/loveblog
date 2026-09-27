@@ -38,6 +38,12 @@ data class ChatSendRequest(
     // server stores the message as a future one and releases it at the
     // given time. Null means "send immediately".
     val visible_at: String? = null,
+    // E2EE 信封：is_encrypted=true 时 content 仅为占位（web 端置 null），
+    // 真实正文在 ciphertext 里，需要用共享口令派生的密钥解密。
+    val is_encrypted: Boolean = false,
+    val iv: String? = null,
+    val ciphertext: String? = null,
+    val algo: String? = null,
 )
 
 @Serializable
@@ -69,6 +75,11 @@ data class ChatMessageResponse(
     val read_at: String? = null,
     val visible_at: String? = null,
     val created_at: String = "",
+    // E2EE envelope（is_encrypted=true 时 content 为 null，需要本地解密）。
+    val is_encrypted: Boolean = false,
+    val iv: String? = null,
+    val ciphertext: String? = null,
+    val algo: String? = null,
 )
 
 @Serializable
@@ -115,4 +126,64 @@ data class PokeRequest(
     val last_message: ChatMessageResponse? = null,
     val pinned_quote: ChatMessageResponse? = null,
     val keywords: List<ChatKeywordItem> = emptyList(),
+)
+
+@Serializable data class ChatSearchResponse(
+    val query: String = "",
+    val items: List<ChatMessageResponse> = emptyList(),
+)
+
+// ---- E2EE 聊天密钥托管（服务端只存公开 KDF 参数与 verifier，无密钥）----
+
+@Serializable
+data class ChatKeyMetaResponse(
+    val initialized: Boolean = false,
+    val salt: String? = null,
+    val kdf: String? = null,
+    val kdf_hash: String? = null,
+    val iterations: Int? = null,
+    val algo: String? = null,
+    // 供本地校验口令正确性的 verifier（不含密钥）。
+    val verifier_iv: String? = null,
+    val verifier_cipher: String? = null,
+    val needs_re_encrypt: Boolean = false,
+)
+
+@Serializable
+data class ChatKeySetupRequest(
+    val salt: String,
+    val kdf: String = "PBKDF2",
+    val kdf_hash: String = "SHA-256",
+    val iterations: Int = 210_000,
+    val algo: String = "AES-GCM",
+    val verifier_iv: String,
+    val verifier_cipher: String,
+    val verifier_hash: String,
+)
+
+@Serializable
+data class ChatKeyVerifyRequest(
+    val proof_iv: String,
+    val proof_cipher: String,
+)
+
+/**
+ * 更换口令载荷：服务端 `ChatKeyRekeyRequest` 继承 setup 模型并额外要求
+ * new_salt / new_verifier_* 四个字段（web 端把新 meta 同时填进两处）。
+ * 只发 setup 形状的 body 会 422。
+ */
+@Serializable
+data class ChatKeyRekeyRequest(
+    val salt: String,
+    val kdf: String = "PBKDF2",
+    val kdf_hash: String = "SHA-256",
+    val iterations: Int = 210_000,
+    val algo: String = "AES-GCM",
+    val verifier_iv: String,
+    val verifier_cipher: String,
+    val verifier_hash: String,
+    val new_salt: String,
+    val new_verifier_iv: String,
+    val new_verifier_cipher: String,
+    val new_verifier_hash: String,
 )

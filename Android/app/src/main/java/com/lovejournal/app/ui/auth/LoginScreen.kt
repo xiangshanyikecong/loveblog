@@ -71,6 +71,14 @@ fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showBootstrapDialog by remember { mutableStateOf(false) }
+    var showRecoveryDialog by remember { mutableStateOf(false) }
+    val recoveryState by viewModel.recoveryState.collectAsStateWithLifecycle()
+    LaunchedEffect(recoveryState.success) {
+        if (recoveryState.success) {
+            showRecoveryDialog = false
+            viewModel.resetRecoveryState()
+        }
+    }
 
     // 站点初始化状态懒加载检查（结果按地址缓存），仅在未初始化时展示引导入口。
     LaunchedEffect(server) { viewModel.checkBootstrapStatus(server) }
@@ -98,6 +106,11 @@ fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
                     state.connectionOk?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
                     state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     Button(onClick = { viewModel.login(server, username, password) }, enabled = !state.loading && !state.testingConnection && username.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) { if (state.loading) CircularProgressIndicator(strokeWidth = 2.dp) else Text("登录") }
+                    TextButton(
+                        onClick = { showRecoveryDialog = true },
+                        enabled = !state.loading,
+                        modifier = Modifier.align(Alignment.End),
+                    ) { Text("忘记密码？") }
                     if (state.showBootstrapEntry) {
                         Text(
                             "这是全新的站点？初始化后即可创建第一个账号",
@@ -112,6 +125,18 @@ fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
                 }
             }
         }
+    }
+
+    if (showRecoveryDialog) {
+        PasswordRecoveryDialog(
+            serverAddress = server,
+            state = recoveryState,
+            onSubmit = { user, pass, token -> viewModel.recoverPassword(server, user, pass, token) },
+            onDismiss = {
+                showRecoveryDialog = false
+                viewModel.resetRecoveryState()
+            },
+        )
     }
 
     if (showBootstrapDialog) {
@@ -174,5 +199,56 @@ private fun BootstrapDialog(
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !state.submitting) { Text("取消") }
         },
+    )
+}
+
+/**
+ * 忘记密码自助找回：与网页端一致，凭部署时设定的恢复令牌
+ * （BOOTSTRAP_SETUP_TOKEN）重置指定账号的密码。成功后该账号全部
+ * 会话失效，用新密码重新登录即可。
+ */
+@Composable
+private fun PasswordRecoveryDialog(
+    serverAddress: String,
+    state: RecoveryUiState,
+    onSubmit: (String, String, String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var username by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var token by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { if (!state.submitting) onDismiss() },
+        title = { Text("找回密码") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "需要服务器部署时设定的恢复令牌（BOOTSTRAP_SETUP_TOKEN）。重置后该账号在所有设备上的登录都会失效。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(username, { username = it }, label = { Text("用户名") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(newPassword, { newPassword = it }, label = { Text("新密码") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(confirmPassword, { confirmPassword = it }, label = { Text("确认新密码") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(token, { token = it }, label = { Text("恢复令牌") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                if (state.error != null) {
+                    Text(state.error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                if (serverAddress.isBlank()) {
+                    Text("请先填写服务器地址", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSubmit(username, newPassword, token) },
+                enabled = !state.submitting && username.isNotBlank() && newPassword.isNotBlank() && token.isNotBlank(),
+            ) {
+                if (state.submitting) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("重置密码")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !state.submitting) { Text("取消") } },
     )
 }

@@ -43,10 +43,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.EnhancedEncryption
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
@@ -79,9 +83,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -109,6 +117,20 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
         }
     }
     if (state.toolsOpen) ChatToolsDialog(state, viewModel::closeTools, viewModel::clearPin)
+    var showSearch by remember { mutableStateOf(false) }
+    var showE2eeDialog by remember { mutableStateOf(false) }
+    // 打开对话框前刷新一次密钥状态，避免初始化状态过期导致误判为「未启用」。
+    if (showE2eeDialog) viewModel.refreshKeyState()
+    if (showE2eeDialog) {
+        E2eeDialog(
+            initialized = state.e2eeInitialized,
+            unlocked = state.e2eeUnlocked,
+            onDismiss = { showE2eeDialog = false },
+            onUnlock = { pass, cb -> viewModel.unlockE2ee(pass, cb) },
+            onSetup = { pass, cb -> viewModel.setupE2ee(pass, cb) },
+            onRekey = { pass, cb -> viewModel.rekeyE2ee(pass, cb) },
+        )
+    }
     if (showScheduleDialog) {
         ScheduleDialog(
             initial = scheduleAt ?: Instant.now().plusSeconds(60 * 60),
@@ -175,7 +197,39 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 connected = state.connected,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                // E2EE 状态指示：已启用未解锁 → 锁；已解锁 → 开锁；未启用也可
+                // 点进去首次设置共享口令。
+                IconButton(onClick = { showE2eeDialog = true }) {
+                    Icon(
+                        imageVector = when {
+                            !state.e2eeInitialized -> Icons.Outlined.EnhancedEncryption
+                            state.e2eeUnlocked -> Icons.Outlined.LockOpen
+                            else -> Icons.Outlined.Lock
+                        },
+                        contentDescription = "端到端加密",
+                        tint = when {
+                            !state.e2eeInitialized -> MaterialTheme.colorScheme.onSurfaceVariant
+                            state.e2eeUnlocked -> MaterialTheme.colorScheme.tertiary
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                    )
+                }
+                IconButton(onClick = { showSearch = !showSearch }) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "搜索聊天记录",
+                        tint = if (showSearch) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                    )
+                }
                 IconButton(onClick = viewModel::openTools) { Icon(Icons.Default.MoreVert, "聊天工具") }
+            }
+            if (showSearch) {
+                ChatSearchPanel(
+                    state = state,
+                    onQuery = viewModel::updateSearchQuery,
+                    mediaUrl = viewModel::mediaUrl,
+                    onImageClick = { previewUrl = it },
+                )
             }
             LazyColumn(
                 state = listState,
@@ -532,4 +586,187 @@ private fun formatScheduleLabel(instant: Instant): String {
     val ldt = instant.atZone(zone)
     val pattern = if (ldt.year == LocalDateTime.now(zone).year) "MM-dd HH:mm" else "yyyy-MM-dd HH:mm"
     return ldt.format(DateTimeFormatter.ofPattern(pattern))
+}
+
+// ---------------------------------------------------------------------------
+// 聊天记录搜索（对齐网页端 /cottage/chat 的搜索功能）
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun ChatSearchPanel(
+    state: ChatUiState,
+    onQuery: (String) -> Unit,
+    mediaUrl: (String?) -> String?,
+    onImageClick: (String) -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = onQuery,
+                placeholder = { Text("搜索悄悄话…", style = MaterialTheme.typography.bodySmall) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            when {
+                state.searching -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 8.dp),
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                        Text(
+                            " 搜索中…",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                state.searchResults != null -> {
+                    val results = state.searchResults
+                    if (results.isNullOrEmpty()) {
+                        Text(
+                            "没有找到相关消息",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.heightIn(max = 220.dp).padding(top = 8.dp),
+                        ) {
+                            items(results, key = { it.mid }) { msg ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { mediaUrl(msg.media_url)?.let(onImageClick) }
+                                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                                ) {
+                                    Text(
+                                        "${msg.sender_nickname} · ${msg.created_at.take(16).replace('T', ' ')}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        msg.content ?: if (msg.type == "image") "[图片]" else "[消息]",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 2,
+                                    )
+                                }
+                                HorizontalDivider(
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 端到端加密（E2EE）设置 / 解锁 / 更换口令
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun E2eeDialog(
+    initialized: Boolean,
+    unlocked: Boolean,
+    onDismiss: () -> Unit,
+    onUnlock: (String, (String?) -> Unit) -> Unit,
+    onSetup: (String, (String?) -> Unit) -> Unit,
+    onRekey: (String, (String?) -> Unit) -> Unit,
+) {
+    var passphrase by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    val isSetup = !initialized
+    val isRekey = initialized && unlocked
+
+    fun submit() {
+        if (busy) return
+        error = null
+        when {
+            passphrase.length < 6 -> error = "口令至少 6 位"
+            isSetup && passphrase != confirm -> error = "两次输入不一致"
+            else -> {
+                busy = true
+                val callback: (String?) -> Unit = { err ->
+                    busy = false
+                    if (err == null) onDismiss() else error = err
+                }
+                when {
+                    isSetup -> onSetup(passphrase, callback)
+                    isRekey -> onRekey(passphrase, callback)
+                    else -> onUnlock(passphrase, callback)
+                }
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!busy) onDismiss() },
+        title = { Text(if (isSetup) "开启加密聊天" else if (isRekey) "更换共享口令" else "解锁加密聊天") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    when {
+                        isSetup -> "设置一个只有你们俩知道的共享口令。之后发出的悄悄话将在本机加密，服务器也无法查看。对方需在网页端/手机端输入同一口令解锁。"
+                        isRekey -> "输入新口令（至少 6 位）。更换后双方都需要用新口令重新解锁。"
+                        else -> "输入共享口令以解密聊天记录。口令只在本机派生密钥，不会上传。"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = passphrase,
+                    onValueChange = { passphrase = it },
+                    label = { Text(if (isSetup || isRekey) "新口令" else "共享口令") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    enabled = !busy,
+                )
+                if (isSetup) {
+                    OutlinedTextField(
+                        value = confirm,
+                        onValueChange = { confirm = it },
+                        label = { Text("确认口令") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        enabled = !busy,
+                    )
+                }
+                if (error != null) {
+                    Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                if (unlocked) {
+                    Text(
+                        "✓ 当前已解锁",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = ::submit, enabled = !busy) {
+                if (busy) {
+                    CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(if (isSetup) "开启" else if (isRekey) "更换" else "解锁")
+                }
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("关闭") } },
+    )
 }

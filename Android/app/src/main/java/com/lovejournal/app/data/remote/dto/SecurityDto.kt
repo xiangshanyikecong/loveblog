@@ -35,3 +35,56 @@ data class ChangePasswordRequest(
 data class RevokeSessionsRequest(
     val confirm: Boolean = true,
 )
+
+// ---- 两步验证（TOTP，对齐网页端安全设置）----
+
+@Serializable
+data class TotpStatusResponse(
+    val enabled: Boolean = false,
+    val recovery_codes_remaining: Int = 0,
+)
+
+@Serializable
+data class TotpSetupResponse(
+    val secret: String,
+    val uri: String,
+)
+
+@Serializable
+data class TotpEnableRequest(val code: String)
+
+@Serializable
+data class TotpEnableResponse(
+    val enabled: Boolean = false,
+    val recovery_codes: List<String> = emptyList(),
+)
+
+@Serializable
+data class TotpDisableRequest(val code: String, val password: String)
+
+// ---- 登录设备管理 ----
+
+@Serializable
+data class LoginDeviceResponse(
+    val did: String,
+    val device_name: String = "",
+    val ip: String? = null,
+    val user_agent: String? = null,
+    val first_seen_at: String = "",
+    val last_login_at: String = "",
+)
+
+@Serializable
+data class DeviceRevokeResponse(
+    val revoked: Boolean = false,
+    val new_session_version: Int = 0,
+)
+
+@Serializable
+data class DevicesRevokeAllResponse(val revoked: Int = 0)
+
+@Serializable
+data class PasswordRecoveryRequest(
+    val username: String,
+    val new_password: String,
+)

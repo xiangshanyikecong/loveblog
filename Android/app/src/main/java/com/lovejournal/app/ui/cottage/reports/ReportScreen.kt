@@ -97,6 +97,7 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
             }
         }
 
+        AnnualReportSection(state)
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             val report = state.report
             when {
@@ -204,6 +205,69 @@ private fun HighlightCard(highlight: CottageReportHighlight) {
                 Text(highlight.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                 highlight.occurred_at?.let {
                     Text(formatDateTime(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 恋爱年报区块（对齐网页端年度报告）：在一起天数、年度统计、年度歌单 Top、
+ * 高光时刻摘要。点击年份箭头切换年 ReportViewModel.loadAnnual。
+ */
+@Composable
+private fun AnnualReportSection(state: ReportUiState) {
+    val annual = state.annual
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f))) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "${annual?.year ?: state.year} 年度报告",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (state.annualLoading) {
+                    CircularProgressIndicator(modifier = Modifier.height(16.dp).padding(0.dp), strokeWidth = 2.dp)
+                }
+            }
+            when {
+                annual == null -> Text(
+                    state.annualError ?: "暂无年报数据",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                else -> {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        StatCell("在一起天数", annual.days_together, Modifier.weight(1f))
+                        StatCell("文章", annual.stats.articles, Modifier.weight(1f))
+                        StatCell("照片", annual.stats.photos, Modifier.weight(1f))
+                        StatCell("报备", annual.stats.checkins, Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        StatCell("悄悄话", annual.stats.messages, Modifier.weight(1f))
+                        StatCell("听歌次数", annual.stats.songs_played, Modifier.weight(1f))
+                        StatCell("达成心愿", annual.stats.wishes_completed, Modifier.weight(1f))
+                        StatCell("时光胶囊", annual.stats.capsules_created, Modifier.weight(1f))
+                    }
+                    if (annual.top_songs.isNotEmpty()) {
+                        Text("年度歌曲 Top${minOf(3, annual.top_songs.size)}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        annual.top_songs.take(3).forEachIndexed { i, song ->
+                            Text(
+                                "${i + 1}. ${song.name} - ${song.artists.joinToString("/")}（${song.played_count} 次）",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    annual.highlights.take(3).forEach { Text("✨ \$it", style = MaterialTheme.typography.bodySmall) }
+                    Text(
+                        "${annual.stats.songs_minutes} 分钟的共同旋律 · ${annual.stats.capsules_created} 颗时光胶囊",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }

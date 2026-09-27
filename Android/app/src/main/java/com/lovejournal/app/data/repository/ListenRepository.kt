@@ -22,6 +22,14 @@ import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.ImportCookieRequest
 import com.lovejournal.app.data.remote.dto.ListenHistoryResponse
+import com.lovejournal.app.data.remote.dto.LikedStatusResponse
+import com.lovejournal.app.data.remote.dto.LikedToggleRequest
+import com.lovejournal.app.data.remote.dto.LikedToggleResponse
+import com.lovejournal.app.data.remote.dto.LikedTracksResponse
+import com.lovejournal.app.data.remote.dto.MyPlaylistCreateRequest
+import com.lovejournal.app.data.remote.dto.MyPlaylistDetail
+import com.lovejournal.app.data.remote.dto.MyPlaylistTrackAddRequest
+import com.lovejournal.app.data.remote.dto.MyPlaylistUpdateRequest
 import com.lovejournal.app.data.remote.dto.LocalTracksResponse
 import com.lovejournal.app.data.remote.dto.PlaylistTracksResponse
 import com.lovejournal.app.data.remote.dto.PlaylistsResponse
@@ -169,6 +177,92 @@ class ListenRepository @Inject constructor(
 
     suspend fun history(limit: Int = 50): Result<ListenHistoryResponse> =
         runCatching { api.listenHistory(limit) }
+
+    // ---- 我的音乐库（收藏歌曲 + 自建歌单，对齐网页端）----
+
+    suspend fun likedTracks(limit: Int = 100, offset: Int = 0): Result<LikedTracksResponse> =
+        runCatching { api.listenLikedTracks(limit, offset) }
+
+    suspend fun likedStatus(songIds: List<String>): Result<LikedStatusResponse> =
+        runCatching { api.listenLikedStatus(songIds.joinToString(",")) }
+
+    suspend fun toggleLiked(song: SongMeta): Result<LikedToggleResponse> = runCatching {
+        api.listenToggleLiked(
+            LikedToggleRequest(
+                songId = song.songId,
+                name = song.name,
+                artists = song.artists,
+                album = song.album,
+                durationMs = song.durationMs,
+                coverUrl = song.coverUrl,
+            ),
+        )
+    }
+
+    suspend fun removeLiked(songId: String): Result<Unit> = runCatching {
+        val response = api.listenRemoveLiked(songId)
+        if (!response.isSuccessful) error("取消收藏失败: HTTP ${response.code()}")
+        Unit
+    }
+
+    suspend fun myPlaylists(): Result<List<MyPlaylistDetail>> =
+        runCatching { api.listenMyPlaylists() }
+
+    suspend fun myPlaylist(pid: String): Result<MyPlaylistDetail> =
+        runCatching { api.listenMyPlaylist(pid) }
+
+    suspend fun createMyPlaylist(name: String, description: String? = null): Result<Unit> = runCatching {
+        val response = api.listenCreateMyPlaylist(MyPlaylistCreateRequest(name = name, description = description))
+        if (!response.isSuccessful) error("创建歌单失败: HTTP ${response.code()}")
+        Unit
+    }
+
+    suspend fun updateMyPlaylist(pid: String, name: String?, description: String? = null): Result<Unit> = runCatching {
+        val response = api.listenUpdateMyPlaylist(pid, MyPlaylistUpdateRequest(name = name, description = description))
+        if (!response.isSuccessful) error("更新歌单失败: HTTP ${response.code()}")
+        Unit
+    }
+
+    suspend fun deleteMyPlaylist(pid: String): Result<Unit> = runCatching {
+        val response = api.listenDeleteMyPlaylist(pid)
+        if (!response.isSuccessful) error("删除歌单失败: HTTP ${response.code()}")
+        Unit
+    }
+
+    suspend fun addTrackToMyPlaylist(pid: String, song: SongMeta): Result<Unit> = runCatching {
+        val response = api.listenAddTrackToMyPlaylist(
+            pid,
+            MyPlaylistTrackAddRequest(
+                songId = song.songId,
+                name = song.name,
+                artists = song.artists,
+                album = song.album,
+                durationMs = song.durationMs,
+                coverUrl = song.coverUrl,
+            ),
+        )
+        if (!response.isSuccessful) {
+            error(
+                when (response.code()) {
+                    409 -> "这首歌已经在歌单里了"
+                    else -> "添加歌曲失败: HTTP ${response.code()}"
+                },
+            )
+        }
+        Unit
+    }
+
+    suspend fun removeTrackFromMyPlaylist(pid: String, songId: String): Result<Unit> = runCatching {
+        val response = api.listenRemoveTrackFromMyPlaylist(pid, songId)
+        if (!response.isSuccessful) error("移除歌曲失败: HTTP ${response.code()}")
+        Unit
+    }
+
+    suspend fun playMyPlaylist(pid: String): Result<Unit> = runCatching {
+        val response = api.listenPlayMyPlaylist(pid)
+        if (!response.isSuccessful) error("播放歌单失败: HTTP ${response.code()}")
+        Unit
+    }
 
     suspend fun localTracks(): Result<LocalTracksResponse> = runCatching { api.listenLocalTracks() }
 

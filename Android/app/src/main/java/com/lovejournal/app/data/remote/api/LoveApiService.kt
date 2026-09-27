@@ -38,6 +38,11 @@ import com.lovejournal.app.data.remote.dto.ChatHistoryResponse
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
 import com.lovejournal.app.data.remote.dto.ChatSendRequest
 import com.lovejournal.app.data.remote.dto.ChatStateResponse
+import com.lovejournal.app.data.remote.dto.ChatSearchResponse
+import com.lovejournal.app.data.remote.dto.ChatKeyMetaResponse
+import com.lovejournal.app.data.remote.dto.ChatKeySetupRequest
+import com.lovejournal.app.data.remote.dto.ChatKeyVerifyRequest
+import com.lovejournal.app.data.remote.dto.ChatKeyRekeyRequest
 import com.lovejournal.app.data.remote.dto.ChatFavoriteListResponse
 import com.lovejournal.app.data.remote.dto.ChatFutureMessagesResponse
 import com.lovejournal.app.data.remote.dto.ChatKeywordsResponse
@@ -59,6 +64,14 @@ import com.lovejournal.app.data.remote.dto.GameMatchListResponse
 import com.lovejournal.app.data.remote.dto.GameStateResponse
 import com.lovejournal.app.data.remote.dto.ImportCookieRequest
 import com.lovejournal.app.data.remote.dto.ListenHistoryResponse
+import com.lovejournal.app.data.remote.dto.LikedTracksResponse
+import com.lovejournal.app.data.remote.dto.LikedStatusResponse
+import com.lovejournal.app.data.remote.dto.LikedToggleRequest
+import com.lovejournal.app.data.remote.dto.LikedToggleResponse
+import com.lovejournal.app.data.remote.dto.MyPlaylistCreateRequest
+import com.lovejournal.app.data.remote.dto.MyPlaylistUpdateRequest
+import com.lovejournal.app.data.remote.dto.MyPlaylistTrackAddRequest
+import com.lovejournal.app.data.remote.dto.MyPlaylistDetail
 import com.lovejournal.app.data.remote.dto.LocalTracksResponse
 import com.lovejournal.app.data.remote.dto.PlaylistTracksResponse
 import com.lovejournal.app.data.remote.dto.PlaylistsResponse
@@ -119,6 +132,18 @@ import com.lovejournal.app.data.remote.dto.NotificationListResponse
 import com.lovejournal.app.data.remote.dto.NotificationReadAllResponse
 import com.lovejournal.app.data.remote.dto.NotificationResponse
 import com.lovejournal.app.data.remote.dto.SearchResponse
+import com.lovejournal.app.data.remote.dto.TotpStatusResponse
+import com.lovejournal.app.data.remote.dto.TotpSetupResponse
+import com.lovejournal.app.data.remote.dto.TotpEnableRequest
+import com.lovejournal.app.data.remote.dto.TotpEnableResponse
+import com.lovejournal.app.data.remote.dto.TotpDisableRequest
+import com.lovejournal.app.data.remote.dto.LoginDeviceResponse
+import com.lovejournal.app.data.remote.dto.DeviceRevokeResponse
+import com.lovejournal.app.data.remote.dto.DevicesRevokeAllResponse
+import com.lovejournal.app.data.remote.dto.PasswordRecoveryRequest
+import com.lovejournal.app.data.remote.dto.OnThisDayResponse
+import com.lovejournal.app.data.remote.dto.AnnualReportResponse
+import com.lovejournal.app.data.remote.dto.StorageUsageResponse
 import com.lovejournal.app.data.remote.dto.RecycleBinResponse
 import com.lovejournal.app.data.remote.dto.ChangePasswordRequest
 import com.lovejournal.app.data.remote.dto.RevokeSessionsRequest
@@ -262,7 +287,7 @@ interface LoveApiService {
     ): MoodResponse
 
     @GET("cottage/mood/today")
-    suspend fun moodToday(@Query("mood_date") moodDate: String? = null): MoodTodayResponse
+    suspend fun moodToday(@Query("on") on: String? = null): MoodTodayResponse
 
     @GET("cottage/mood/calendar")
     suspend fun moodCalendar(
@@ -334,6 +359,13 @@ interface LoveApiService {
         @Query("limit") limit: Int = 30,
     ): ChatHistoryResponse
 
+    // 关键词搜索（仅明文消息；E2EE 消息需客户端本地搜索）。
+    @GET("cottage/chat/search")
+    suspend fun searchChatMessages(
+        @Query("q") q: String,
+        @Query("limit") limit: Int = 20,
+    ): ChatSearchResponse
+
     @POST("cottage/chat/messages")
     suspend fun sendChatMessage(
         @Header("Idempotency-Key") idempotencyKey: String? = null,
@@ -378,6 +410,21 @@ interface LoveApiService {
 
     @GET("cottage/chat/state")
     suspend fun chatState(): ChatStateResponse
+
+    // ---- 小屋·聊天 端到端加密密钥托管 ----
+
+    @GET("cottage/chat/keys/meta")
+    suspend fun chatKeyMeta(): ChatKeyMetaResponse
+
+    @POST("cottage/chat/keys/setup")
+    suspend fun setupChatKey(@Body body: ChatKeySetupRequest): ChatKeyMetaResponse
+
+    // 服务端返回 204 No Content：必须用 Response<Unit>，声明实体类会在空响应体上崩溃。
+    @POST("cottage/chat/keys/verify")
+    suspend fun verifyChatKey(@Body body: ChatKeyVerifyRequest): Response<Unit>
+
+    @POST("cottage/chat/keys/rekey")
+    suspend fun rekeyChatKey(@Body body: ChatKeyRekeyRequest): ChatKeyMetaResponse
 
     @POST("cottage/poke")
     suspend fun poke(@Body body: PokeRequest): Response<Unit>
@@ -541,6 +588,50 @@ interface LoveApiService {
 
     @GET("cottage/listen/history")
     suspend fun listenHistory(@Query("limit") limit: Int = 50): ListenHistoryResponse
+
+    // ---- 小屋·一起听 我的音乐库（收藏 + 自建歌单）----
+
+    @GET("cottage/listen/liked")
+    suspend fun listenLikedTracks(
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
+    ): LikedTracksResponse
+
+    @GET("cottage/listen/liked/status")
+    suspend fun listenLikedStatus(@Query("song_ids") songIds: String): LikedStatusResponse
+
+    @PUT("cottage/listen/liked/toggle")
+    suspend fun listenToggleLiked(@Body body: LikedToggleRequest): LikedToggleResponse
+
+    @DELETE("cottage/listen/liked/{songId}")
+    suspend fun listenRemoveLiked(@Path("songId") songId: String): Response<Unit>
+
+    @GET("cottage/listen/playlists/mine")
+    suspend fun listenMyPlaylists(): List<MyPlaylistDetail>
+
+    @POST("cottage/listen/playlists/mine")
+    suspend fun listenCreateMyPlaylist(@Body body: MyPlaylistCreateRequest): Response<Unit>
+
+    @GET("cottage/listen/playlists/mine/{pid}")
+    suspend fun listenMyPlaylist(@Path("pid") pid: String): MyPlaylistDetail
+
+    @PUT("cottage/listen/playlists/mine/{pid}")
+    suspend fun listenUpdateMyPlaylist(@Path("pid") pid: String, @Body body: MyPlaylistUpdateRequest): Response<Unit>
+
+    @DELETE("cottage/listen/playlists/mine/{pid}")
+    suspend fun listenDeleteMyPlaylist(@Path("pid") pid: String): Response<Unit>
+
+    @POST("cottage/listen/playlists/mine/{pid}/tracks")
+    suspend fun listenAddTrackToMyPlaylist(
+        @Path("pid") pid: String,
+        @Body body: MyPlaylistTrackAddRequest,
+    ): Response<Unit>
+
+    @DELETE("cottage/listen/playlists/mine/{pid}/tracks/{songId}")
+    suspend fun listenRemoveTrackFromMyPlaylist(@Path("pid") pid: String, @Path("songId") songId: String): Response<Unit>
+
+    @POST("cottage/listen/playlists/mine/{pid}/play")
+    suspend fun listenPlayMyPlaylist(@Path("pid") pid: String): Response<Unit>
 
     @GET("cottage/listen/auth/qr-key")
     suspend fun listenQrKey(): QrKeyResponse
@@ -711,9 +802,6 @@ interface LoveApiService {
         @Query("sort") sort: String = "desc",
     ): TimelineListResponse
 
-    @POST("timeline")
-    suspend fun createMoment(@Body body: MomentCreateRequest): MomentResponse
-
     @DELETE("timeline/{mid}")
     suspend fun deleteMoment(@Path("mid") mid: String): Response<Unit>
 
@@ -822,13 +910,44 @@ interface LoveApiService {
     @PUT("auth/visitors/{uid}") suspend fun updateVisitor(@Path("uid") uid: String, @Body body: JsonObject): JsonElement
     @POST("auth/visitors/{uid}/toggle-ban") suspend fun toggleVisitorBan(@Path("uid") uid: String): JsonElement
 
+    // ---- 账号安全扩展（TOTP / 登录设备 / 密码找回，对齐网页端）----
+
+    @GET("auth/totp/status") suspend fun totpStatus(): TotpStatusResponse
+    @POST("auth/totp/setup") suspend fun totpSetup(): TotpSetupResponse
+    @POST("auth/totp/enable") suspend fun totpEnable(@Body body: TotpEnableRequest): TotpEnableResponse
+    @POST("auth/totp/disable") suspend fun totpDisable(@Body body: TotpDisableRequest): TotpStatusResponse
+
+    @GET("auth/devices") suspend fun loginDevices(): List<LoginDeviceResponse>
+    @DELETE("auth/devices/{did}") suspend fun revokeLoginDevice(@Path("did") did: String): DeviceRevokeResponse
+    @DELETE("auth/devices") suspend fun revokeAllLoginDevices(): DevicesRevokeAllResponse
+
+    @POST("auth/password-recovery") suspend fun passwordRecovery(
+        @Header("X-Bootstrap-Token") bootstrapToken: String,
+        @Body body: PasswordRecoveryRequest,
+    ): Response<Unit>
+
+    // ---- 回忆 / 年报 / 存储用量 ----
+
+    @GET("memories/on-this-day") suspend fun onThisDay(@Query("date") date: String? = null): OnThisDayResponse
+    @GET("reports/annual") suspend fun annualReport(@Query("year") year: Int): AnnualReportResponse
+    @GET("storage/usage") suspend fun storageUsage(): StorageUsageResponse
+
+    // 隐私中心（对齐网页端 PrivacyCenterView）：服务端保存了哪些数据、
+    // 加密状态、导出策略与最近的隐私相关审计事件。
+    @GET("privacy/summary") suspend fun privacySummary(): JsonObject
+    @POST("privacy/recovery-events") suspend fun recordPrivacyRecoveryEvent(@Body body: JsonObject): JsonObject
+    @GET("health/system/history") suspend fun healthHistory(
+        @Query("hours") hours: Int = 24,
+        @Query("limit") limit: Int = 50,
+    ): JsonElement
+    @POST("health/system/remediate") suspend fun healthRemediate(): JsonElement
+
     @GET("security/users") suspend fun securityUsers(): JsonElement
     @POST("security/users/{uid}/reset-password") suspend fun adminResetPassword(@Path("uid") uid: String, @Body body: JsonObject): Response<Unit>
     @POST("security/users/{uid}/revoke-sessions") suspend fun adminRevokeSessions(@Path("uid") uid: String): Response<Unit>
     @POST("security/users/{uid}/unlock") suspend fun adminUnlock(@Path("uid") uid: String): Response<Unit>
 
     @GET("push/fcm-tokens") suspend fun fcmTokens(): JsonElement
-    @DELETE("push/fcm-tokens") suspend fun removeFcmToken(@Body body: FcmTokenDeleteRequest): Response<Unit>
     @GET("push/public-key") suspend fun pushPublicKey(): JsonElement
     @GET("push/subscriptions") suspend fun pushSubscriptions(): JsonElement
     @PUT("push/subscriptions") suspend fun updatePushSubscription(@Body body: JsonObject): JsonElement
@@ -840,8 +959,9 @@ interface LoveApiService {
     @POST("export/auto/run") suspend fun runAutoExport(): JsonElement
     @GET("export/history") suspend fun exportHistory(): JsonElement
     @GET("export/all") suspend fun exportAll(): ResponseBody
-    @POST("export/restore/preflight") suspend fun restorePreflight(@Body body: RequestBody): JsonElement
-    @POST("export/restore") suspend fun restoreExport(@Body body: RequestBody): JsonElement
+    // 备份恢复是 multipart 上传（服务端 UploadFile = File(...)），用 JSON 裸体会 422。
+    @Multipart @POST("export/restore/preflight") suspend fun restorePreflight(@Part file: MultipartBody.Part): JsonElement
+    @Multipart @POST("export/restore") suspend fun restoreExport(@Part file: MultipartBody.Part): JsonElement
 
     @POST("uploads/avatars/from-qq") suspend fun uploadAvatarFromQq(@Body body: JsonObject): UploadResponse
     @Multipart @POST("uploads/timeline") suspend fun uploadTimeline(@Part file: MultipartBody.Part): UploadResponse
@@ -849,5 +969,6 @@ interface LoveApiService {
     @Multipart @POST("uploads/videos") suspend fun uploadVideo(@Part file: MultipartBody.Part): UploadResponse
     @Multipart @POST("uploads/capsule") suspend fun uploadCapsule(@Part file: MultipartBody.Part): UploadResponse
     @GET("uploads/storage-stats") suspend fun storageStats(): JsonElement
-    @POST("uploads/cleanup") suspend fun cleanupUploads(@Body body: JsonObject): JsonElement
+    // 服务端只接受 dry_run 查询参数（无请求体），发 JSON 体会被忽略导致永远 dry-run。
+    @POST("uploads/cleanup") suspend fun cleanupUploads(@Query("dry_run") dryRun: Boolean = true): JsonElement
 }

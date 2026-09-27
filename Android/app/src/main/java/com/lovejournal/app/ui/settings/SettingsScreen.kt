@@ -85,6 +85,7 @@ private fun parseDate(iso: String?): LocalDate? {
 fun SettingsScreen(
     onLogout: () -> Unit,
     onOpenSecurity: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
     onOpenRecycleBin: () -> Unit = {},
     onOpenAdminTools: () -> Unit = {},
     onOpenLicenses: () -> Unit = {},
@@ -110,7 +111,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     state.error?.let { Text("加载失败：$it", color = MaterialTheme.colorScheme.error) }
-                    AccountEntryButtons(onOpenSecurity, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses)
+                    AccountEntryButtons(onOpenSecurity, onOpenPrivacy, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses)
                     LogoutButton(onLogout)
                 }
             else -> {
@@ -137,6 +138,7 @@ fun SettingsScreen(
                     onInvite = { username, password, nickname -> viewModel.invitePartner(username, password, nickname) },
                     onClearInviteSuccess = { viewModel.clearInviteSuccess() },
                     onOpenSecurity = onOpenSecurity,
+                    onOpenPrivacy = onOpenPrivacy,
                     onOpenRecycleBin = onOpenRecycleBin,
                     onOpenAdminTools = onOpenAdminTools,
                     onOpenLicenses = onOpenLicenses,
@@ -163,6 +165,7 @@ private fun SettingsForm(
     onInvite: (username: String, password: String, nickname: String) -> Unit,
     onClearInviteSuccess: () -> Unit,
     onOpenSecurity: () -> Unit,
+    onOpenPrivacy: () -> Unit,
     onOpenRecycleBin: () -> Unit,
     onOpenAdminTools: () -> Unit,
     onOpenLicenses: () -> Unit,
@@ -231,7 +234,7 @@ private fun SettingsForm(
             onInvite = onInvite,
         )
         LoveSectionTitle("账户与维护")
-        LoveSoftCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { AccountEntryButtons(onOpenSecurity, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses) } }
+        LoveSoftCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { AccountEntryButtons(onOpenSecurity, onOpenPrivacy, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses) } }
         LogoutButton(onLogout)
     }
 
@@ -375,12 +378,16 @@ private fun InvitePartnerCard(
 @Composable
 private fun AccountEntryButtons(
     onOpenSecurity: () -> Unit,
+    onOpenPrivacy: () -> Unit,
     onOpenRecycleBin: () -> Unit,
     onOpenAdminTools: () -> Unit,
     onOpenLicenses: () -> Unit,
 ) {
     OutlinedButton(onClick = onOpenSecurity, modifier = Modifier.fillMaxWidth()) {
-        Text("账号安全（修改密码 / 登录设备）")
+        Text("账号安全（修改密码 / 两步验证 / 登录设备）")
+    }
+    OutlinedButton(onClick = onOpenPrivacy, modifier = Modifier.fillMaxWidth()) {
+        Text("隐私中心（数据与加密状态）")
     }
     OutlinedButton(onClick = onOpenRecycleBin, modifier = Modifier.fillMaxWidth()) {
         Text("回收站")

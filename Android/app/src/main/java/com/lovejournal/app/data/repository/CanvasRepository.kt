@@ -31,6 +31,7 @@ import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import retrofit2.Response
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -53,7 +54,11 @@ class CanvasRepository @Inject constructor(
         runCatching { api.uploadTimeline(file) }
 
     suspend fun createMoment(content: String, mediaUrls: List<String>): Result<Unit> =
-        runCatching { api.createMoment(MomentCreateRequest(content = content, media_urls = mediaUrls)); Unit }
+        runCatching {
+            // 幂等键：网络重试时避免服务端产生重复动态。
+            api.createMoment(idempotencyKey = UUID.randomUUID().toString(), body = MomentCreateRequest(content = content, media_urls = mediaUrls))
+            Unit
+        }
 
     // ---- Canvas 作品集 (gallery) ----
 

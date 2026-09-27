@@ -47,6 +47,10 @@ object NetworkModule {
         ignoreUnknownKeys = true
         coerceInputValues = true
         explicitNulls = false
+        // 序列化默认值字段：服务端多个请求模型把 confirm/iterations 等声明为必填，
+        // 若省略默认值字段会直接触发 422（如 vault setup 的 iterations、
+        // revoke-sessions 的 confirm），因此必须显式发送。
+        encodeDefaults = true
     }
 
     @Provides

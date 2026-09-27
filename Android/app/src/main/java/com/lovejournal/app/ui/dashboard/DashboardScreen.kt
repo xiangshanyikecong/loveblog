@@ -68,6 +68,7 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
     val events by viewModel.events.collectAsStateWithLifecycle()
     val clock by viewModel.clock.collectAsStateWithLifecycle()
     val offline by viewModel.offline.collectAsStateWithLifecycle()
+    val onThisDay by viewModel.onThisDay.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -88,6 +89,11 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
         ) {
             item { WelcomeHeader() }
             item { LoveClockCard(clock) }
+            onThisDay?.let { od ->
+                if (od.years.isNotEmpty()) {
+                    item { OnThisDayCard(od) }
+                }
+            }
             if (offline) item { OfflineBanner() }
             item { LoveSectionTitle("近期纪念日", "把值得期待的日子放在心上") }
             if (events.isEmpty()) {
@@ -247,6 +253,43 @@ private fun EventRow(event: EventEntity) {
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * 那年今日卡片：展示历史上同一天创建的文章 / 相册 / 听过的歌，
+ * 数据来自 /v1/memories/on-this-day（与网页端「那年今日」一致）。
+ */
+@Composable
+private fun OnThisDayCard(data: com.lovejournal.app.data.remote.dto.OnThisDayResponse) {
+    LoveSoftCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("🕰️", style = MaterialTheme.typography.titleMedium)
+                Text("那年今日", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            data.years.forEach { year ->
+                Text(
+                    "${year.year} 年的今天",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                year.articles.take(2).forEach { article ->
+                    Text("· 文章：${article.title}", style = MaterialTheme.typography.bodySmall)
+                }
+                year.albums.take(2).forEach { album ->
+                    Text("· 相册：${album.title}", style = MaterialTheme.typography.bodySmall)
+                }
+                year.songs.take(2).forEach { song ->
+                    Text("· 一起听过：${song.name}", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Text(
+                "${data.totals.articles} 篇文章 · ${data.totals.albums} 张相册 · ${data.totals.songs} 首歌",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

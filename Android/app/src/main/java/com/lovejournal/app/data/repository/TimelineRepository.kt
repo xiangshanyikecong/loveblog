@@ -46,7 +46,8 @@ class TimelineRepository @Inject constructor(
         mediaUrls: List<String> = emptyList(),
     ): Result<Unit> = runCatching {
         api.createMoment(
-            MomentCreateRequest(content = content, media_urls = mediaUrls, visibility = visibility),
+            idempotencyKey = null,
+            body = MomentCreateRequest(content = content, media_urls = mediaUrls, visibility = visibility),
         )
         Unit
     }

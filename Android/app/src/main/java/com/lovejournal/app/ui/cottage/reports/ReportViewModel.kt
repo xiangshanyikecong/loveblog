@@ -19,6 +19,7 @@ package com.lovejournal.app.ui.cottage.reports
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.data.remote.dto.AnnualReportResponse
 import com.lovejournal.app.data.remote.dto.CottageMonthlyReportResponse
 import com.lovejournal.app.data.repository.ReportRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,6 +37,10 @@ data class ReportUiState(
     val month: Int,
     val report: CottageMonthlyReportResponse? = null,
     val error: String? = null,
+    // ---- 恋爱年报 ----
+    val annualLoading: Boolean = false,
+    val annual: AnnualReportResponse? = null,
+    val annualError: String? = null,
 )
 
 @HiltViewModel
@@ -49,6 +54,18 @@ class ReportViewModel @Inject constructor(
 
     init {
         refresh()
+        loadAnnual(today.year)
+    }
+
+    /** 恋爱年报（对齐网页端 /reports/annual）。 */
+    fun loadAnnual(year: Int = _state.value.year) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(annualLoading = true, annualError = null)
+            repository.annual(year).fold(
+                onSuccess = { _state.value = _state.value.copy(annualLoading = false, annual = it) },
+                onFailure = { _state.value = _state.value.copy(annualLoading = false, annualError = it.message ?: "年报加载失败") },
+            )
+        }
     }
 
     fun refresh() {

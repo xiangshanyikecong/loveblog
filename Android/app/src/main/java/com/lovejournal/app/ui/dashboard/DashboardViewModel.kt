@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.local.entity.EventEntity
 import com.lovejournal.app.data.remote.dto.LoveClock
+import com.lovejournal.app.data.remote.dto.OnThisDayResponse
 import com.lovejournal.app.data.repository.DashboardRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,8 +46,19 @@ class DashboardViewModel @Inject constructor(
     private val _offline = MutableStateFlow(false)
     val offline: StateFlow<Boolean> = _offline.asStateFlow()
 
+    /** 那年今日：历史同月的文章 / 相册 / 歌曲（可能为空 = 无回忆）。 */
+    private val _onThisDay = MutableStateFlow<OnThisDayResponse?>(null)
+    val onThisDay: StateFlow<OnThisDayResponse?> = _onThisDay.asStateFlow()
+
     init {
         refresh()
+        loadOnThisDay()
+    }
+
+    private fun loadOnThisDay() {
+        viewModelScope.launch {
+            repository.onThisDay().onSuccess { _onThisDay.value = it }
+        }
     }
 
     fun refresh() {

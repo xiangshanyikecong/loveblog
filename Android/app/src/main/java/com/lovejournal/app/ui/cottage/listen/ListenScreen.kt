@@ -44,6 +44,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -57,6 +60,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -99,6 +103,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.lovejournal.app.data.remote.dto.ListenHistoryItem
+import com.lovejournal.app.data.remote.dto.MyPlaylistDetail
 import com.lovejournal.app.data.remote.dto.LyricLine
 import com.lovejournal.app.data.remote.dto.PlaylistItem
 import com.lovejournal.app.data.remote.dto.RoomCurrent
@@ -106,6 +111,22 @@ import com.lovejournal.app.data.remote.dto.SongMeta
 import com.lovejournal.app.data.remote.dto.ToplistItem
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.theme.LoveMint
+
+/**
+ * 「我的音乐库」动作集合。用一个数据类打包穿过多层 Composable，
+ * 避免在 ListenScreen → Content → Body → LibraryContent 之间层层转发参数。
+ */
+data class MineCallbacks(
+    val loadLiked: () -> Unit,
+    val toggleLiked: (SongMeta) -> Unit,
+    val loadPlaylists: () -> Unit,
+    val openPlaylist: (String) -> Unit,
+    val closePlaylist: () -> Unit,
+    val createPlaylist: (String) -> Unit,
+    val deletePlaylist: (String) -> Unit,
+    val removeTrack: (String, String) -> Unit,
+    val playPlaylist: (String) -> Unit,
+)
 
 private fun formatMs(ms: Long): String {
     if (ms <= 0) return "0:00"
@@ -150,6 +171,17 @@ fun ListenScreen(viewModel: ListenViewModel = hiltViewModel()) {
         onDeleteLocal = viewModel::deleteLocalTrack,
         onRemoveQueue = viewModel::removeQueue,
         onClearQueue = viewModel::clearQueue,
+        mine = MineCallbacks(
+            loadLiked = viewModel::loadLiked,
+            toggleLiked = viewModel::toggleLiked,
+            loadPlaylists = viewModel::loadMyPlaylists,
+            openPlaylist = viewModel::openMyPlaylist,
+            closePlaylist = viewModel::closeMyPlaylist,
+            createPlaylist = viewModel::createMyPlaylist,
+            deletePlaylist = viewModel::deleteMyPlaylist,
+            removeTrack = viewModel::removeTrackFromMyPlaylist,
+            playPlaylist = viewModel::playMyPlaylist,
+        ),
     )
 }
 
@@ -176,6 +208,7 @@ private fun ListenScreenContent(
     onDeleteLocal: (SongMeta) -> Unit,
     onRemoveQueue: (Int) -> Unit,
     onClearQueue: () -> Unit,
+    mine: MineCallbacks,
 ) {
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LovePage(modifier = Modifier.padding(padding)) {
@@ -204,6 +237,7 @@ private fun ListenScreenContent(
                 onDeleteLocal = onDeleteLocal,
                 onRemoveQueue = onRemoveQueue,
                 onClearQueue = onClearQueue,
+                mine = mine,
             )
         }
         }
@@ -233,6 +267,7 @@ private fun ListenBody(
     onDeleteLocal: (SongMeta) -> Unit,
     onRemoveQueue: (Int) -> Unit,
     onClearQueue: () -> Unit,
+    mine: MineCallbacks,
 ) {
     var selectedTab by remember { mutableStateOf(ListenLibraryTab.Search) }
     Column(
@@ -276,6 +311,7 @@ private fun ListenBody(
             onDeleteLocal = onDeleteLocal,
             onRemoveQueue = onRemoveQueue,
             onClearQueue = onClearQueue,
+            mine = mine,
             modifier = Modifier.weight(1f),
         )
     }
@@ -563,6 +599,7 @@ private fun LibraryContent(
     onDeleteLocal: (SongMeta) -> Unit,
     onRemoveQueue: (Int) -> Unit,
     onClearQueue: () -> Unit,
+    mine: MineCallbacks,
     modifier: Modifier = Modifier,
 ) {
     when (tab) {
@@ -572,6 +609,7 @@ private fun LibraryContent(
         ListenLibraryTab.Charts -> ChartsTab(state, onLoadDiscover, onLoadToplistTracks, onPlaySong, onQueueSong, modifier)
         ListenLibraryTab.History -> HistoryTab(state, onLoadHistory, onPlaySong, onQueueSong, modifier)
         ListenLibraryTab.Local -> LocalTab(state, onLoadLocal, onUploadLocal, onDeleteLocal, onPlaySong, onQueueSong, modifier)
+        ListenLibraryTab.Mine -> MineTab(state, mine, onPlaySong, onQueueSong, modifier)
         ListenLibraryTab.Queue -> QueueTab(state, onRemoveQueue, onClearQueue, onPlaySong, modifier)
     }
 }
@@ -831,6 +869,172 @@ private fun QueueTab(
     }
 }
 
+/**
+ * 「我的音乐库」：收藏的歌曲（我喜欢）+ 自建歌单。对齐网页端一起听的
+ * liked / playlists/mine 能力：红心收藏、建歌单、把歌单投入共同队列播放。
+ */
+@Composable
+private fun MineTab(
+    state: ListenUiState,
+    mine: MineCallbacks,
+    onPlaySong: (SongMeta) -> Unit,
+    onQueueSong: (SongMeta) -> Unit,
+    modifier: Modifier,
+) {
+    var showCreateDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        mine.loadLiked()
+        mine.loadPlaylists()
+    }
+
+    Column(modifier = modifier.padding(top = 12.dp)) {
+        val selected = state.selectedMyPlaylist
+        if (selected == null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    "我的歌单",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { showCreateDialog = true }) { Text("新建") }
+            }
+            when {
+                state.myPlaylistsLoading -> Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                }
+                state.myPlaylists.isEmpty() -> Text(
+                    "还没有自建歌单，点右上角「新建」创建一个吧",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                else -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    state.myPlaylists.forEach { playlist ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { mine.openPlaylist(playlist.pid) }
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                        ) {
+                            Icon(
+                                Icons.Filled.QueueMusic,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Column(Modifier.weight(1f).padding(start = 8.dp)) {
+                                Text(playlist.name, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    "${playlist.trackCount} 首",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            IconButton(onClick = { mine.playPlaylist(playlist.pid) }) {
+                                Icon(Icons.Filled.PlayArrow, contentDescription = "投入共同队列", tint = MaterialTheme.colorScheme.primary)
+                            }
+                            IconButton(onClick = { mine.deletePlaylist(playlist.pid) }) {
+                                Icon(Icons.Outlined.Delete, contentDescription = "删除歌单", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            SectionHeader(title = "我喜欢的音乐", loading = state.likedLoading, onRefresh = mine.loadLiked)
+            SongList(
+                songs = state.likedTracks,
+                emptyMessage = "还没有收藏的歌曲，搜索页点红心收藏",
+                onPlaySong = onPlaySong,
+                onQueueSong = onQueueSong,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = mine.closePlaylist) { Text("← 返回") }
+                Text(
+                    selected.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { mine.playPlaylist(selected.pid) }) { Text("共同播放") }
+            }
+            if (selected.tracks.isEmpty()) {
+                Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        "歌单是空的，去搜索页把喜欢的歌加进来",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                ) {
+                    items(selected.tracks, key = { it.songId }) { song ->
+                        SongRow(
+                            song = song,
+                            onPlay = { onPlaySong(song) },
+                            onQueue = { onQueueSong(song) },
+                            trailing = {
+                                IconButton(onClick = { mine.removeTrack(selected.pid, song.songId) }) {
+                                    Icon(
+                                        Icons.Outlined.RemoveCircleOutline,
+                                        contentDescription = "从歌单移除",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+    if (showCreateDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreateDialog = false },
+            onConfirm = { name ->
+                mine.createPlaylist(name)
+                showCreateDialog = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun CreatePlaylistDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var name by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("新建歌单") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("歌单名") },
+                singleLine = true,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { if (name.isNotBlank()) onConfirm(name.trim()) }, enabled = name.isNotBlank()) {
+                Text("创建")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+    )
+}
+
 @Composable
 private fun SongList(
     songs: List<SongMeta>,
@@ -1062,6 +1266,7 @@ private val ListenLibraryTab.icon: ImageVector
         ListenLibraryTab.Charts -> Icons.Filled.TrendingUp
         ListenLibraryTab.History -> Icons.Filled.History
         ListenLibraryTab.Local -> Icons.Filled.FileUpload
+        ListenLibraryTab.Mine -> Icons.Filled.FavoriteBorder
         ListenLibraryTab.Queue -> Icons.Filled.QueueMusic
     }
 

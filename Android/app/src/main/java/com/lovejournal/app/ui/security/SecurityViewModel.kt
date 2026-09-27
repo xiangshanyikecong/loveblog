@@ -20,6 +20,7 @@ package com.lovejournal.app.ui.security
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.repository.SecurityRepository
+import com.lovejournal.app.data.remote.dto.LoginDeviceResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,18 @@ data class SecurityUiState(
     val submitting: Boolean = false,
     // 操作成功后，当前会话已失效，需重新登录；用于禁用按钮并提示。
     val done: Boolean = false,
+    // ---- 两步验证（TOTP）----
+    val totpEnabled: Boolean = false,
+    val totpRecoveryRemaining: Int = 0,
+    val totpLoading: Boolean = false,
+    /** setup 阶段返回的 secret + otpauth URI，展示给验证器 App 录入。 */
+    val totpSecret: String? = null,
+    val totpUri: String? = null,
+    /** 开启成功的一次性恢复码（仅展示一次）。 */
+    val totpRecoveryCodes: List<String> = emptyList(),
+    // ---- 登录设备 ----
+    val devices: List<LoginDeviceResponse> = emptyList(),
+    val devicesLoading: Boolean = false,
 )
 
 @HiltViewModel
@@ -89,6 +102,101 @@ class SecurityViewModel @Inject constructor(
                     _state.value = _state.value.copy(submitting = false)
                     _message.value = it.message ?: "操作失败"
                 },
+            )
+        }
+    }
+
+    // ---- 两步验证（TOTP）----
+
+    fun loadTotpStatus() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(totpLoading = true)
+            repository.totpStatus().fold(
+                onSuccess = { resp ->
+                    _state.value = _state.value.copy(
+                        totpEnabled = resp.enabled,
+                        totpRecoveryRemaining = resp.recovery_codes_remaining,
+                        totpLoading = false,
+                    )
+                },
+                onFailure = {
+                    _state.value = _state.value.copy(totpLoading = false)
+                    _message.value = it.message ?: "无法获取两步验证状态"
+                },
+            )
+        }
+    }
+
+    fun startTotpSetup() {
+        viewModelScope.launch {
+            repository.totpSetup().fold(
+                onSuccess = { resp ->
+                    _state.value = _state.value.copy(totpSecret = resp.secret, totpUri = resp.uri)
+                },
+                onFailure = { _message.value = it.message ?: "无法开始绑定" },
+            )
+        }
+    }
+
+    fun confirmTotpEnable(code: String) {
+        if (code.isBlank()) return
+        viewModelScope.launch {
+            repository.totpEnable(code).fold(
+                onSuccess = { resp ->
+                    _state.value = _state.value.copy(
+                        totpEnabled = true,
+                        totpSecret = null,
+                        totpUri = null,
+                        totpRecoveryCodes = resp.recovery_codes,
+                    )
+                    _message.value = "两步验证已开启，请妥善保存恢复码"
+                },
+                onFailure = { _message.value = it.message ?: "开启失败" },
+            )
+        }
+    }
+
+    fun confirmTotpDisable(code: String, password: String) {
+        viewModelScope.launch {
+            repository.totpDisable(code, password).fold(
+                onSuccess = {
+                    _state.value = _state.value.copy(totpEnabled = false, totpRecoveryRemaining = 0)
+                    _message.value = "两步验证已关闭"
+                },
+                onFailure = { _message.value = it.message ?: "关闭失败" },
+            )
+        }
+    }
+
+    fun dismissRecoveryCodes() {
+        _state.value = _state.value.copy(totpRecoveryCodes = emptyList())
+    }
+
+    // ---- 登录设备 ----
+
+    fun loadDevices() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(devicesLoading = true)
+            repository.loginDevices().fold(
+                onSuccess = { devices ->
+                    _state.value = _state.value.copy(devices = devices, devicesLoading = false)
+                },
+                onFailure = {
+                    _state.value = _state.value.copy(devicesLoading = false)
+                    _message.value = it.message ?: "无法获取登录设备"
+                },
+            )
+        }
+    }
+
+    fun revokeDevice(did: String) {
+        viewModelScope.launch {
+            repository.revokeDevice(did).fold(
+                onSuccess = {
+                    _state.value = _state.value.copy(devices = _state.value.devices.filterNot { it.did == did })
+                    _message.value = "该设备已登出"
+                },
+                onFailure = { _message.value = it.message ?: "撤销失败" },
             )
         }
     }

@@ -59,6 +59,17 @@ data class ChatUiState(
     val memoryCard: ChatMemoryCardResponse? = null,
     /** 图片消息正在上传/发送中，用于附件按钮的转圈与防连点。 */
     val uploadingImage: Boolean = false,
+    // ---- 聊天搜索 ----
+    val searchQuery: String = "",
+    val searchResults: List<ChatMessageResponse>? = null,
+    val searching: Boolean = false,
+    // ---- 端到端加密（E2EE）----
+    /** 服务器已设置共享口令。 */
+    val e2eeInitialized: Boolean = false,
+    /** 本机已解锁（派生密钥在内存中）。 */
+    val e2eeUnlocked: Boolean = false,
+    /** 是否曾尝试取密钥状态（避免设置完成前的误报）。 */
+    val e2eeReady: Boolean = false,
 )
 
 @HiltViewModel
@@ -88,8 +99,60 @@ class ChatViewModel @Inject constructor(
         }
         observeConnection()
         observeEvents()
+        observeKeySession()
         bootstrap()
+        refreshKeyState()
         repository.connect()
+    }
+
+    private fun observeKeySession() {
+        viewModelScope.launch {
+            repository.keySession.collect { session ->
+                _state.update { it.copy(e2eeUnlocked = session != null) }
+                // 解锁/上锁都影响已渲染的密文，重新解密一遍。
+                emitMessages()
+            }
+        }
+    }
+
+    /** 拉取服务端 E2EE 密钥状态（是否已设置共享口令）。 */
+    fun refreshKeyState() {
+        viewModelScope.launch {
+            repository.keyMeta().onSuccess { meta ->
+                _state.update {
+                    it.copy(e2eeInitialized = meta.initialized, e2eeReady = true)
+                }
+            }
+            // 失败时不置 e2eeReady：状态未知（可能离线/出错）就放行明文发送，
+            // 若恰逢对方已启用加密，入队的明文会被服务端永久拒绝。
+        }
+    }
+
+    fun unlockE2ee(passphrase: String, onDone: (String?) -> Unit) {
+        viewModelScope.launch {
+            repository.unlockKey(passphrase.toCharArray())
+                .onSuccess { onDone(null) }
+                .onFailure { onDone(it.message ?: "解锁失败") }
+        }
+    }
+
+    fun setupE2ee(passphrase: String, onDone: (String?) -> Unit) {
+        viewModelScope.launch {
+            repository.setupKey(passphrase.toCharArray())
+                .onSuccess {
+                    _state.update { it.copy(e2eeInitialized = true) }
+                    onDone(null)
+                }
+                .onFailure { onDone(it.message ?: "设置失败") }
+        }
+    }
+
+    fun rekeyE2ee(passphrase: String, onDone: (String?) -> Unit) {
+        viewModelScope.launch {
+            repository.rekeyKey(passphrase.toCharArray())
+                .onSuccess { onDone(null) }
+                .onFailure { onDone(it.message ?: "更换口令失败") }
+        }
     }
 
     private fun bootstrap() {
@@ -154,7 +217,47 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun emitMessages() {
-        _state.update { it.copy(messages = messageMap.values.sortedBy { m -> m.id }) }
+        val decrypted = repository.decryptAll(messageMap.values.sortedBy { m -> m.id })
+        _state.update { it.copy(messages = decrypted) }
+    }
+
+    // ---- 聊天搜索 ----
+
+    private var searchJob: Job? = null
+
+    fun updateSearchQuery(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+        searchJob?.cancel()
+        if (query.isBlank()) {
+            _state.update { it.copy(searchResults = null, searching = false) }
+            return
+        }
+        searchJob = viewModelScope.launch {
+            delay(250) // 输入防抖
+            _state.update { it.copy(searching = true) }
+            repository.search(query.trim()).onSuccess { resp ->
+                val merged = LinkedHashMap<String, ChatMessageResponse>()
+                resp.items.forEach { merged[it.mid] = it }
+                // E2EE 消息服务端搜不到：与 web 一致，补充本地已加载消息的
+                // 明文匹配（对本地副本先解密再匹配）。
+                if (_state.value.e2eeInitialized) {
+                    val needle = query.trim().lowercase()
+                    repository.decryptAll(messageMap.values.sortedByDescending { it.id })
+                        .filter { it.type == "text" && !it.is_recalled }
+                        .filter { (it.content ?: "").lowercase().contains(needle) }
+                        .take(20)
+                        .forEach { merged.getOrPut(it.mid) { it } }
+                }
+                val results = repository.decryptAll(merged.values.sortedByDescending { it.id })
+                if (_state.value.searchQuery.trim() == query.trim()) {
+                    _state.update { it.copy(searchResults = results, searching = false) }
+                }
+            }.onFailure {
+                if (_state.value.searchQuery.trim() == query.trim()) {
+                    _state.update { it.copy(searchResults = emptyList(), searching = false) }
+                }
+            }
+        }
     }
 
     fun send(content: String, visibleAt: java.time.Instant? = null) {
@@ -164,11 +267,37 @@ class ChatViewModel @Inject constructor(
             repository.sendTyping(false)
         }
         viewModelScope.launch {
+            // E2EE 状态未知时（冷启动正在拉取密钥状态）禁止发送：否则明文
+            // 消息可能在对方刚启用加密后入队，重放会被服务端永久拒绝，
+            // 在同步队列里反复失败。状态就绪后：已启用 → 必须本地加密；
+            // 已启用但未解锁 → 拦截提示。
+            if (!_state.value.e2eeReady) {
+                _toast.tryEmit("正在同步加密设置，请稍候再发送")
+                refreshKeyState() // 每次发送尝试都顺带重试拉取加密状态
+                return@launch
+            }
+            val envelope = if (_state.value.e2eeInitialized && _state.value.e2eeUnlocked) {
+                repository.encryptText(content.trim())
+            } else {
+                null
+            }
+            if (_state.value.e2eeInitialized && envelope == null) {
+                _toast.tryEmit("聊天已加密，请先输入共享口令解锁")
+                return@launch
+            }
             // Offline-aware: a network failure parks the payload in the
             // SyncQueue for the next worker tick instead of dropping the
             // user-typed message on the floor.
-            repository.sendOfflineAware(content.trim(), visibleAt = visibleAt)
-                .onSuccess { messageMap[it.mid] = it; emitMessages() }
+            repository.sendOfflineAware(content.trim(), visibleAt = visibleAt, envelope = envelope)
+                .onSuccess { msg ->
+                    // 加密消息服务端回包 content=null：像 web 一样用本地明文回填。
+                    messageMap[msg.mid] = if (msg.is_encrypted && msg.content == null) {
+                        msg.copy(content = content.trim())
+                    } else {
+                        msg
+                    }
+                    emitMessages()
+                }
                 .onFailure { _toast.tryEmit(it.message ?: "已存入待发送队列") }
         }
     }
@@ -183,6 +312,12 @@ class ChatViewModel @Inject constructor(
      */
     fun sendImage(uri: Uri, caption: String) {
         if (_state.value.uploadingImage) return // 上传中，忽略重复点击
+        // E2EE 图片链路尚未实现：加密已启用时放行明文图片会绕过端到端加密，
+        // 与网页端行为不一致，因此直接拦截提示。
+        if (_state.value.e2eeInitialized) {
+            _toast.tryEmit("加密聊天暂不支持图片消息")
+            return
+        }
         if (!connectivity.isOnline()) {
             _toast.tryEmit("当前离线，图片消息需要联网后发送")
             return

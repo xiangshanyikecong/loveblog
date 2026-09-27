@@ -22,6 +22,7 @@ import com.lovejournal.app.data.local.entity.EventEntity
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.DashboardResponse
+import com.lovejournal.app.data.remote.dto.OnThisDayResponse
 import com.lovejournal.app.widget.LoveDaysWidget
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +38,9 @@ class DashboardRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     fun observeEvents(): Flow<List<EventEntity>> = eventDao.observeAll()
+
+    /** 那年今日（对齐网页端 memories/on-this-day）。 */
+    suspend fun onThisDay(): Result<OnThisDayResponse> = runCatching { api.onThisDay() }
 
     suspend fun refresh(): Result<DashboardResponse> = runCatching {
         val data = api.dashboard()
