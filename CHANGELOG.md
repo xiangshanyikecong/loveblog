@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4-beta.5] - 2026-09-27
+
+### Added
+
+- Android 端到端加密聊天（与 Web 端 `chatCrypto.js` 完全互通）：新增
+  `ChatCrypto`（PBKDF2-HMAC-SHA256 210,000 次派生 + AES-GCM-256，标准 base64，
+  `java.util.Base64` 纯 JVM 可测），支持设置共享口令、解锁（本地 verifier 校验 +
+  服务端 proof 上报）、更换口令（按 `ChatKeyRekeyRequest` 契约同时提交 setup 字段
+  与 `new_*` 四字段）；消息发送以 `is_encrypted + iv + ciphertext + algo` 信封
+  加密、正文置 null，离线队列入队前完成加密、重放无需再次解锁
+- Android 聊天记录搜索：服务端明文搜索 + E2EE 消息本地解密补搜（与 Web 策略一致），
+  输入防抖；聊天页新增 E2EE 状态锁形图标（未启用 / 已上锁 / 已解锁三态）
+- Android「一起听」我的音乐库：收藏歌曲（红心收藏/取消，状态与 `liked/status` 对齐）、
+  自建歌单（创建 / 删除 / 详情 / 移除歌曲，409 重复添加友好提示）、
+  「共同播放」把歌单整单投入共同队列（走服务端 `playlists/mine/{pid}/play`）
+- Android 账号安全对齐 Web 端：TOTP 两步验证（生成密钥 + 动态码启用 + 恢复码展示 +
+  关闭）、登录设备列表与单独登出、忘记密码自助找回（登录页入口，凭
+  `BOOTSTRAP_SETUP_TOKEN`）
+- Android 新增「那年今日」首页卡片（`memories/on-this-day`）、恋爱月报页年度报告
+  区块（`reports/annual`）、隐私中心页（`privacy/summary`：数据可见范围 / 加密状态 /
+  导出策略 / 最近隐私事件）、后台存储用量明细与健康检查历史 + 一键自动修复
+- 单元测试：新增 `ChatCryptoTest`，含与 Web 端互操作的双向已知答案向量（可解密
+  Web 算法输出；固定 IV 下加密结果逐字节等于 Web 算法输出）与 verifier_hash 校验锁定
+
+### Fixed
+
+- Android 大量 422 类接口错误的系统性根因修复：
+  - `Json` 未开启 `encodeDefaults`，所有带默认值的请求字段不会上线：
+    vault setup/rekey 缺必填 `iterations`、revoke-sessions 的 `confirm`
+    恒为 false 等，现已显式发送（已核对服务端 `extra="forbid"` 模型无新增风险）
+  - `export/restore(/preflight)` 原 JSON 裸体发送，服务端要求 multipart，
+    必然 422 → 改 `@Multipart` 上传
+  - `uploads/cleanup` 原 JSON body 被服务端忽略、永远 dry-run → 改 `dry_run`
+    查询参数
+  - `cottage/mood/today` 查询参数 `mood_date` 服务端不识别（正确参数为 `on`），
+    选定日期静默失效 → 已更正
+  - `cottage/chat/keys/verify` 服务端返回 204 无响应体，声明实体类会反序列化
+    崩溃 → 改 `Response<Unit>`
+  - `chat/keys/rekey` 漏掉 `new_salt` / `new_verifier_*` 四个必填字段 → 422
+  - 移除重复的 `createMoment` / `removeFcmToken` 声明；画板分享动态补幂等键
+- Android E2EE 一致性加固：共享口令启用后拦截明文图片发送（服务端在密钥启用后
+  拒绝一切明文消息，含媒体）；加密状态未就绪（冷启动拉取中 / 拉取失败）时阻止
+  发送并顺带重试拉取，避免明文入队后被服务端永久拒绝、在同步队列无限重试；
+  E2EE 对话框打开前先刷新密钥状态，避免把「已启用」误判为「未启用」
+- 三端契约比对工具（`.zcode/compare_api.py`，不入库）：解析器修复 `@SerialName`
+  注解字段被跳过的盲区后全量复核，请求/响应字段、查询参数、204 空响应、
+  multipart 上传、枚举值大小写全部与 OpenAPI 契约对齐
+
+### Changed
+
+- Android 性能：Coil 图片加载显式配置内存缓存（20%）与 256MB 磁盘缓存上限、
+  120ms 淡入，减少长列表大图重复解码掉帧；E2EE 明文按 `mid@iv` 缓存，
+  每条密文仅解密一次，避免历史刷新时随消息数线性增长的重复 AES 运算
+- 服务端实测：按 Android 真实载荷（含 `encodeDefaults` 全字段语义）对全部新增
+  链路做 68 项集成验证全部通过（TOTP 真实动态码全流程 / E2EE 收发与幂等重放 /
+  音乐库 CRUD / 设备撤销 / multipart 恢复预检 / 既有端点回归）
+
 ## [1.0.4-beta.4] - 2026-09-26
 
 ### Fixed
