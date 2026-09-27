@@ -44,6 +44,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -70,6 +71,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,15 +85,19 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import com.lovejournal.app.data.remote.dto.WatchBookmark
 import com.lovejournal.app.data.remote.dto.WatchSourceResponse
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.theme.LoveMint
+import com.lovejournal.app.ui.theme.LovePeach
 
 @OptIn(UnstableApi::class)
 @Composable
 fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    var addOpen by remember { mutableStateOf(false) }
+    var addOpen by rememberSaveable { mutableStateOf(false) }
     var bookmarkOpen by remember { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<WatchSourceResponse?>(null) }
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.uploadVideo(it) }
     }
@@ -142,7 +148,7 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
                 ) {
                     Button(onClick = { viewModel.togglePlay() }) {
                         Icon(
-                            if (ui.isPlaying) Icons.Filled.Close else Icons.Filled.PlayArrow,
+                            if (ui.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = if (ui.isPlaying) "暂停" else "播放",
                             modifier = Modifier.size(18.dp),
                         )
@@ -216,7 +222,7 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
                             deleting = ui.deletingWsid == src.wsid,
                             isCurrent = src.wsid == ui.currentWsid,
                             onPlay = { viewModel.loadSource(src) },
-                            onDelete = { viewModel.deleteSource(src) },
+                            onDelete = { pendingDelete = src },
                         )
                     }
                 }
@@ -228,6 +234,18 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
         AddSourceDialog(
             onDismiss = { addOpen = false },
             onAdd = { title, url -> viewModel.addSource(title, url); addOpen = false },
+        )
+    }
+
+    pendingDelete?.let { src ->
+        LoveConfirmDialog(
+            title = "删除片源「${src.title}」？",
+            message = "删除后双方的片库里都会移除这部片子，观看进度和书签也无法找回。",
+            onConfirm = {
+                viewModel.deleteSource(src)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 
@@ -245,10 +263,11 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
 
 @Composable
 private fun StatusDot(connected: Boolean, partnerOnline: Boolean) {
+    // 与聊天屏的在线点保持同一套主题色（薄荷绿=在线），不绕过 MaterialTheme。
     val color = when {
-        !connected -> Color(0xFF9CA3AF)
-        partnerOnline -> Color(0xFF22C55E)
-        else -> Color(0xFFF59E0B)
+        !connected -> MaterialTheme.colorScheme.outline
+        partnerOnline -> LoveMint
+        else -> LovePeach
     }
     Box(
         Modifier

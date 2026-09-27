@@ -18,6 +18,7 @@
 package com.lovejournal.app.ui.timeline
 
 import android.net.Uri
+import android.os.Parcelable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -84,6 +85,10 @@ import coil.request.ImageRequest
 import com.lovejournal.app.BuildConfig
 import com.lovejournal.app.data.remote.dto.CommentNodeResponse
 import com.lovejournal.app.data.remote.dto.MomentResponse
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.lovejournal.app.ui.components.LoveConfirmDialog
+import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.util.formatDateTime
 
 private val VISIBILITY_OPTIONS = listOf("PartnersOnly" to "仅彼此", "Public" to "公开")
@@ -120,8 +125,9 @@ private fun yearOf(iso: String): Int? = iso.take(4).toIntOrNull()
 fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
     var previewUrl by remember { mutableStateOf<String?>(null) }
+    var pendingDelete by remember { mutableStateOf<MomentResponse?>(null) }
 
     Box(
         modifier = Modifier
@@ -151,7 +157,8 @@ fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
             when (state.selectedTab) {
                 TimelineTab.MOMENTS -> MomentsContent(
                     state = state,
-                    onDelete = viewModel::delete,
+                    onRetry = viewModel::refresh,
+                    onDelete = { pendingDelete = it },
                     onComment = { mid, content, parentCid -> viewModel.comment(mid, content, parentCid) },
                     onPreviewImage = { previewUrl = it },
                 )
@@ -188,6 +195,18 @@ fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
     previewUrl?.let { url ->
         FullScreenImageDialog(url = url, onDismiss = { previewUrl = null })
     }
+
+    pendingDelete?.let { moment ->
+        LoveConfirmDialog(
+            title = "删除这条动态？",
+            message = "动态的文字与图片、以及下面的评论都会一起删除，无法恢复。",
+            onConfirm = {
+                viewModel.delete(moment)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
+        )
+    }
 }
 
 /** 「动态 / 回忆」分段切换。 */
@@ -216,6 +235,7 @@ private fun TimelineModeSwitch(selected: TimelineTab, onSelect: (TimelineTab) ->
 @Composable
 private fun MomentsContent(
     state: TimelineUiState,
+    onRetry: () -> Unit,
     onDelete: (MomentResponse) -> Unit,
     onComment: (mid: String, content: String, parentCid: String?) -> Unit,
     onPreviewImage: (String) -> Unit,
@@ -225,11 +245,15 @@ private fun MomentsContent(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         state.error != null && state.items.isEmpty() ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = onRetry) { Text("重试") }
+                }
             }
         state.items.isEmpty() ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("还没有动态，点右下角发一条吧")
+                LoveEmptyState("✍️", "还没有动态", "把此刻的心情记录下来吧")
             }
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -596,6 +620,12 @@ private fun FullScreenImageDialog(url: String, onDismiss: () -> Unit) {
     }
 }
 
+/** Uri 列表的 Saver：转屏/进程回收后已选图片不丢（Uri 为 Parcelable）。 */
+private val UriListSaver = listSaver<List<Uri>, Parcelable>(
+    save = { list -> list },
+    restore = { list -> list.map { it as Uri } },
+)
+
 /** 发动态对话框：文字 + 可见范围 + 图片多选（最多 9 张，发布时经上传链路换取 URL）。 */
 @Composable
 private fun MomentEditorDialog(
@@ -603,9 +633,9 @@ private fun MomentEditorDialog(
     onDismiss: () -> Unit,
     onSave: (content: String, visibility: String, imageUris: List<Uri>) -> Unit,
 ) {
-    var content by remember { mutableStateOf("") }
-    var visibility by remember { mutableStateOf("PartnersOnly") }
-    var selectedUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var content by rememberSaveable { mutableStateOf("") }
+    var visibility by rememberSaveable { mutableStateOf("PartnersOnly") }
+    var selectedUris by rememberSaveable(stateSaver = UriListSaver) { mutableStateOf(emptyList<Uri>()) }
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MAX_MEDIA_PER_MOMENT),
     ) { uris -> selectedUris = uris.take(MAX_MEDIA_PER_MOMENT) }

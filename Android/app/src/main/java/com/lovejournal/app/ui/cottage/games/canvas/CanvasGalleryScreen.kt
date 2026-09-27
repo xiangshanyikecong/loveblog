@@ -53,7 +53,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +77,7 @@ fun CanvasGalleryScreen(
 ) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    var pendingDelete by remember { mutableStateOf<CanvasArtworkResponse?>(null) }
     LaunchedEffect(Unit) {
         viewModel.toast.collect { snackbar.showSnackbar(it) }
     }
@@ -120,12 +124,24 @@ fun CanvasGalleryScreen(
                             art = art,
                             deleting = ui.deletingCaid == art.caid,
                             onClick = { onOpenArtwork(art.caid) },
-                            onDelete = { viewModel.delete(art) },
+                            onDelete = { pendingDelete = art },
                         )
                     }
                 }
             }
         }
+    }
+
+    pendingDelete?.let { art ->
+        LoveConfirmDialog(
+            title = "删除这幅作品？",
+            message = "「${art.title}」将从作品集中删除，无法恢复。",
+            onConfirm = {
+                viewModel.delete(art)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
+        )
     }
 }
 

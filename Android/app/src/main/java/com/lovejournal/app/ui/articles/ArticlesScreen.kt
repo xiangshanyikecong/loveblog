@@ -55,6 +55,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,6 +65,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSectionTitle
@@ -74,7 +77,7 @@ import com.lovejournal.app.ui.theme.LoveRose
 @Composable
 fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var editing by remember { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     BackHandler(state.detail != null) { viewModel.closeDetail() }
 
@@ -136,7 +139,12 @@ fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(article.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                 article.excerpt?.let {
-                                    Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                                    Text(
+                                        it,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                 }
                                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     Surface(
@@ -186,6 +194,7 @@ private fun ArticleDetailContent(
     modifier: Modifier = Modifier,
 ) {
     var comment by remember(detail.aid) { mutableStateOf("") }
+    var pendingRollback by remember { mutableStateOf<Int?>(null) }
     LazyColumn(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -203,7 +212,7 @@ private fun ArticleDetailContent(
         if (versions.isNotEmpty()) item {
             Card { Column(Modifier.padding(12.dp)) {
                 Text("历史版本", fontWeight = FontWeight.Bold)
-                versions.forEach { version -> TextButton(onClick = { onRollback(version) }) { Text("回滚到版本 $version") } }
+                versions.forEach { version -> TextButton(onClick = { pendingRollback = version }) { Text("回滚到版本 $version") } }
             } }
         }
         item { Text("评论", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
@@ -214,6 +223,20 @@ private fun ArticleDetailContent(
                 Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text("发送") }
             }
         }
+    }
+
+    pendingRollback?.let { version ->
+        LoveConfirmDialog(
+            title = "回滚到版本 $version？",
+            message = "当前内容会被版本 $version 覆盖（当前版本仍保留在历史里）。",
+            confirmText = "回滚",
+            destructive = false,
+            onConfirm = {
+                onRollback(version)
+                pendingRollback = null
+            },
+            onDismiss = { pendingRollback = null },
+        )
     }
 }
 

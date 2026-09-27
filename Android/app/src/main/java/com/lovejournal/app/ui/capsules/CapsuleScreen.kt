@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,16 +52,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.CapsuleResponse
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LoveEmptyState
+import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSoftCard
 import com.lovejournal.app.util.formatDateTime
 import java.time.Instant
@@ -72,19 +75,12 @@ import java.time.ZoneOffset
 fun CapsuleScreen(viewModel: CapsuleViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<CapsuleResponse?>(null) }
 
+    LovePage(contentPadding = PaddingValues(0.dp)) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
-                    ),
-                ),
-            ),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
@@ -111,7 +107,7 @@ fun CapsuleScreen(viewModel: CapsuleViewModel = hiltViewModel()) {
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.items, key = { it.uuid }) { capsule ->
-                        CapsuleCard(capsule = capsule, onDelete = { viewModel.delete(capsule) })
+                        CapsuleCard(capsule = capsule, onDelete = { pendingDelete = capsule })
                     }
                 }
             }
@@ -123,14 +119,31 @@ fun CapsuleScreen(viewModel: CapsuleViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "写一封")
+            Icon(Icons.Filled.Add, contentDescription = "写胶囊")
         }
+    }
     }
 
     if (editorOpen) {
         CapsuleEditorDialog(
             onDismiss = { editorOpen = false },
             onSave = { content, openAtIso -> viewModel.add(content, openAtIso) { editorOpen = false } },
+        )
+    }
+
+    pendingDelete?.let { capsule ->
+        LoveConfirmDialog(
+            title = if (capsule.is_open) "删除这封胶囊？" else "删除未开启的胶囊？",
+            message = if (capsule.is_open) {
+                "删除后无法恢复。"
+            } else {
+                "胶囊还未到开启时间，里面写了什么谁都没看过，删除后无法恢复。确定要删吗？"
+            },
+            onConfirm = {
+                viewModel.delete(capsule)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 }

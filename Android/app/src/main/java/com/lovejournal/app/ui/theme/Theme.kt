@@ -28,7 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
 private val LightColors = lightColorScheme(
-    primary = LovePink,
+    primary = LovePrimaryAccessible,
     onPrimary = LoveOnPrimary,
     onPrimaryContainer = LoveText,
     primaryContainer = LovePinkLight,

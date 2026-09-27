@@ -124,17 +124,27 @@ private object MainRoute {
     const val ADMIN_TOOLS = "admin-tools"
 }
 
-private val SECONDARY_ROUTES = setOf(
-    MainRoute.SEARCH,
-    MainRoute.NOTIFICATIONS,
-    MainRoute.TIMELINE,
-    MainRoute.CAPSULES,
-    MainRoute.SETTINGS,
-    MainRoute.LICENSES,
-    MainRoute.SECURITY,
-    MainRoute.PRIVACY,
-    MainRoute.RECYCLE_BIN,
-    MainRoute.ADMIN_TOOLS,
+/**
+ * 搜索结果 / 通知的来源类型 → App 内目的地。
+ * 返回 Tab 路由时走底部 Tab 的导航方式，返回二级路由时直接压栈。
+ */
+private fun destinationRouteFor(sourceType: String?): String? = when (sourceType) {
+    "article" -> Tab.Articles.route
+    "album" -> Tab.Albums.route
+    "event" -> Tab.Events.route
+    "moment" -> MainRoute.TIMELINE
+    "message" -> Tab.Messages.route
+    else -> null
+}
+
+/** 底部 Tab 的根路由：这些页面不显示返回键、显示顶栏动作。 */
+private val TOP_LEVEL_ROUTES = setOf(
+    Tab.Dashboard.route,
+    Tab.Events.route,
+    Tab.Articles.route,
+    Tab.Albums.route,
+    CottageRoute.HUB,
+    Tab.Messages.route,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,6 +161,20 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
     val backStack by navController.currentBackStackEntryAsState()
     val currentDestination = backStack?.destination
     val currentRoute = currentDestination?.route
+
+    // 搜索结果 / 通知点击后的跳转：未知来源忽略，二级路由直接压栈，Tab 路由走 Tab 导航。
+    fun navigateToSource(routeOf: () -> String?) {
+        when (val route = routeOf()) {
+            null -> Unit
+            MainRoute.TIMELINE -> navController.navigate(route) { launchSingleTop = true }
+            else -> navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+
     val title = when (currentRoute) {
         CottageRoute.HUB -> "我们的小屋"
         CottageRoute.CHAT -> "悄悄话"
@@ -170,7 +194,7 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
         CottageRoute.CHECKINS -> "报备签到"
         CottageRoute.CANVAS -> "协作画板"
         CottageRoute.CANVAS_GALLERY -> "作品集"
-        CottageRoute.CANVAS_ARTWORK -> "作品回放"
+        "${CottageRoute.CANVAS_GALLERY}/{caid}" -> "作品回放"
         MainRoute.SEARCH -> "搜索"
         MainRoute.NOTIFICATIONS -> "通知中心"
         MainRoute.TIMELINE -> "时间线"
@@ -192,14 +216,14 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
                 title = { Text(title) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 navigationIcon = {
-                    if (currentRoute in SECONDARY_ROUTES) {
+                    if (currentRoute !in TOP_LEVEL_ROUTES) {
                         IconButton(onClick = { navController.navigateUp() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                         }
                     }
                 },
                 actions = {
-                    if (currentRoute !in SECONDARY_ROUTES) {
+                    if (currentRoute in TOP_LEVEL_ROUTES) {
                         IconButton(onClick = { navController.navigate(MainRoute.SEARCH) { launchSingleTop = true } }) {
                             Icon(Icons.Filled.Search, contentDescription = "搜索")
                         }
@@ -306,8 +330,20 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
             composable(CottageRoute.VAULT) { VaultScreen() }
             composable(CottageRoute.PLANS) { PlanScreen() }
             composable(CottageRoute.CHECKINS) { CheckinScreen() }
-            composable(MainRoute.SEARCH) { SearchScreen() }
-            composable(MainRoute.NOTIFICATIONS) { NotificationScreen() }
+            composable(MainRoute.SEARCH) {
+                SearchScreen(
+                    onOpen = { result ->
+                        navigateToSource { destinationRouteFor(result.type) }
+                    },
+                )
+            }
+            composable(MainRoute.NOTIFICATIONS) {
+                NotificationScreen(
+                    onOpen = { item ->
+                        navigateToSource { destinationRouteFor(item.source_type) }
+                    },
+                )
+            }
             composable(MainRoute.TIMELINE) { TimelineScreen() }
             composable(MainRoute.CAPSULES) { CapsuleScreen() }
             composable(MainRoute.SETTINGS) {

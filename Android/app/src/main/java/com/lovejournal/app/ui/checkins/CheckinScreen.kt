@@ -55,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,7 +78,7 @@ import com.lovejournal.app.util.formatDateTime
 fun CheckinScreen(viewModel: CheckinViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -196,7 +197,7 @@ private fun CheckinCard(checkin: CheckInResponse, mediaUrl: (String?) -> String?
 @Composable
 private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Unit) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
-    var content by remember { mutableStateOf("") }
+    var content by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
 
     val galleryLauncher = rememberLauncherForActivityResult(

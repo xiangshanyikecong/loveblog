@@ -262,7 +262,7 @@ private fun AnnualReportSection(state: ReportUiState) {
                             )
                         }
                     }
-                    annual.highlights.take(3).forEach { Text("✨ \$it", style = MaterialTheme.typography.bodySmall) }
+                    annual.highlights.take(3).forEach { Text("✨ $it", style = MaterialTheme.typography.bodySmall) }
                     Text(
                         "${annual.stats.songs_minutes} 分钟的共同旋律 · ${annual.stats.capsules_created} 颗时光胶囊",
                         style = MaterialTheme.typography.labelSmall,

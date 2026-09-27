@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.ui.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.SearchResultItem
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.util.formatDate
 
 private fun typeLabel(type: String): String = when (type) {
@@ -63,7 +65,10 @@ private fun typeLabel(type: String): String = when (type) {
 }
 
 @Composable
-fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
+fun SearchScreen(
+    viewModel: SearchViewModel = hiltViewModel(),
+    onOpen: (SearchResultItem) -> Unit = {},
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LovePage {
@@ -97,7 +102,7 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
                         Text("输入关键词，找回你们的点点滴滴", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("没有找到相关内容") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoveEmptyState("🔍", "没有找到相关内容", "换个关键词再试试") }
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         Text(
@@ -107,7 +112,7 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
                         )
                     }
                     items(state.items, key = { it.type + ":" + it.id }) { result ->
-                        SearchResultCard(result)
+                        SearchResultCard(result, onClick = { onOpen(result) })
                     }
                 }
             }
@@ -117,8 +122,8 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun SearchResultCard(result: SearchResultItem) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun SearchResultCard(result: SearchResultItem, onClick: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(typeLabel(result.type), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)

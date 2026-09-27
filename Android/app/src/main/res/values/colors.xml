@@ -3,4 +3,6 @@
     <color name="love_primary_dark">#C75A82</color>
     <color name="white">#FFFFFFFF</color>
     <color name="widget_background">#FFFFF1F5</color>
+    <color name="love_surface_dark">#FF241C20</color>
+    <color name="love_background_dark">#FF171114</color>
 </resources>

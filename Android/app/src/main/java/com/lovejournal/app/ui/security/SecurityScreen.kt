@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LovePage
 
 @Composable
@@ -59,10 +61,13 @@ fun SecurityScreen(viewModel: SecurityViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
 
+    // 密码字段用普通 remember：不能明文落入系统持久化的实例状态。
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var confirmRevoke by remember { mutableStateOf(false) }
+    var pendingRevokeDid by remember { mutableStateOf<String?>(null) }
+    var pendingRevokeName by remember { mutableStateOf<String?>(null) }
     var showTotpDialog by remember { mutableStateOf(false) }
 
     // 进入页面即拉取两步验证状态与登录设备列表（对齐网页端安全中心）。
@@ -175,7 +180,7 @@ fun SecurityScreen(viewModel: SecurityViewModel = hiltViewModel()) {
                         name = device.device_name,
                         ip = device.ip,
                         lastLogin = device.last_login_at.take(16).replace('T', ' '),
-                        onRevoke = { viewModel.revokeDevice(device.did) },
+                        onRevoke = { pendingRevokeDid = device.did; pendingRevokeName = device.device_name },
                         enabled = !locked,
                     )
                 }
@@ -188,6 +193,19 @@ fun SecurityScreen(viewModel: SecurityViewModel = hiltViewModel()) {
         ) {
             Text("登出所有设备", color = MaterialTheme.colorScheme.error)
         }
+    }
+
+    if (pendingRevokeDid != null) {
+        LoveConfirmDialog(
+            title = "登出这台设备？",
+            message = "「${pendingRevokeName ?: ""}」的登录会立即失效。确定继续吗？",
+            confirmText = "登出",
+            onConfirm = {
+                viewModel.revokeDevice(pendingRevokeDid!!)
+                pendingRevokeDid = null
+            },
+            onDismiss = { pendingRevokeDid = null },
+        )
     }
 
     if (confirmRevoke) {

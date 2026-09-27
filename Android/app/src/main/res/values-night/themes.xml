@@ -1,0 +1,9 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- 暗色主题：窗口背景跟随暗色，避免 Compose 暗色界面启动瞬间的白闪；
+         状态栏图标用浅色（黑底白字）。 -->
+    <style name="Theme.LoveJournal" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/love_surface_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/love_background_dark</item>
+    </style>
+</resources>

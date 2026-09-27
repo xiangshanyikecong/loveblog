@@ -44,10 +44,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.NotificationResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.util.formatDateTime
 
 @Composable
-fun NotificationScreen(viewModel: NotificationViewModel = hiltViewModel()) {
+fun NotificationScreen(
+    viewModel: NotificationViewModel = hiltViewModel(),
+    onOpen: (NotificationResponse) -> Unit = {},
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LovePage {
@@ -77,13 +81,13 @@ fun NotificationScreen(viewModel: NotificationViewModel = hiltViewModel()) {
                         Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("暂时没有通知") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { LoveEmptyState("🔔", "暂时没有通知", "对方的互动会出现在这里") }
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(state.items, key = { it.nid }) { item ->
-                        NotificationCard(item = item, onClick = { viewModel.markRead(item) })
+                        NotificationCard(item = item, onClick = { viewModel.markRead(item); onOpen(item) })
                     }
                 }
             }

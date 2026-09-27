@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -50,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -81,9 +83,12 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
     val attachment by viewModel.attachmentUrl.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
-    var selected by remember { mutableStateOf(MOODS.first()) }
-    var note by remember { mutableStateOf("") }
-    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedMood by rememberSaveable { mutableStateOf(MOODS.first().first) }
+    var note by rememberSaveable { mutableStateOf("") }
+    // cameraUri 必须能挺过转屏/进程回收：拍照期间系统回收界面后，
+    // 回调里拿不到 URI 就会静默丢掉刚拍的照片。
+    var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    val selected = MOODS.firstOrNull { it.first == selectedMood } ?: MOODS.first()
 
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
@@ -99,10 +104,17 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
             viewModel.clearStatus()
         }
     }
+    LaunchedEffect(Unit) {
+        viewModel.checkInSuccess.collect {
+            note = ""
+            cameraUri = null
+        }
+    }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LovePage(modifier = Modifier.padding(padding)) {
             LazyColumn(
+                modifier = Modifier.imePadding(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
             item { Text("今天心情怎么样？", style = MaterialTheme.typography.titleMedium) }
@@ -110,8 +122,8 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MOODS.forEach { entry ->
                         FilterChip(
-                            selected = selected == entry,
-                            onClick = { selected = entry },
+                            selected = selectedMood == entry.first,
+                            onClick = { selectedMood = entry.first },
                             label = { Text("${entry.second} ${entry.first}") },
                         )
                     }

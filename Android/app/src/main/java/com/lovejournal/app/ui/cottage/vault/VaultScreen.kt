@@ -47,13 +47,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LovePage
 
 @Composable
@@ -64,10 +67,25 @@ fun VaultScreen(viewModel: VaultViewModel = hiltViewModel()) {
     var creating by remember { mutableStateOf(false) }
     var changing by remember { mutableStateOf(false) }
     var resetting by remember { mutableStateOf(false) }
+    // 正文默认遮挡，点击「显示内容」后展示；离开屏面或再次点击即隐藏。
+    var showBodies by rememberSaveable { mutableStateOf(false) }
+    var pendingDeleteVid by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteTitle by remember { mutableStateOf<String?>(null) }
     state.message?.let { AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text("确定") } }, text = { Text(it) }) }
     if (creating || editing != null) VaultEditor(editing, { creating = false; editing = null }) { title, body -> viewModel.save(editing?.vid, title, body); creating = false; editing = null }
     if (changing) PassphraseDialog("更换保险箱口令", { changing = false }) { viewModel.changePassphrase(it); changing = false }
     if (resetting) AlertDialog(onDismissRequest = { resetting = false }, title = { Text("永久重置？") }, text = { Text("所有加密内容将永久删除，无法从回收站恢复。") }, confirmButton = { TextButton(onClick = { resetting = false; viewModel.reset() }) { Text("永久删除") } }, dismissButton = { TextButton(onClick = { resetting = false }) { Text("取消") } })
+    if (pendingDeleteVid != null) {
+        LoveConfirmDialog(
+            title = "删除「${pendingDeleteTitle ?: ""}」？",
+            message = "这条加密内容将永久删除，无法从回收站恢复。",
+            onConfirm = {
+                viewModel.delete(pendingDeleteVid!!)
+                pendingDeleteVid = null
+            },
+            onDismiss = { pendingDeleteVid = null; pendingDeleteTitle = null },
+        )
+    }
 
     if (state.loading) { Column(Modifier.fillMaxSize().padding(24.dp)) { CircularProgressIndicator() }; return }
     if (state.meta?.initialized != true) {
@@ -83,7 +101,22 @@ fun VaultScreen(viewModel: VaultViewModel = hiltViewModel()) {
         LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text("私密空间", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("端到端加密 · 5 分钟自动锁定") }; IconButton(onClick = viewModel::lock) { Icon(Icons.Default.Lock, "锁定") } }; Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = { changing = true }) { Text("更换口令") }; TextButton(onClick = { resetting = true }) { Text("重置") } } }
             if (state.entries.isEmpty()) item { Text("还没有加密内容。") }
-            items(state.entries, key = { it.vid }) { entry -> Card(Modifier.fillMaxWidth().clickable { editing = entry; viewModel.touch() }) { Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) { Column(Modifier.weight(1f)) { Text(entry.title.ifBlank { "无标题" }, fontWeight = FontWeight.Bold); Text(entry.body, maxLines = 3) }; IconButton(onClick = { viewModel.delete(entry.vid) }) { Icon(Icons.Default.Delete, "删除") } } } }
+            item { TextButton(onClick = { showBodies = !showBodies }) { Text(if (showBodies) "隐藏内容" else "显示内容") } }
+            items(state.entries, key = { it.vid }) { entry ->
+                Card(Modifier.fillMaxWidth().clickable { editing = entry; viewModel.touch() }) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column(Modifier.weight(1f)) {
+                            Text(entry.title.ifBlank { "无标题" }, fontWeight = FontWeight.Bold)
+                            if (showBodies) {
+                                Text(entry.body, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            } else {
+                                Text("••••••••", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        IconButton(onClick = { pendingDeleteVid = entry.vid; pendingDeleteTitle = entry.title.ifBlank { "无标题" } }) { Icon(Icons.Default.Delete, "删除") }
+                    }
+                }
+            }
         }
         }
     }

@@ -32,6 +32,9 @@ val LoveMint = Color(0xFF56C8A5)
 val LoveOutline = Color(0xFFE6D9DE)
 val LoveText = Color(0xFF33262B)
 
+/** 浅色主题的 primary：加深到白字对比度 ≥ 4.5:1（WCAG AA），色相仍在品牌粉区间。 */
+val LovePrimaryAccessible = Color(0xFFB44A6F)
+
 val LovePinkDarkScheme = Color(0xFFFFB1C8)
 val LoveBackgroundDark = Color(0xFF171114)
 val LoveSurfaceDark = Color(0xFF241C20)

@@ -88,6 +88,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -109,6 +110,7 @@ import com.lovejournal.app.data.remote.dto.PlaylistItem
 import com.lovejournal.app.data.remote.dto.RoomCurrent
 import com.lovejournal.app.data.remote.dto.SongMeta
 import com.lovejournal.app.data.remote.dto.ToplistItem
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.theme.LoveMint
 
@@ -796,6 +798,7 @@ private fun LocalTab(
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) onUpload(uri)
     }
+    var pendingDelete by remember { mutableStateOf<SongMeta?>(null) }
     Column(modifier = modifier.padding(top = 12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             SectionTitle("本地上传", modifier = Modifier.weight(1f))
@@ -821,7 +824,7 @@ private fun LocalTab(
                         onPlay = { onPlaySong(song) },
                         onQueue = { onQueueSong(song) },
                         trailing = {
-                            IconButton(onClick = { onDelete(song) }) {
+                            IconButton(onClick = { pendingDelete = song }) {
                                 Icon(Icons.Filled.Delete, contentDescription = "删除")
                             }
                         },
@@ -829,6 +832,18 @@ private fun LocalTab(
                 }
             }
         }
+    }
+
+    pendingDelete?.let { song ->
+        LoveConfirmDialog(
+            title = "删除本地歌曲「${song.name}」？",
+            message = "只会从一起听的本地列表移除，手机里的原文件不受影响。",
+            onConfirm = {
+                onDelete(song)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
+        )
     }
 }
 
@@ -840,10 +855,11 @@ private fun QueueTab(
     onPlaySong: (SongMeta) -> Unit,
     modifier: Modifier,
 ) {
+    var confirmClear by remember { mutableStateOf(false) }
     Column(modifier = modifier.padding(top = 12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             SectionTitle("播放队列", modifier = Modifier.weight(1f))
-            TextButton(onClick = onClearQueue, enabled = state.queue.isNotEmpty()) {
+            TextButton(onClick = { confirmClear = true }, enabled = state.queue.isNotEmpty()) {
                 Text("清空")
             }
         }
@@ -867,6 +883,19 @@ private fun QueueTab(
             }
         }
     }
+
+    if (confirmClear) {
+        LoveConfirmDialog(
+            title = "清空播放队列？",
+            message = "双方的共同队列会被清空，无法恢复。",
+            confirmText = "清空",
+            onConfirm = {
+                onClearQueue()
+                confirmClear = false
+            },
+            onDismiss = { confirmClear = false },
+        )
+    }
 }
 
 /**
@@ -882,6 +911,10 @@ private fun MineTab(
     modifier: Modifier,
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
+    var pendingDeletePid by remember { mutableStateOf<String?>(null) }
+    val pendingDeleteName = pendingDeletePid?.let { pid ->
+        state.myPlaylists.firstOrNull { it.pid == pid }?.name
+    }
     LaunchedEffect(Unit) {
         mine.loadLiked()
         mine.loadPlaylists()
@@ -938,7 +971,7 @@ private fun MineTab(
                             IconButton(onClick = { mine.playPlaylist(playlist.pid) }) {
                                 Icon(Icons.Filled.PlayArrow, contentDescription = "投入共同队列", tint = MaterialTheme.colorScheme.primary)
                             }
-                            IconButton(onClick = { mine.deletePlaylist(playlist.pid) }) {
+                            IconButton(onClick = { pendingDeletePid = playlist.pid }) {
                                 Icon(Icons.Outlined.Delete, contentDescription = "删除歌单", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -1005,6 +1038,18 @@ private fun MineTab(
                 mine.createPlaylist(name)
                 showCreateDialog = false
             },
+        )
+    }
+
+    pendingDeletePid?.let { pid ->
+        LoveConfirmDialog(
+            title = "删除歌单「${pendingDeleteName ?: ""}」？",
+            message = "歌单将从双方的音乐库里移除，无法恢复。",
+            onConfirm = {
+                mine.deletePlaylist(pid)
+                pendingDeletePid = null
+            },
+            onDismiss = { pendingDeletePid = null },
         )
     }
 }

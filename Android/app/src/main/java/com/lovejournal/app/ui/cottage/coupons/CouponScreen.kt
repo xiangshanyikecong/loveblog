@@ -23,6 +23,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,32 +53,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.CouponResponse
+import com.lovejournal.app.ui.components.LoveConfirmDialog
+import com.lovejournal.app.ui.components.LovePage
 
 @Composable
 fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf<CouponResponse?>(null) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
+    // CouponResponse 不可 Bundle 化，只存 id，旋转后从已加载列表还原。
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val editing = editingId?.let { id -> state.items.firstOrNull { it.cpid == id } }
+    var pendingDelete by remember { mutableStateOf<CouponResponse?>(null) }
+    var pendingRedeem by remember { mutableStateOf<CouponResponse?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize().background(
-        Brush.verticalGradient(
-            listOf(
-                MaterialTheme.colorScheme.background,
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
-            ),
-        ),
-    )) {
+    LovePage(contentPadding = PaddingValues(0.dp)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
@@ -114,9 +115,9 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
                     items(state.items, key = { it.cpid }) { coupon ->
                         CouponCard(
                             coupon = coupon,
-                            onRedeem = { viewModel.redeem(coupon) },
-                            onEdit = { editing = coupon; editorOpen = true },
-                            onDelete = { viewModel.delete(coupon) },
+                            onRedeem = { pendingRedeem = coupon },
+                            onEdit = { editingId = coupon.cpid; editorOpen = true },
+                            onDelete = { pendingDelete = coupon },
                         )
                     }
                 }
@@ -124,13 +125,14 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
         }
 
         FloatingActionButton(
-            onClick = { editing = null; editorOpen = true },
+            onClick = { editingId = null; editorOpen = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
             Icon(Icons.Filled.Add, contentDescription = "送一张券")
         }
+    }
     }
 
     if (editorOpen) {
@@ -145,6 +147,32 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
                     viewModel.updateCoupon(current.cpid, title, desc, icon) { editorOpen = false }
                 }
             },
+        )
+    }
+
+    pendingRedeem?.let { coupon ->
+        LoveConfirmDialog(
+            title = "核销「${coupon.title}」？",
+            message = "兑换券核销后立即失效，此操作不可撤销。",
+            confirmText = "核销",
+            destructive = false,
+            onConfirm = {
+                viewModel.redeem(coupon)
+                pendingRedeem = null
+            },
+            onDismiss = { pendingRedeem = null },
+        )
+    }
+
+    pendingDelete?.let { coupon ->
+        LoveConfirmDialog(
+            title = "删除「${coupon.title}」？",
+            message = "删除后这张券无法恢复。",
+            onConfirm = {
+                viewModel.delete(coupon)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 }

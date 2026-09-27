@@ -27,7 +27,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -71,6 +73,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import java.time.Instant
 import java.time.LocalDateTime
@@ -102,7 +105,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-    var draft by remember { mutableStateOf("") }
+    var draft by rememberSaveable { mutableStateOf("") }
     // "寄给未来" — when non-null, the next send() schedules the message
     // for this instant instead of sending immediately. Reset after each send.
     var scheduleAt by remember { mutableStateOf<Instant?>(null) }
@@ -188,7 +191,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-        LovePage(modifier = Modifier.padding(padding)) {
+        LovePage(modifier = Modifier.padding(padding).consumeWindowInsets(padding)) {
         Column(modifier = Modifier.fillMaxSize()) {
             PresenceHeader(
                 nickname = state.partnerNickname,
@@ -249,7 +252,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 }
             }
             Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(8.dp).imePadding(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { viewModel.poke() }) {

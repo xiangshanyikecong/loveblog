@@ -63,6 +63,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import coil.compose.AsyncImage
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.ui.components.LovePage
@@ -174,9 +176,10 @@ private fun SettingsForm(
     var siteName by remember(setting) { mutableStateOf(setting.site_name) }
     var allowReg by remember(setting) { mutableStateOf(setting.allow_registration) }
     var loveDate by remember(setting) { mutableStateOf(parseDate(setting.love_start_date)) }
-    var inviteUsername by remember { mutableStateOf("") }
+    // 邀请密码同样不进 savedInstanceState；用户名/昵称保留 saveable。
+    var inviteUsername by rememberSaveable { mutableStateOf("") }
     var invitePassword by remember { mutableStateOf("") }
-    var inviteNickname by remember { mutableStateOf("") }
+    var inviteNickname by rememberSaveable { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(inviteSucceeded) {
@@ -402,7 +405,20 @@ private fun AccountEntryButtons(
 
 @Composable
 private fun LogoutButton(onLogout: () -> Unit) {
-    OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+    var confirmLogout by remember { mutableStateOf(false) }
+    OutlinedButton(onClick = { confirmLogout = true }, modifier = Modifier.fillMaxWidth()) {
         Text("退出登录", color = MaterialTheme.colorScheme.error)
+    }
+    if (confirmLogout) {
+        LoveConfirmDialog(
+            title = "退出登录？",
+            message = "退出后需要重新输入服务器地址与密码才能再次进入，未同步的数据会在下次登录后继续同步。",
+            confirmText = "退出登录",
+            onConfirm = {
+                confirmLogout = false
+                onLogout()
+            },
+            onDismiss = { confirmLogout = false },
+        )
     }
 }

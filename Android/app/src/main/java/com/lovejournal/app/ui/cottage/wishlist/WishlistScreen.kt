@@ -48,32 +48,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.WishResponse
+import com.lovejournal.app.ui.components.LoveConfirmDialog
+import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.LoveEmptyState
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf<WishResponse?>(null) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
+    // WishResponse 不可 Bundle 化，只存 id，旋转后从已加载列表还原。
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val editing = editingId?.let { id -> state.items.firstOrNull { it.wid == id } }
+    var pendingDelete by remember { mutableStateOf<WishResponse?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize().background(
-        Brush.verticalGradient(
-            listOf(
-                MaterialTheme.colorScheme.background,
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
-            ),
-        ),
-    )) {
+    LovePage(contentPadding = PaddingValues(0.dp)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
@@ -92,7 +93,7 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有心愿，点右下角加一个吧")
+                        LoveEmptyState("💝", "还没有心愿", "写下想一起实现的心愿", actionLabel = "添加心愿", onAction = { editorOpen = true })
                     }
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -109,8 +110,8 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                         WishCard(
                             wish = wish,
                             onToggle = { viewModel.toggle(wish) },
-                            onEdit = { editing = wish; editorOpen = true },
-                            onDelete = { viewModel.delete(wish) },
+                            onEdit = { editingId = wish.wid; editorOpen = true },
+                            onDelete = { pendingDelete = wish },
                         )
                     }
                 }
@@ -118,11 +119,12 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
         }
 
         FloatingActionButton(
-            onClick = { editing = null; editorOpen = true },
+            onClick = { editingId = null; editorOpen = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
         ) {
             Icon(Icons.Filled.Add, contentDescription = "添加心愿")
         }
+    }
     }
 
     if (editorOpen) {
@@ -137,6 +139,18 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                     viewModel.updateWish(current.wid, title, desc, category) { editorOpen = false }
                 }
             },
+        )
+    }
+
+    pendingDelete?.let { wish ->
+        LoveConfirmDialog(
+            title = "删除心愿「${wish.title}」？",
+            message = "删除后这条心愿无法恢复。",
+            onConfirm = {
+                viewModel.delete(wish)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 }
@@ -183,9 +197,9 @@ private fun WishEditorDialog(
     onDismiss: () -> Unit,
     onSave: (title: String, description: String?, category: String?) -> Unit,
 ) {
-    var title by remember { mutableStateOf(initial?.title ?: "") }
-    var description by remember { mutableStateOf(initial?.description ?: "") }
-    var category by remember { mutableStateOf(initial?.category ?: "") }
+    var title by rememberSaveable { mutableStateOf(initial?.title ?: "") }
+    var description by rememberSaveable { mutableStateOf(initial?.description ?: "") }
+    var category by rememberSaveable { mutableStateOf(initial?.category ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,

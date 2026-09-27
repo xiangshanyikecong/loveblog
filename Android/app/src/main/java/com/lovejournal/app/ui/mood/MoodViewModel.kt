@@ -27,9 +27,12 @@ import com.lovejournal.app.data.repository.MoodRepository
 import com.lovejournal.app.data.repository.UploadRepository
 import com.lovejournal.app.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -55,15 +58,29 @@ class MoodViewModel @Inject constructor(
     private val _attachmentUrl = MutableStateFlow<String?>(null)
     val attachmentUrl: StateFlow<String?> = _attachmentUrl.asStateFlow()
 
+    /** 打卡成功信号：界面收到后清空本屏的文字/心情选择，防止重复提交。 */
+    private val _checkInSuccess = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val checkInSuccess: SharedFlow<Unit> = _checkInSuccess.asSharedFlow()
+
+    private var submitting = false
+
     init {
         viewModelScope.launch { moodRepository.refreshToday() }
     }
 
     fun checkIn(mood: String, emoji: String?, note: String?) {
+        if (submitting) return
+        submitting = true
         viewModelScope.launch {
-            val online = moodRepository.checkIn(mood, emoji, note)
-            _status.value = if (online) "已记录今日心情" else "离线已保存，联网后自动同步"
-            SyncScheduler.requestSyncNow(getApplication())
+            try {
+                val online = moodRepository.checkIn(mood, emoji, note)
+                _status.value = if (online) "已记录今日心情" else "离线已保存，联网后自动同步"
+                _attachmentUrl.value = null
+                _checkInSuccess.tryEmit(Unit)
+                SyncScheduler.requestSyncNow(getApplication())
+            } finally {
+                submitting = false
+            }
         }
     }
 

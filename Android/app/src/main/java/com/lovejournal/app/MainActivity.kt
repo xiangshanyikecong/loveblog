@@ -22,6 +22,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Edge-to-edge：配合 M3 Scaffold 的 insets 处理，避免 Android 15+
+        // 强制全面屏后状态栏图标与内容叠压，也让 imePadding 正常生效。
+        enableEdgeToEdge()
         maybeRequestNotificationPermission()
         setContent {
             LoveJournalTheme {

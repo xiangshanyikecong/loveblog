@@ -21,7 +21,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -50,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -67,8 +70,8 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
     val selfUid by viewModel.selfUid.collectAsStateWithLifecycle()
     val versions by viewModel.versions.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    var draft by remember { mutableStateOf("") }
-    var isPublic by remember { mutableStateOf(true) }
+    var draft by rememberSaveable { mutableStateOf("") }
+    var isPublic by rememberSaveable { mutableStateOf(true) }
     var editingMessage by remember { mutableStateOf<MessageEntity?>(null) }
     var deletingMessage by remember { mutableStateOf<MessageEntity?>(null) }
     var historyMessage by remember { mutableStateOf<MessageEntity?>(null) }
@@ -161,7 +164,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-        LovePage(modifier = Modifier.padding(padding)) {
+        LovePage(modifier = Modifier.padding(padding).consumeWindowInsets(padding)) {
             Column(Modifier.fillMaxSize()) {
                 LazyColumn(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -178,7 +181,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                         )
                     }
                 }
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).imePadding()) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = isPublic,

@@ -35,12 +35,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 import com.lovejournal.app.ui.components.LovePage
 
 @Composable
@@ -62,7 +66,21 @@ fun AdminToolsScreen(viewModel: AdminToolsViewModel = hiltViewModel()) {
             }
         }
         AdminCard("备份计划与历史", state.backup)
-        Button(onClick = viewModel::runBackup, modifier = Modifier.fillMaxWidth()) { Text("立即执行自动备份") }
+        var confirmBackup by remember { mutableStateOf(false) }
+        Button(onClick = { confirmBackup = true }, modifier = Modifier.fillMaxWidth()) { Text("立即执行自动备份") }
+        if (confirmBackup) {
+            LoveConfirmDialog(
+                title = "立即执行自动备份？",
+                message = "将在服务器上触发一次完整备份，可能持续一段时间。",
+                confirmText = "执行",
+                destructive = false,
+                onConfirm = {
+                    confirmBackup = false
+                    viewModel.runBackup()
+                },
+                onDismiss = { confirmBackup = false },
+            )
+        }
         AdminCard("安全用户", state.users)
         AdminCard("审计日志", state.audit)
         OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth()) { Text("刷新") }

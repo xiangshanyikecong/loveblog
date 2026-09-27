@@ -24,6 +24,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -64,12 +65,14 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.ui.components.LoveConfirmDialog
 
 private val palette = listOf(
     "#1e293b", "#ef4444", "#f59e0b", "#10b981",
     "#3b82f6", "#a855f7", "#ec4899", "#ffffff",
 )
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun CanvasScreen(
     viewModel: CanvasViewModel = hiltViewModel(),
@@ -83,6 +86,7 @@ fun CanvasScreen(
         viewModel.toast.collect { snackbar.showSnackbar(it) }
     }
 
+    var confirmClear by remember { mutableStateOf(false) }
     var currentSid by remember { mutableStateOf<String?>(null) }
     var lastPos by remember { mutableStateOf<Offset?>(null) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
@@ -120,16 +124,16 @@ fun CanvasScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            // ── Color palette + size slider ─────────────────────────────────
+            // ── Color palette（32dp 色块，触控目标比原先 24dp 翻倍）─────────
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 palette.forEach { c ->
                     Box(
                         Modifier
-                            .size(24.dp)
+                            .size(32.dp)
                             .clip(CircleShape)
                             .background(parseColor(c))
                             .border(
@@ -140,13 +144,19 @@ fun CanvasScreen(
                             .clickable { viewModel.setColor(c) },
                     )
                 }
-                Spacer(Modifier.width(8.dp))
+            }
+            // ── Brush size ───────────────────────────────────────────────────
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text("粗细", style = MaterialTheme.typography.labelSmall)
                 Slider(
                     value = state.size,
                     onValueChange = { viewModel.setSize(it) },
                     valueRange = 1f..40f,
-                    modifier = Modifier.width(80.dp),
+                    modifier = Modifier.weight(1f),
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -155,8 +165,8 @@ fun CanvasScreen(
                 Text("${state.size.toInt()}", style = MaterialTheme.typography.labelSmall, modifier = Modifier.width(20.dp))
             }
 
-            // ── Tool buttons ────────────────────────────────────────────────
-            Row(
+            // ── Tool buttons（FlowRow：窄屏自动换行，不再溢出）────────────
+            FlowRow(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -168,7 +178,7 @@ fun CanvasScreen(
                     ),
                 ) { Text(if (state.eraser) "橡皮(开)" else "橡皮") }
                 OutlinedButton(onClick = { viewModel.undo() }) { Text("撤销") }
-                OutlinedButton(onClick = { viewModel.clear() }) { Text("清空") }
+                OutlinedButton(onClick = { confirmClear = true }) { Text("清空") }
                 OutlinedButton(
                     onClick = { viewModel.saveToTimeline(context.cacheDir) },
                     enabled = !state.saving,
@@ -268,6 +278,19 @@ fun CanvasScreen(
                 }
             }
         }
+    }
+
+    if (confirmClear) {
+        LoveConfirmDialog(
+            title = "清空画布？",
+            message = "清空会同步到对方的画布上，两个人画的内容都会消失，且无法恢复。",
+            confirmText = "清空",
+            onConfirm = {
+                viewModel.clear()
+                confirmClear = false
+            },
+            onDismiss = { confirmClear = false },
+        )
     }
 }
 

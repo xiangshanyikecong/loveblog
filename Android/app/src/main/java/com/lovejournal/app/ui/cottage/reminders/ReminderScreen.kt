@@ -22,6 +22,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,15 +60,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.ui.components.LoveConfirmDialog
+import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.data.remote.dto.ReminderResponse
 import com.lovejournal.app.util.formatDateTime
 import java.time.Instant
@@ -94,17 +98,14 @@ private fun parseLocal(iso: String): LocalDateTime? = runCatching {
 fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf<ReminderResponse?>(null) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
+    // ReminderResponse 不可 Bundle 化，只存 id，旋转后从已加载列表还原。
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val editing = editingId?.let { id -> state.items.firstOrNull { it.rid == id } }
+    var pendingDelete by remember { mutableStateOf<ReminderResponse?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize().background(
-        Brush.verticalGradient(
-            listOf(
-                MaterialTheme.colorScheme.background,
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
-            ),
-        ),
-    )) {
+    LovePage(contentPadding = PaddingValues(0.dp)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
@@ -142,7 +143,7 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有提醒，点右下角加一个吧")
+                        LoveEmptyState("🔔", "还没有提醒", "重要的小事，交给提醒来记")
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -154,8 +155,8 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
                         ReminderCard(
                             reminder = reminder,
                             onToggle = { viewModel.toggleDone(reminder) },
-                            onEdit = { editing = reminder },
-                            onDelete = { viewModel.delete(reminder) },
+                            onEdit = { editingId = reminder.rid },
+                            onDelete = { pendingDelete = reminder },
                         )
                     }
                 }
@@ -171,6 +172,7 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
             Icon(Icons.Filled.Add, contentDescription = "添加提醒")
         }
     }
+    }
 
     if (editorOpen) {
         ReminderEditorDialog(
@@ -184,10 +186,22 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
     editing?.let { reminder ->
         ReminderEditorDialog(
             initial = reminder,
-            onDismiss = { editing = null },
+            onDismiss = { editingId = null },
             onSave = { title, note, remindAtIso, audience ->
-                viewModel.update(reminder, title, note, remindAtIso, audience) { editing = null }
+                viewModel.update(reminder, title, note, remindAtIso, audience) { editingId = null }
             },
+        )
+    }
+
+    pendingDelete?.let { reminder ->
+        LoveConfirmDialog(
+            title = "删除提醒「${reminder.title}」？",
+            message = "删除后这条提醒无法恢复。",
+            onConfirm = {
+                viewModel.delete(reminder)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 }

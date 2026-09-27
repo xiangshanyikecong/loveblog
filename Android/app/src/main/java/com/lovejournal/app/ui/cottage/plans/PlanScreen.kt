@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,16 +54,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lovejournal.app.data.remote.dto.PlanResponse
+import com.lovejournal.app.ui.components.LoveConfirmDialog
+import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.LoveEmptyState
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -79,7 +85,8 @@ private fun statusLabel(value: String): String = STATUS_LABELS[value] ?: value
 fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var editorOpen by remember { mutableStateOf(false) }
+    var editorOpen by rememberSaveable { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<PlanResponse?>(null) }
 
     val displayItems = if (state.showDone) {
         state.items
@@ -87,14 +94,8 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
         state.items.filter { it.status != "done" && it.status != "cancelled" }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(
-        Brush.verticalGradient(
-            listOf(
-                MaterialTheme.colorScheme.background,
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f),
-            ),
-        ),
-    )) {
+    LovePage(contentPadding = PaddingValues(0.dp)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
@@ -132,7 +133,7 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
                     }
                 displayItems.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有约会计划，点右下角加一个吧")
+                        LoveEmptyState("🗓️", "还没有约会计划", "期待下一次见面，先做个计划吧", actionLabel = "添加计划", onAction = { editorOpen = true })
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -144,7 +145,7 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
                         PlanCard(
                             plan = plan,
                             onToggle = { viewModel.toggleComplete(plan) },
-                            onDelete = { viewModel.delete(plan) },
+                            onDelete = { pendingDelete = plan },
                         )
                     }
                 }
@@ -160,6 +161,7 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
             Icon(Icons.Filled.Add, contentDescription = "添加计划")
         }
     }
+    }
 
     if (editorOpen) {
         PlanEditorDialog(
@@ -167,6 +169,18 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
             onSave = { title, description, location, planDate, priority ->
                 viewModel.add(title, description, location, planDate, priority) { editorOpen = false }
             },
+        )
+    }
+
+    pendingDelete?.let { plan ->
+        LoveConfirmDialog(
+            title = "删除计划「${plan.title}」？",
+            message = "删除后这次约会计划无法恢复。",
+            onConfirm = {
+                viewModel.delete(plan)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
         )
     }
 }

@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +58,7 @@ import com.lovejournal.app.data.local.entity.EventEntity
 import com.lovejournal.app.data.remote.dto.LoveClock
 import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.ui.components.LoveHeroBrush
+import com.lovejournal.app.ui.components.LoveHeroBrushDark
 import com.lovejournal.app.ui.components.LoveSectionTitle
 import com.lovejournal.app.ui.components.LoveSoftCard
 import com.lovejournal.app.ui.theme.LovePink
@@ -142,10 +144,11 @@ private fun LoveClockCard(initial: LoveClock) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
-            .background(LoveHeroBrush)
-            .padding(24.dp),
+            .background(if (isSystemInDarkTheme()) LoveHeroBrushDark else LoveHeroBrush),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // 40% 黑色 scrim：保证白字压在渐变任意位置都 ≥ 4.5:1（渐变最浅端原为 2.07:1）。
+        Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.40f)))
+        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -247,7 +250,7 @@ private fun EventRow(event: EventEntity) {
                     Text(
                         if (days == 0) "今天" else "$days 天",
                         Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelMedium,
                     )

@@ -52,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -62,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.lovejournal.app.data.remote.dto.AlbumDetail
 import com.lovejournal.app.ui.components.LoveEmptyState
+import com.lovejournal.app.ui.components.LoveImageViewerDialog
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSectionTitle
 import com.lovejournal.app.ui.components.LoveSoftCard
@@ -69,7 +71,7 @@ import com.lovejournal.app.ui.components.LoveSoftCard
 @Composable
 fun AlbumsScreen(viewModel: AlbumsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var editing by remember { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { it?.let(viewModel::upload) }
     BackHandler(state.detail != null) { viewModel.closeDetail() }
@@ -96,13 +98,22 @@ fun AlbumsScreen(viewModel: AlbumsViewModel = hiltViewModel()) {
 @Composable
 private fun AlbumDetailContent(detail: AlbumDetail, mediaUrl: (String?) -> String?, onBack: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit, onComment: (String) -> Unit, modifier: Modifier) {
     var comment by remember(detail.alb_id) { mutableStateOf("") }
+    var previewUrl by remember { mutableStateOf<String?>(null) }
     LazyColumn(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") }; Row { IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, "编辑") }; IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除") } } }; Text(detail.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); detail.description?.let { Text(it) } }
-        items(detail.media_items, key = { it.media_id }) { media -> AsyncImage(mediaUrl(media.thumbnail_url ?: media.file_url), null, Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Crop) }
+        items(detail.media_items, key = { it.media_id }) { media ->
+            AsyncImage(
+                mediaUrl(media.thumbnail_url ?: media.file_url),
+                "相册照片",
+                Modifier.fillMaxWidth().height(240.dp).clickable { previewUrl = mediaUrl(media.file_url) },
+                contentScale = ContentScale.Crop,
+            )
+        }
         item { Text("评论", fontWeight = FontWeight.Bold) }
         items(detail.comments, key = { it.cid }) { Text("${it.author_nickname ?: "用户"}：${it.content}") }
         item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(comment, { comment = it }, label = { Text("写评论") }, modifier = Modifier.weight(1f)); Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text("发送") } } }
     }
+    previewUrl?.let { url -> LoveImageViewerDialog(url = url, onDismiss = { previewUrl = null }) }
 }
 
 @Composable
