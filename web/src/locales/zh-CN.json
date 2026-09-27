@@ -2500,5 +2500,6 @@
     "zh-CN": "中文",
     "en-US": "English",
     "ja-JP": "日本語"
-  }
+  },
+  "offline": {"offlineBanner": "当前离线 · 编辑内容已保存在本机", "pending": "{count} 项待同步", "syncNow": "立即同步", "syncing": "同步中…", "authPaused": "登录已过期，重新登录后将继续同步", "queueTitle": "离线同步队列", "empty": "队列为空，所有更改已同步。", "lastSync": "上次同步 {time}", "pendingLabel": "待同步", "conflict": "版本冲突", "dead": "发送失败", "overwrite": "覆盖服务端", "retry": "重试", "copy": "复制内容", "copied": "已复制", "drop": "丢弃", "staleNotice": "离线数据 · 保存于 {time}", "kind": {"article.create": "新建文章", "article.update": "更新文章", "article.delete": "删除文章", "moment.create": "发布时光轴", "moment.delete": "删除时光轴", "moment.comment": "时光轴评论", "checkin.create": "心情打卡"}}
 }

@@ -120,7 +120,10 @@ export async function initPwa(router) {
     isInstalled.value = true;
   });
 
-  if ("serviceWorker" in navigator) {
+  // Register only in production: sw.js serves same-origin requests cache-first,
+  // which in dev returns stale Vite modules after every code change and blanks
+  // the page until the worker is manually unregistered.
+  if ("serviceWorker" in navigator && import.meta.env.PROD) {
     try {
       await navigator.serviceWorker.register("/sw.js");
       await syncBrowserSubscription();

@@ -17,6 +17,9 @@
 
 <template>
   <div class="content-section">
+    <p v-if="staleFrom" class="offline-stale-notice" role="status">
+      {{ $t('offline.staleNotice', { time: new Date(staleFrom).toLocaleString() }) }}
+    </p>
     <ModuleTabs :items="memoryTabs" :label="t('timelineView.tabAriaLabel')" />
 
     <article v-if="token" class="glass-card section-block">
@@ -119,6 +122,7 @@ import ModuleTabs from "../components/ModuleTabs.vue";
 import CommentThread from "../components/CommentThread.vue";
 import MediaCapture from "../components/MediaCapture.vue";
 import { createMoment, fetchTimeline, postComment, resolveAssetUrl, toThumbnailUrl, uploadTimelineImage } from "../lib/api";
+import { loadSnapshot, saveSnapshot } from "../lib/offline/snapshots";
 import { useAuth } from "../stores/auth";
 import { parseError, parseTags } from "../utils/helpers";
 import { useI18n } from "vue-i18n";
@@ -128,6 +132,8 @@ const showMessage = inject("showMessage");
 const { token } = useAuth();
 const moments = ref([]);
 const busy = ref(false);
+// 离线快照回退时记录数据时间（null 表示展示的是实时数据）。
+const staleFrom = ref(null);
 const currentPage = ref(1);
 const hasNext = ref(false);
 const commentInputs = reactive({});
@@ -166,12 +172,25 @@ async function loadTimeline(page = 1) {
     const data = await fetchTimeline({ page, page_size: 20, sort: "desc" });
     if (page === 1) {
       moments.value = data.items || [];
+      await saveSnapshot("timeline:page:1:desc", data);
+      staleFrom.value = null;
     } else {
       moments.value = [...moments.value, ...(data.items || [])];
     }
     currentPage.value = data.page;
     hasNext.value = data.has_next;
   } catch (error) {
+    if (page === 1) {
+      // 离线/请求失败时退回首页快照，明确标注数据时间。
+      const snapshot = await loadSnapshot("timeline:page:1:desc");
+      if (snapshot) {
+        moments.value = snapshot.payload.items || [];
+        currentPage.value = snapshot.payload.page || 1;
+        hasNext.value = Boolean(snapshot.payload.has_next);
+        staleFrom.value = snapshot.fetchedAt;
+        return;
+      }
+    }
     showMessage(parseError(error));
   }
 }

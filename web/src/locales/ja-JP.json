@@ -2356,5 +2356,6 @@
     "zh-CN": "中文",
     "en-US": "English",
     "ja-JP": "日本語"
-  }
+  },
+  "offline": {"offlineBanner": "オフライン · 編集内容はこの端末に保存されています", "pending": "{count} 件が同期待ち", "syncNow": "今すぐ同期", "syncing": "同期中…", "authPaused": "セッションが期限切れです。再度サインインすると同期を再開します", "queueTitle": "オフライン同期キュー", "empty": "キューは空です。すべて同期済みです。", "lastSync": "前回の同期 {time}", "pendingLabel": "同期待ち", "conflict": "バージョン競合", "dead": "送信失敗", "overwrite": "サーバーを上書き", "retry": "再試行", "copy": "内容をコピー", "copied": "コピーしました", "drop": "破棄", "staleNotice": "オフラインデータ · {time} に保存", "kind": {"article.create": "記事を作成", "article.update": "記事を更新", "article.delete": "記事を削除", "moment.create": "タイムラインに投稿", "moment.delete": "タイムラインを削除", "moment.comment": "タイムラインへのコメント", "checkin.create": "気分チェックイン"}}
 }

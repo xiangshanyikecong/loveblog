@@ -763,3 +763,14 @@ body {
     white-space: nowrap;
   }
 }
+
+/* 离线快照回退提示（Dashboard/Timeline/Articles/Albums 共用）。 */
+.offline-stale-notice {
+  margin: 0 0 0.75rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #f2d3a0;
+  border-radius: var(--radius-control, 8px);
+  background: #fff8ec;
+  color: #8a5a1c;
+  font-size: 0.78rem;
+}

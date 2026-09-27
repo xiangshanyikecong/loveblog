@@ -18,6 +18,7 @@
 import axios from "axios";
 import { t } from "../locales";
 import { compressImage } from "../utils/imageCompress";
+import { OutboxQueuedError, enqueueFailedRequest, matchQueueable } from "./offline/outbox";
 
 function isAbsoluteUrl(value) {
   return /^(?:[a-z]+:)?\/\//i.test(value);
@@ -186,7 +187,23 @@ export function rewriteAssetUrlsInHtml(html = "") {
 
 export const api = axios.create({
   baseURL: apiBaseURL,
-  withCredentials: true
+  withCredentials: true,
+  // 弱网下请求不再无限悬挂；上传等长请求在各上传函数里单独放宽。
+  timeout: 15000
+});
+
+// 离线写入队列（P1）：白名单内的创建类写请求在发出前就带上幂等键，
+// 断网失败入队后重放复用同一个键，服务端保证不重复创建。
+api.interceptors.request.use((config) => {
+  const kind = matchQueueable(config?.method, config?.url);
+  if (kind?.needsKey && !config.headers["Idempotency-Key"]) {
+    config.__outboxKey =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `outbox-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    config.headers["Idempotency-Key"] = config.__outboxKey;
+  }
+  return config;
 });
 
 let unauthorizedHandler = () => {};
@@ -231,13 +248,34 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     if (shouldInvalidateSession(error)) {
       unauthorizedHandler();
+    }
+    // 网络类失败 + 白名单写操作 + 未标记跳过 → 入队并返回特殊的
+    // OutboxQueuedError，调用方通过 isOutboxQueued() 识别「已存入待同步
+    // 队列」，给出与普通失败不同的提示。
+    const config = error?.config;
+    if (config && !config.__outboxSkip && isNetworkFailure(error)) {
+      const kind = matchQueueable(config.method, config.url);
+      if (kind) {
+        const item = await enqueueFailedRequest(kind, config);
+        if (item) return Promise.reject(new OutboxQueuedError(kind.kind, item));
+      }
     }
     return Promise.reject(error);
   }
 );
+
+function isNetworkFailure(error) {
+  // 拿到 HTTP 响应说明服务器可达，失败原因不是断网，不进入离线队列。
+  return !error?.response;
+}
+
+/** 调用方用它区分「已离线入队」与真实失败，展示对应的友好提示。 */
+export function isOutboxQueued(error) {
+  return error instanceof OutboxQueuedError || error?.name === "OutboxQueuedError";
+}
 
 export async function fetchDashboard() {
   const { data } = await api.get("/v1/dashboard");
@@ -325,7 +363,7 @@ async function uploadImageWithCompression(file, endpoint) {
 
   const { data } = await api.post(endpoint, formData, {
     headers: {
-      "Content-Type": "multipart/form-data"
+      "Content-Type": "multipart/form-data", timeout: 60000
     }
   });
   return data;
@@ -406,7 +444,7 @@ export async function uploadChatImage(file) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/v1/uploads/checkin", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 }
   });
   return data;
 }
@@ -415,7 +453,7 @@ export async function uploadChatAudio(file) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/v1/uploads/chat-audio", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 }
   });
   return data;
 }
@@ -424,7 +462,7 @@ export async function uploadChatEncryptedMedia(blob, filename = "encrypted.enc")
   const formData = new FormData();
   formData.append("file", blob, filename);
   const { data } = await api.post("/v1/uploads/chat-encrypted-media", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 }
   });
   return data;
 }
@@ -640,7 +678,7 @@ export async function uploadWatchVideo(file, onProgress) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/v1/cottage/watch/sources/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 },
     onUploadProgress: (e) => {
       if (onProgress && e.total) {
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -783,7 +821,7 @@ export async function uploadFile(file, destination = "avatars") {
 
   const { data } = await api.post(`/v1/uploads/${destination}`, formData, {
     headers: {
-      "Content-Type": "multipart/form-data"
+      "Content-Type": "multipart/form-data", timeout: 60000
     }
   });
   return data;
@@ -1091,7 +1129,7 @@ export async function restorePreflight(file) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/v1/export/restore/preflight", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 }
   });
   return data;
 }
@@ -1100,7 +1138,7 @@ export async function restoreBackup(file) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/v1/export/restore", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 }
   });
   return data;
 }
@@ -1119,7 +1157,7 @@ export async function uploadCapsuleMedia(file, onProgress) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/v1/uploads/capsule", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 },
     onUploadProgress: (e) => {
       if (onProgress && e.total) {
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -1374,7 +1412,7 @@ export async function uploadLocalTrack(file, meta = {}) {
   if (meta.duration_ms != null) formData.append("duration_ms", String(meta.duration_ms));
   if (meta.cover_url) formData.append("cover_url", meta.cover_url);
   const { data } = await api.post("/v1/cottage/listen/local-tracks", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
+    headers: { "Content-Type": "multipart/form-data", timeout: 60000 }
   });
   return data; // SongMeta
 }

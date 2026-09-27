@@ -56,6 +56,10 @@ export function eventStatusText(item) {
 }
 
 export function parseError(error) {
+  // 离线入队的写操作不是失败：给出与普通错误不同的提示。
+  if (error?.name === "OutboxQueuedError") {
+    return t("errors.outboxQueued");
+  }
   const url = error?.config?.url;
   const status = error?.response?.status;
   const detail = error?.response?.data?.detail;

@@ -17,6 +17,7 @@
 
 import { computed, ref } from "vue";
 import { fetchMe, logoutApi, setUnauthorizedHandler } from "../lib/api";
+import { wipeOfflineData } from "../lib/offline/db";
 import { disposeListenPlayer } from "./listenPlayer";
 
 const LOGOUT_PENDING_KEY = "love_logout_pending";
@@ -102,6 +103,12 @@ export function useAuth() {
     currentUserRole.value = "";
     localStorage.removeItem("love_is_auth");
     localStorage.removeItem("love_role");
+    // 隐私边界：登出即清空本机离线数据（草稿/写队列/只读快照）与 SW
+    // 运行时缓存，覆盖共享电脑场景。存储不可用时静默跳过。
+    wipeOfflineData().catch(() => {});
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: "LOVE_CLEAR_OFFLINE_CACHE" });
+    }
   }
 
   async function logout() {

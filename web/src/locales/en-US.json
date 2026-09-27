@@ -2500,5 +2500,6 @@
     "zh-CN": "中文",
     "en-US": "English",
     "ja-JP": "日本語"
-  }
+  },
+  "offline": {"offlineBanner": "Offline · edits are saved on this device", "pending": "{count} pending sync", "syncNow": "Sync now", "syncing": "Syncing…", "authPaused": "Session expired — sign in again to resume syncing", "queueTitle": "Offline sync queue", "empty": "Queue is empty. Everything is synced.", "lastSync": "Last sync {time}", "pendingLabel": "Pending", "conflict": "Version conflict", "dead": "Failed", "overwrite": "Overwrite server", "retry": "Retry", "copy": "Copy content", "copied": "Copied", "drop": "Discard", "staleNotice": "Offline data · saved {time}", "kind": {"article.create": "Create article", "article.update": "Update article", "article.delete": "Delete article", "moment.create": "Post moment", "moment.delete": "Delete moment", "moment.comment": "Moment comment", "checkin.create": "Check-in"}}
 }

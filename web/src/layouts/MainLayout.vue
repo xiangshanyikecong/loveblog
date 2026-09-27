@@ -80,6 +80,8 @@
       </nav>
     </header>
 
+    <OfflineStatus />
+
     <main class="page-main">
       <section v-if="route.name === 'dashboard' && !canManageContent" class="hero-banner">
         <div class="hero-content">
@@ -119,6 +121,7 @@ import { Menu, ShieldCheck, X } from "@lucide/vue";
 import { useAuth } from "../stores/auth";
 import ListenMiniPlayer from "../views/cottage/listen/ListenMiniPlayer.vue";
 import LanguageSwitcher from "../components/LanguageSwitcher.vue";
+import OfflineStatus from "../components/OfflineStatus.vue";
 
 const { t } = useI18n();
 const route = useRoute();

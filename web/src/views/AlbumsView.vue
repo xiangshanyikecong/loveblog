@@ -17,6 +17,9 @@
 
 <template>
   <div class="content-section">
+    <p v-if="staleFrom" class="offline-stale-notice" role="status">
+      {{ $t('offline.staleNotice', { time: new Date(staleFrom).toLocaleString() }) }}
+    </p>
     <ModuleTabs :items="contentTabs" :label="t('albums.tabAriaLabel')" />
 
     <article class="glass-card section-block">
@@ -119,6 +122,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import ModuleTabs from "../components/ModuleTabs.vue";
 import { fetchAlbums, createAlbum, resolveAssetUrl, uploadAlbumImage } from "../lib/api";
+import { loadSnapshot, saveSnapshot } from "../lib/offline/snapshots";
 import { parseError, formatFileSize, parseTags } from "../utils/helpers";
 import { useAuth } from "../stores/auth";
 
@@ -127,6 +131,8 @@ const showMessage = inject("showMessage");
 const { canManageContent } = useAuth();
 const { t } = useI18n();
 const albums = ref([]);
+// 离线快照回退时记录数据时间（null 表示展示的是实时数据）。
+const staleFrom = ref(null);
 const contentTabs = [
   { label: t("albums.tabArticles"), to: "/articles" },
   { label: t("albums.tabAlbums"), to: "/albums" },
@@ -161,7 +167,16 @@ async function loadAlbums() {
   try {
     const data = await fetchAlbums();
     albums.value = data.items || [];
+    await saveSnapshot("albums", data);
+    staleFrom.value = null;
   } catch (error) {
+    // 离线/请求失败时退回最近一份快照，明确标注数据时间。
+    const snapshot = await loadSnapshot("albums");
+    if (snapshot) {
+      albums.value = snapshot.payload.items || [];
+      staleFrom.value = snapshot.fetchedAt;
+      return;
+    }
     showMessage(parseError(error));
   }
 }

@@ -36,6 +36,9 @@
       <div class="toolbar-right">
         <span v-if="hasUnsavedChanges" class="unsaved-indicator">{{ t('articleEditor.unsaved') }}</span>
         <span v-else-if="lastSaved" class="saved-indicator">{{ t('articleEditor.saved') }}</span>
+        <span v-if="lastLocalSaved" class="local-draft-indicator" :title="t('articleEditor.localDraftHint')">
+          {{ t('articleEditor.localSaved', { time: lastLocalSaved }) }}
+        </span>
         <span v-if="saveError" class="save-error" role="alert">{{ saveError }}</span>
         
         <button class="btn-secondary" @click="showSettingsModal = true">
@@ -235,6 +238,12 @@ import RichTextEditor from '../components/RichTextEditor.vue';
 import { createArticle, fetchArticle, resolveApiUrl, resolveAssetUrl, updateArticle, uploadFile } from '../lib/api';
 import { confirmDialog, alertDialog, choiceDialog } from '../lib/dialog';
 import { editorRouteKey, isCurrentEditorSave } from '../utils/editorSave';
+import {
+  draftIsWorthRestoring,
+  loadArticleDraft,
+  removeArticleDraft,
+  saveArticleDraft,
+} from '../lib/offline/drafts';
 import { parseTags } from '../utils/helpers';
 
 const route = useRoute();
@@ -254,6 +263,12 @@ const editorMode = ref('wysiwyg'); // wysiwyg, ir, sv
 // to match. Used as the `If-Match` value on save so the server can reject
 // concurrent partner edits with a 409 instead of silently overwriting them.
 const baseVersion = ref(null);
+
+// 本地草稿（IndexedDB）：保存时记录的服务端 updated_at，供恢复判定使用。
+const serverUpdatedAt = ref(null);
+// 工具栏「已本地保存」指示的时间戳。
+const lastLocalSaved = ref('');
+let draftSaveTimer = null;
 
 function emptyArticle() {
   return {
@@ -297,6 +312,7 @@ async function loadArticle() {
     editRevision = 0;
     hasUnsavedChanges.value = false;
     lastSaved.value = null;
+    await maybeRestoreLocalDraft(null, null, generation);
     return;
   }
 
@@ -319,13 +335,68 @@ async function loadArticle() {
     // Store the version the buffer was loaded from so subsequent saves can
     // opt into optimistic concurrency via `If-Match`.
     baseVersion.value = data.__etag ?? data.version ?? null;
+    serverUpdatedAt.value = data.updated_at || null;
     editRevision = 0;
     hasUnsavedChanges.value = false;
+    await maybeRestoreLocalDraft(aid, data.updated_at || null, generation);
   } catch (_error) {
     if (generation !== loadGeneration) return;
     await alertDialog(t('articleEditor.loadFailed'));
     goBack();
   }
+}
+
+// ---- 本地草稿（IndexedDB）----
+
+function currentEditorContent() {
+  return editorRef.value?.getValue() || article.value.content;
+}
+
+/** 立即把当前编辑态写入本地草稿（fire-and-forget；不可用时静默）。 */
+function captureLocalDraft() {
+  if (!article.value.title.trim() && !currentEditorContent().trim()) return;
+  saveArticleDraft({
+    aid: article.value.aid || route.params.aid || null,
+    title: article.value.title,
+    content: currentEditorContent(),
+    coverUrl: article.value.cover_url,
+    baseVersion: baseVersion.value,
+    serverUpdatedAt: serverUpdatedAt.value,
+  }).then((saved) => {
+    if (saved) lastLocalSaved.value = new Date().toLocaleTimeString();
+  });
+}
+
+/** 输入防抖 3s 后写本地草稿；连续输入只在停顿后落盘一次。 */
+function scheduleLocalDraft() {
+  if (draftSaveTimer) clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(captureLocalDraft, 3000);
+}
+
+/**
+ * 加载完成后检查本地草稿：比服务端已知版本新时提示恢复。恢复会把标题/
+ * 正文/封面回填进编辑器并标记未保存，后续保存走既有 If-Match 冲突流程。
+ */
+async function maybeRestoreLocalDraft(aid, updatedIso, generation) {
+  const draft = await loadArticleDraft(aid);
+  if (generation !== loadGeneration) return;
+  if (!draft || !draftIsWorthRestoring(draft, updatedIso)) return;
+  const time = new Date(draft.updatedAt).toLocaleString();
+  const restore = await confirmDialog(
+    t('articleEditor.localDraftFound', { time }),
+    { confirmText: t('articleEditor.restore'), cancelText: t('articleEditor.discard') },
+  );
+  if (generation !== loadGeneration) return;
+  if (!restore) {
+    await removeArticleDraft(aid);
+    return;
+  }
+  article.value.title = draft.title || '';
+  article.value.content = draft.content || '';
+  if (draft.coverUrl) article.value.cover_url = draft.coverUrl;
+  // 草稿基于旧版本时保留其 baseVersion：保存遇到 409 会走既有冲突弹窗。
+  if (draft.baseVersion != null) baseVersion.value = draft.baseVersion;
+  markAsModified();
 }
 
 // 将 blocks 转换为 Markdown
@@ -529,6 +600,11 @@ async function saveArticle({ status = article.value.status, notify = false } = {
     }
     lastSaved.value = new Date().toLocaleTimeString();
 
+    // 服务端保存成功：本地草稿完成使命，两个 key 都清理（创建成功会从
+    // article:new 迁移到 article:<aid>）。
+    await removeArticleDraft(article.value.aid);
+    await removeArticleDraft(null);
+
     if (notify) await alertDialog(status === 'Published' ? t('articleEditor.publishSuccess') : t('articleEditor.saveSuccess'));
     return true;
   } catch (error) {
@@ -616,6 +692,7 @@ function markAsModified() {
   editRevision += 1;
   hasUnsavedChanges.value = true;
   saveError.value = '';
+  scheduleLocalDraft();
 }
 
 // 返回
@@ -640,9 +717,19 @@ function startAutoSave() {
 
 // 页面离开提示
 function handleBeforeUnload(e) {
+  // 关页/刷新前把缓冲内容落一份本地草稿：即使这次会话没保存成功，
+  // 下次打开也能恢复。IndexedDB 写入在 unload 前发起即可完成。
   if (hasUnsavedChanges.value) {
+    captureLocalDraft();
     e.preventDefault();
     e.returnValue = '';
+  }
+}
+
+// 切后台同样强制落盘（移动端浏览器可能随时回收标签页）。
+function handleVisibilityChange() {
+  if (document.visibilityState === 'hidden' && hasUnsavedChanges.value) {
+    captureLocalDraft();
   }
 }
 
@@ -660,6 +747,7 @@ onMounted(() => {
   startAutoSave();
   window.addEventListener('beforeunload', handleBeforeUnload);
   window.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onBeforeUnmount(() => {
@@ -668,8 +756,14 @@ onBeforeUnmount(() => {
   if (autoSaveTimer) {
     clearInterval(autoSaveTimer);
   }
+  if (draftSaveTimer) {
+    clearTimeout(draftSaveTimer);
+    // 离开页面前把防抖中的草稿立即落盘（路由离开确认后仍可恢复）。
+    if (hasUnsavedChanges.value) captureLocalDraft();
+  }
   window.removeEventListener('beforeunload', handleBeforeUnload);
   window.removeEventListener('keydown', handleKeyDown);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
 // 监听路由变化
@@ -817,6 +911,11 @@ watch(() => route.params.aid, () => {
   color: #b91c1c;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.local-draft-indicator {
+  color: #64748b;
+  font-size: 0.78rem;
 }
 
 .editor-container {

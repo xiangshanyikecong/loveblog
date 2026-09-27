@@ -17,6 +17,9 @@
 
 <template>
   <div class="content-section">
+    <p v-if="staleFrom" class="offline-stale-notice" role="status">
+      {{ $t('offline.staleNotice', { time: new Date(staleFrom).toLocaleString() }) }}
+    </p>
     <section
       v-if="hasCouple"
       class="home-hero glass-card"
@@ -260,6 +263,7 @@ import EmptyState from "../components/EmptyState.vue";
 import LoveClockDisplay from "../components/LoveClockDisplay.vue";
 import MessageBoard from "../components/MessageBoard.vue";
 import { fetchDashboard, fetchMemories, resolveAssetUrl } from "../lib/api";
+import { loadSnapshot, saveSnapshot } from "../lib/offline/snapshots";
 import { useAuth } from "../stores/auth";
 import { eventGradient, eventStatusText, parseError } from "../utils/helpers";
 
@@ -303,6 +307,8 @@ function initialOf(member, fallback) {
 
 const busy = ref(false);
 const memories = ref([]);
+// 离线快照回退时记录数据时间（null 表示展示的是实时数据）。
+const staleFrom = ref(null);
 
 const validCountdownEvent = computed(() => {
   const now = new Date();
@@ -328,18 +334,31 @@ function onDayAdvance() {
   dashboard.love_clock.days += 1;
 }
 
+async function applyDashboardData(data) {
+  dashboard.love_clock = data.love_clock;
+  dashboard.stats = data.stats;
+  dashboard.couple = data.couple || { partner_a: null, partner_b: null };
+  dashboard.recent_events = data.recent_events || [];
+  dashboard.latest_articles = data.latest_articles || [];
+  dashboard.latest_albums = data.latest_albums || [];
+}
+
 async function reloadDashboard() {
   busy.value = true;
   try {
     const data = await fetchDashboard();
-    dashboard.love_clock = data.love_clock;
-    dashboard.stats = data.stats;
-    dashboard.couple = data.couple || { partner_a: null, partner_b: null };
-    dashboard.recent_events = data.recent_events || [];
-    dashboard.latest_articles = data.latest_articles || [];
-    dashboard.latest_albums = data.latest_albums || [];
+    await applyDashboardData(data);
+    await saveSnapshot("dashboard", data);
+    staleFrom.value = null;
   } catch (error) {
-    showMessage(parseError(error), "error");
+    // 离线/请求失败时退回最近一份快照，明确标注数据时间。
+    const snapshot = await loadSnapshot("dashboard");
+    if (snapshot) {
+      await applyDashboardData(snapshot.payload);
+      staleFrom.value = snapshot.fetchedAt;
+    } else {
+      showMessage(parseError(error), "error");
+    }
   } finally {
     busy.value = false;
   }
@@ -352,8 +371,11 @@ async function loadMemories() {
   }
   try {
     memories.value = await fetchMemories();
+    await saveSnapshot("memories", memories.value);
   } catch {
-    // Keep the dashboard usable when the optional memory summary is unavailable.
+    // 可选的记忆摘要失败不阻塞首页；离线时读快照。
+    const snapshot = await loadSnapshot("memories");
+    if (snapshot && staleFrom.value) memories.value = snapshot.payload;
   }
 }
 

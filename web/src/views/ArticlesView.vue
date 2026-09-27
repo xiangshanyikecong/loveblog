@@ -17,6 +17,9 @@
 
 <template>
   <div class="content-section">
+    <p v-if="staleFrom" class="offline-stale-notice" role="status">
+      {{ $t('offline.staleNotice', { time: new Date(staleFrom).toLocaleString() }) }}
+    </p>
     <ModuleTabs :items="contentTabs" :label="t('articles.tabAriaLabel')" />
 
     <!-- Tabs -->
@@ -177,6 +180,7 @@ import { CircleAlert, FilePenLine, FileText, RefreshCw } from "@lucide/vue";
 import EmptyState from "../components/EmptyState.vue";
 import ModuleTabs from "../components/ModuleTabs.vue";
 import { fetchArticles, fetchDrafts, createArticle } from "../lib/api";
+import { loadSnapshot, saveSnapshot } from "../lib/offline/snapshots";
 import { parseError, parseTags } from "../utils/helpers";
 import { useAuth } from "../stores/auth";
 
@@ -187,6 +191,8 @@ const articles = ref([]);
 const drafts = ref([]);
 const busy = ref(false);
 const loadingArticles = ref(false);
+// 离线快照回退时记录数据时间（null 表示展示的是实时数据）。
+const staleFrom = ref(null);
 const loadingDrafts = ref(false);
 const articlesError = ref("");
 const draftsError = ref("");
@@ -211,11 +217,21 @@ const articleForm = reactive({
 async function loadArticles() {
   loadingArticles.value = true;
   articlesError.value = "";
+  const scope = token.value ? "all" : "published";
   try {
     const data = await fetchArticles({ only_published: !token.value });
     articles.value = data.items || [];
+    await saveSnapshot(`articles:${scope}`, data);
+    staleFrom.value = null;
   } catch (error) {
-    articlesError.value = parseError(error);
+    // 离线/请求失败时退回最近一份列表快照，明确标注数据时间。
+    const snapshot = await loadSnapshot(`articles:${scope}`);
+    if (snapshot) {
+      articles.value = snapshot.payload.items || [];
+      staleFrom.value = snapshot.fetchedAt;
+    } else {
+      articlesError.value = parseError(error);
+    }
   } finally {
     loadingArticles.value = false;
   }
