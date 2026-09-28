@@ -106,7 +106,8 @@ export function useAuth() {
     // 隐私边界：登出即清空本机离线数据（草稿/写队列/只读快照）与 SW
     // 运行时缓存，覆盖共享电脑场景。存储不可用时静默跳过。
     wipeOfflineData().catch(() => {});
-    if (navigator.serviceWorker?.controller) {
+    // navigator 在 Node 20 及以下不存在，测试环境按缺失处理。
+    if (typeof navigator !== "undefined" && navigator.serviceWorker?.controller) {
       navigator.serviceWorker.controller.postMessage({ type: "LOVE_CLEAR_OFFLINE_CACHE" });
     }
   }
