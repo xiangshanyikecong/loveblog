@@ -120,7 +120,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | baseline-browser-mapping | 2.10.19 | Apache-2.0 | Not declared | <https://github.com/web-platform-dx/baseline-browser-mapping> |
 | binary-extensions | 2.3.0 | MIT | Not declared | sindresorhus/binary-extensions |
 | boolbase | 1.0.0 | ISC | Not declared | <https://github.com/fb55/boolbase> |
-| brace-expansion | 1.1.16 | MIT | Not declared | <https://github.com/juliangruber/brace-expansion> |
+| brace-expansion | 1.1.18 | MIT | Not declared | <https://github.com/juliangruber/brace-expansion> |
 | braces | 3.0.3 | MIT | Not declared | micromatch/braces |
 | browserslist | 4.28.2 | MIT | Not declared | browserslist/browserslist |
 | cacheable | 2.5.0 | MIT | Not declared | <https://github.com/jaredwray/cacheable> |
@@ -155,7 +155,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | dom-serializer | 2.0.0 | MIT | Not declared | <https://github.com/cheeriojs/dom-serializer> |
 | domelementtype | 2.3.0 | BSD-2-Clause | Not declared | <https://github.com/fb55/domelementtype> |
 | domhandler | 5.0.3 | BSD-2-Clause | Not declared | <https://github.com/fb55/domhandler> |
-| dompurify | 3.4.12 | (MPL-2.0 OR Apache-2.0) | Not declared | <https://github.com/cure53/DOMPurify> |
+| dompurify | 3.4.13 | (MPL-2.0 OR Apache-2.0) | Not declared | <https://github.com/cure53/DOMPurify> |
 | domutils | 3.2.2 | BSD-2-Clause | Not declared | <https://github.com/fb55/domutils> |
 | dunder-proto | 1.0.1 | MIT | Not declared | <https://github.com/es-shims/dunder-proto> |
 | electron-to-chromium | 1.5.340 | ISC | Not declared | <https://github.com/Kilian/electron-to-chromium> |
@@ -189,11 +189,12 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | estree-walker | 3.0.3 | MIT | Not declared | <https://github.com/Rich-Harris/estree-walker> |
 | esutils | 2.0.3 | BSD-2-Clause | Not declared | <http://github.com/estools/esutils> |
 | expect-type | 1.4.0 | Apache-2.0 | Not declared | <https://github.com/mmkal/expect-type> |
+| fake-indexeddb | 6.2.5 | Apache-2.0 | Not declared | <https://github.com/dumbmatter/fakeIndexedDB> |
 | fast-deep-equal | 3.1.3 | MIT | Not declared | <https://github.com/epoberezkin/fast-deep-equal> |
 | fast-glob | 3.3.3 | MIT | Not declared | mrmlnc/fast-glob |
 | fast-json-stable-stringify | 2.1.0 | MIT | Not declared | <https://github.com/epoberezkin/fast-json-stable-stringify> |
 | fast-levenshtein | 2.0.6 | MIT | Not declared | <https://github.com/hiddentao/fast-levenshtein> |
-| fast-uri | 3.1.4 | BSD-3-Clause | Not declared | <https://github.com/fastify/fast-uri> |
+| fast-uri | 3.1.5 | BSD-3-Clause | Not declared | <https://github.com/fastify/fast-uri> |
 | fastest-levenshtein | 1.0.16 | MIT | Not declared | <https://github.com/ka-weihe/fastest-levenshtein> |
 | fastq | 1.20.1 | ISC | Not declared | <https://github.com/mcollina/fastq> |
 | fdir | 6.5.0 | MIT | Not declared | <https://github.com/thecodrr/fdir> |
@@ -232,6 +233,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | html-tags | 3.3.1 | MIT | Not declared | sindresorhus/html-tags |
 | htmlparser2 | 8.0.2 | MIT | Not declared | <https://github.com/fb55/htmlparser2> |
 | https-proxy-agent | 5.0.1 | MIT | Not declared | <https://github.com/TooTallNate/node-https-proxy-agent> |
+| idb | 8.0.3 | ISC | Not declared | <https://github.com/jakearchibald/idb> |
 | ignore | 5.3.2 | MIT | Not declared | <https://github.com/kaelzhang/node-ignore> |
 | ignore | 7.0.6 | MIT | Not declared | <https://github.com/kaelzhang/node-ignore> |
 | import-fresh | 3.3.1 | MIT | Not declared | sindresorhus/import-fresh |
@@ -249,7 +251,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | jiti | 1.21.7 | MIT | Not declared | unjs/jiti |
 | js-tokens | 4.0.0 | MIT | Not declared | lydell/js-tokens |
 | js-tokens | 9.0.1 | MIT | Not declared | lydell/js-tokens |
-| js-yaml | 4.3.0 | MIT | Not declared | nodeca/js-yaml |
+| js-yaml | 4.3.1 | MIT | Not declared | nodeca/js-yaml |
 | json-buffer | 3.0.1 | MIT | Not declared | <https://github.com/dominictarr/json-buffer> |
 | json-parse-even-better-errors | 2.3.1 | MIT | Not declared | <https://github.com/npm/json-parse-even-better-errors> |
 | json-schema-traverse | 0.4.1 | MIT | Not declared | <https://github.com/epoberezkin/json-schema-traverse> |
@@ -293,7 +295,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | minimatch | 3.1.5 | ISC | Not declared | <https://github.com/isaacs/minimatch> |
 | ms | 2.1.3 | MIT | Not declared | vercel/ms |
 | mz | 2.7.0 | MIT | Not declared | normalize/mz |
-| nanoid | 3.3.16 | MIT | Not declared | ai/nanoid |
+| nanoid | 3.3.18 | MIT | Not declared | ai/nanoid |
 | natural-compare | 1.4.0 | MIT | Not declared | <https://github.com/litejs/natural-compare-lite> |
 | node-releases | 2.0.37 | MIT | Not declared | <https://github.com/chicoxyzzy/node-releases> |
 | normalize-path | 3.0.0 | MIT | Not declared | jonschlinkert/normalize-path |
@@ -318,7 +320,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | picomatch | 4.0.5 | MIT | Not declared | micromatch/picomatch |
 | pify | 2.3.0 | MIT | Not declared | sindresorhus/pify |
 | pirates | 4.0.7 | MIT | Not declared | <https://github.com/danez/pirates> |
-| postcss | 8.5.19 | MIT | Not declared | postcss/postcss |
+| postcss | 8.5.26 | MIT | Not declared | postcss/postcss |
 | postcss-html | 1.8.1 | MIT | Not declared | <https://github.com/ota-meshi/postcss-html> |
 | postcss-import | 15.1.0 | MIT | Not declared | <https://github.com/postcss/postcss-import> |
 | postcss-js | 4.1.0 | MIT | Not declared | postcss/postcss-js |
@@ -657,7 +659,7 @@ SOFTWARE.
 
 ### Text 9
 
-Applies to: @eslint/config-array 0.21.2 (LICENSE); @eslint/config-helpers 0.4.2 (LICENSE); @eslint/core 0.17.0 (LICENSE); @eslint/object-schema 2.1.7 (LICENSE); @eslint/plugin-kit 0.4.1 (LICENSE); @humanfs/core 0.19.2 (LICENSE); @humanfs/node 0.16.8 (LICENSE); @humanwhocodes/module-importer 1.0.1 (LICENSE); @humanwhocodes/retry 0.4.3 (LICENSE); baseline-browser-mapping 2.10.19 (LICENSE.txt); diff-match-patch 1.0.5 (LICENSE); dompurify 3.4.12 (LICENSE)
+Applies to: @eslint/config-array 0.21.2 (LICENSE); @eslint/config-helpers 0.4.2 (LICENSE); @eslint/core 0.17.0 (LICENSE); @eslint/object-schema 2.1.7 (LICENSE); @eslint/plugin-kit 0.4.1 (LICENSE); @humanfs/core 0.19.2 (LICENSE); @humanfs/node 0.16.8 (LICENSE); @humanwhocodes/module-importer 1.0.1 (LICENSE); @humanwhocodes/retry 0.4.3 (LICENSE); baseline-browser-mapping 2.10.19 (LICENSE.txt); diff-match-patch 1.0.5 (LICENSE); dompurify 3.4.13 (LICENSE)
 
 ```text
 Apache License
@@ -1821,7 +1823,7 @@ SOFTWARE.
 
 ### Text 36
 
-Applies to: autoprefixer 10.5.0 (LICENSE); postcss 8.5.19 (LICENSE)
+Applies to: autoprefixer 10.5.0 (LICENSE); postcss 8.5.26 (LICENSE)
 
 ```text
 The MIT License (MIT)
@@ -1907,7 +1909,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Text 40
 
-Applies to: brace-expansion 1.1.16 (LICENSE)
+Applies to: brace-expansion 1.1.18 (LICENSE)
 
 ```text
 MIT License
@@ -3162,7 +3164,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### Text 67
 
-Applies to: dompurify 3.4.12 (LICENSE-MPL)
+Applies to: dompurify 3.4.13 (LICENSE-MPL)
 
 ```text
 Mozilla Public License Version 2.0
@@ -4281,6 +4283,221 @@ Copyright 2024 Misha Kaletsky
 
 ### Text 84
 
+Applies to: fake-indexeddb 6.2.5 (LICENSE)
+
+```text
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+    "License" shall mean the terms and conditions for use, reproduction, and
+    distribution as defined by Sections 1 through 9 of this document.
+
+    "Licensor" shall mean the copyright owner or entity authorized by the
+    copyright owner that is granting the License.
+
+    "Legal Entity" shall mean the union of the acting entity and all other
+    entities that control, are controlled by, or are under common control with
+    that entity. For the purposes of this definition, "control" means (i) the
+    power, direct or indirect, to cause the direction or management of such
+    entity, whether by contract or otherwise, or (ii) ownership of
+    fifty percent (50%) or more of the outstanding shares, or (iii) beneficial
+    ownership of such entity.
+
+    "You" (or "Your") shall mean an individual or Legal Entity exercising
+    permissions granted by this License.
+
+    "Source" form shall mean the preferred form for making modifications,
+    including but not limited to software source code, documentation source,
+    and configuration files.
+
+    "Object" form shall mean any form resulting from mechanical transformation
+    or translation of a Source form, including but not limited to compiled
+    object code, generated documentation, and conversions to
+    other media types.
+
+    "Work" shall mean the work of authorship, whether in Source or Object
+    form, made available under the License, as indicated by a copyright notice
+    that is included in or attached to the work (an example is provided in the
+    Appendix below).
+
+    "Derivative Works" shall mean any work, whether in Source or Object form,
+    that is based on (or derived from) the Work and for which the editorial
+    revisions, annotations, elaborations, or other modifications represent,
+    as a whole, an original work of authorship. For the purposes of this
+    License, Derivative Works shall not include works that remain separable
+    from, or merely link (or bind by name) to the interfaces of, the Work and
+    Derivative Works thereof.
+
+    "Contribution" shall mean any work of authorship, including the original
+    version of the Work and any modifications or additions to that Work or
+    Derivative Works thereof, that is intentionally submitted to Licensor for
+    inclusion in the Work by the copyright owner or by an individual or
+    Legal Entity authorized to submit on behalf of the copyright owner.
+    For the purposes of this definition, "submitted" means any form of
+    electronic, verbal, or written communication sent to the Licensor or its
+    representatives, including but not limited to communication on electronic
+    mailing lists, source code control systems, and issue tracking systems
+    that are managed by, or on behalf of, the Licensor for the purpose of
+    discussing and improving the Work, but excluding communication that is
+    conspicuously marked or otherwise designated in writing by the copyright
+    owner as "Not a Contribution."
+
+    "Contributor" shall mean Licensor and any individual or Legal Entity on
+    behalf of whom a Contribution has been received by Licensor and
+    subsequently incorporated within the Work.
+
+2. Grant of Copyright License.
+
+    Subject to the terms and conditions of this License, each Contributor
+    hereby grants to You a perpetual, worldwide, non-exclusive, no-charge,
+    royalty-free, irrevocable copyright license to reproduce, prepare
+    Derivative Works of, publicly display, publicly perform, sublicense,
+    and distribute the Work and such Derivative Works in
+    Source or Object form.
+
+3. Grant of Patent License.
+
+    Subject to the terms and conditions of this License, each Contributor
+    hereby grants to You a perpetual, worldwide, non-exclusive, no-charge,
+    royalty-free, irrevocable (except as stated in this section) patent
+    license to make, have made, use, offer to sell, sell, import, and
+    otherwise transfer the Work, where such license applies only to those
+    patent claims licensable by such Contributor that are necessarily
+    infringed by their Contribution(s) alone or by combination of their
+    Contribution(s) with the Work to which such Contribution(s) was submitted.
+    If You institute patent litigation against any entity (including a
+    cross-claim or counterclaim in a lawsuit) alleging that the Work or a
+    Contribution incorporated within the Work constitutes direct or
+    contributory patent infringement, then any patent licenses granted to
+    You under this License for that Work shall terminate as of the date such
+    litigation is filed.
+
+4. Redistribution.
+
+    You may reproduce and distribute copies of the Work or Derivative Works
+    thereof in any medium, with or without modifications, and in Source or
+    Object form, provided that You meet the following conditions:
+
+    1. You must give any other recipients of the Work or Derivative Works a
+    copy of this License; and
+
+    2. You must cause any modified files to carry prominent notices stating
+    that You changed the files; and
+
+    3. You must retain, in the Source form of any Derivative Works that You
+    distribute, all copyright, patent, trademark, and attribution notices from
+    the Source form of the Work, excluding those notices that do not pertain
+    to any part of the Derivative Works; and
+
+    4. If the Work includes a "NOTICE" text file as part of its distribution,
+    then any Derivative Works that You distribute must include a readable copy
+    of the attribution notices contained within such NOTICE file, excluding
+    those notices that do not pertain to any part of the Derivative Works,
+    in at least one of the following places: within a NOTICE text file
+    distributed as part of the Derivative Works; within the Source form or
+    documentation, if provided along with the Derivative Works; or, within a
+    display generated by the Derivative Works, if and wherever such
+    third-party notices normally appear. The contents of the NOTICE file are
+    for informational purposes only and do not modify the License.
+    You may add Your own attribution notices within Derivative Works that You
+    distribute, alongside or as an addendum to the NOTICE text from the Work,
+    provided that such additional attribution notices cannot be construed
+    as modifying the License.
+
+    You may add Your own copyright statement to Your modifications and may
+    provide additional or different license terms and conditions for use,
+    reproduction, or distribution of Your modifications, or for any such
+    Derivative Works as a whole, provided Your use, reproduction, and
+    distribution of the Work otherwise complies with the conditions
+    stated in this License.
+
+5. Submission of Contributions.
+
+    Unless You explicitly state otherwise, any Contribution intentionally
+    submitted for inclusion in the Work by You to the Licensor shall be under
+    the terms and conditions of this License, without any additional
+    terms or conditions. Notwithstanding the above, nothing herein shall
+    supersede or modify the terms of any separate license agreement you may
+    have executed with Licensor regarding such Contributions.
+
+6. Trademarks.
+
+    This License does not grant permission to use the trade names, trademarks,
+    service marks, or product names of the Licensor, except as required for
+    reasonable and customary use in describing the origin of the Work and
+    reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty.
+
+    Unless required by applicable law or agreed to in writing, Licensor
+    provides the Work (and each Contributor provides its Contributions)
+    on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+    either express or implied, including, without limitation, any warranties
+    or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS
+    FOR A PARTICULAR PURPOSE. You are solely responsible for determining the
+    appropriateness of using or redistributing the Work and assume any risks
+    associated with Your exercise of permissions under this License.
+
+8. Limitation of Liability.
+
+    In no event and under no legal theory, whether in tort
+    (including negligence), contract, or otherwise, unless required by
+    applicable law (such as deliberate and grossly negligent acts) or agreed
+    to in writing, shall any Contributor be liable to You for damages,
+    including any direct, indirect, special, incidental, or consequential
+    damages of any character arising as a result of this License or out of
+    the use or inability to use the Work (including but not limited to damages
+    for loss of goodwill, work stoppage, computer failure or malfunction,
+    or any and all other commercial damages or losses), even if such
+    Contributor has been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability.
+
+    While redistributing the Work or Derivative Works thereof, You may choose
+    to offer, and charge a fee for, acceptance of support, warranty,
+    indemnity, or other liability obligations and/or rights consistent with
+    this License. However, in accepting such obligations, You may act only
+    on Your own behalf and on Your sole responsibility, not on behalf of any
+    other Contributor, and only if You agree to indemnify, defend, and hold
+    each Contributor harmless for any liability incurred by, or claims
+    asserted against, such Contributor by reason of your accepting any such
+    warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work
+
+    To apply the Apache License to your work, attach the following boilerplate
+    notice, with the fields enclosed by brackets "[]" replaced with your own
+    identifying information. (Don't include the brackets!) The text should be
+    enclosed in the appropriate comment syntax for the file format. We also
+    recommend that a file or class name and description of purpose be included
+    on the same "printed page" as the copyright notice for easier
+    identification within third-party archives.
+
+        Copyright 2017 Jeremy Scheff
+
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+        or implied. See the License for the specific language governing
+        permissions and limitations under the License.
+```
+
+### Text 85
+
 Applies to: fast-deep-equal 3.1.3 (LICENSE); json-schema-traverse 0.4.1 (LICENSE); json-schema-traverse 1.0.0 (LICENSE)
 
 ```text
@@ -4307,7 +4524,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 85
+### Text 86
 
 Applies to: fast-json-stable-stringify 2.1.0 (LICENSE)
 
@@ -4335,7 +4552,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 86
+### Text 87
 
 Applies to: fast-levenshtein 2.0.6 (LICENSE.md)
 
@@ -4366,9 +4583,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 87
+### Text 88
 
-Applies to: fast-uri 3.1.4 (LICENSE)
+Applies to: fast-uri 3.1.5 (LICENSE)
 
 ```text
 Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae
@@ -4403,7 +4620,7 @@ The complete list of contributors can be found at:
 - https://github.com/garycourt/uri-js/graphs/contributors
 ```
 
-### Text 88
+### Text 89
 
 Applies to: fastest-levenshtein 1.0.16 (LICENSE.md)
 
@@ -4431,7 +4648,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 89
+### Text 90
 
 Applies to: fastq 1.20.1 (LICENSE)
 
@@ -4451,7 +4668,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 90
+### Text 91
 
 Applies to: fdir 6.5.0 (LICENSE)
 
@@ -4465,7 +4682,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 91
+### Text 92
 
 Applies to: file-entry-cache 8.0.0 (LICENSE)
 
@@ -4493,7 +4710,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 92
+### Text 93
 
 Applies to: flat-cache 4.0.1 (LICENSE)
 
@@ -4521,7 +4738,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 93
+### Text 94
 
 Applies to: flatted 3.4.3 (LICENSE)
 
@@ -4543,7 +4760,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 94
+### Text 95
 
 Applies to: follow-redirects 1.16.0 (LICENSE)
 
@@ -4568,7 +4785,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 95
+### Text 96
 
 Applies to: form-data 4.0.6 (License)
 
@@ -4594,7 +4811,7 @@ Copyright (c) 2012 Felix Geisendörfer (felix@debuggable.com) and contributors
  THE SOFTWARE.
 ```
 
-### Text 96
+### Text 97
 
 Applies to: fraction.js 5.3.4 (LICENSE)
 
@@ -4622,7 +4839,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 97
+### Text 98
 
 Applies to: function-bind 1.1.2 (LICENSE)
 
@@ -4648,7 +4865,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 98
+### Text 99
 
 Applies to: get-intrinsic 1.3.0 (LICENSE)
 
@@ -4676,7 +4893,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 99
+### Text 100
 
 Applies to: get-proto 1.0.1 (LICENSE)
 
@@ -4704,7 +4921,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 100
+### Text 101
 
 Applies to: glob-parent 5.1.2 (LICENSE); glob-parent 5.1.2 (LICENSE)
 
@@ -4726,7 +4943,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 101
+### Text 102
 
 Applies to: glob-parent 6.0.2 (LICENSE)
 
@@ -4748,7 +4965,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 102
+### Text 103
 
 Applies to: global-modules 2.0.0 (LICENSE); global-prefix 3.0.0 (LICENSE); to-regex-range 5.0.1 (LICENSE)
 
@@ -4776,7 +4993,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 103
+### Text 104
 
 Applies to: globjoin 0.1.4 (LICENSE)
 
@@ -4804,7 +5021,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 104
+### Text 105
 
 Applies to: gopd 1.2.0 (LICENSE)
 
@@ -4832,7 +5049,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 105
+### Text 106
 
 Applies to: has-symbols 1.1.0 (LICENSE)
 
@@ -4860,7 +5077,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 106
+### Text 107
 
 Applies to: has-tostringtag 1.0.2 (LICENSE)
 
@@ -4888,7 +5105,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 107
+### Text 108
 
 Applies to: hashery 1.5.1 (LICENSE)
 
@@ -4916,7 +5133,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 108
+### Text 109
 
 Applies to: hasown 2.0.4 (LICENSE)
 
@@ -4944,7 +5161,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 109
+### Text 110
 
 Applies to: hookified 1.15.1 (LICENSE); hookified 2.2.0 (LICENSE); qified 0.10.1 (LICENSE)
 
@@ -4970,7 +5187,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 110
+### Text 111
 
 Applies to: htmlparser2 8.0.2 (LICENSE)
 
@@ -4995,7 +5212,20 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 ```
 
-### Text 111
+### Text 112
+
+Applies to: idb 8.0.3 (LICENSE)
+
+```text
+ISC License (ISC)
+Copyright (c) 2016, Jake Archibald <jaffathecake@gmail.com>
+
+Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+```
+
+### Text 113
 
 Applies to: ignore 5.3.2 (LICENSE-MIT); ignore 7.0.6 (LICENSE-MIT)
 
@@ -5023,7 +5253,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 112
+### Text 114
 
 Applies to: ini 1.3.8 (LICENSE); isexe 2.0.0 (LICENSE); minimatch 3.1.5 (LICENSE); semver 7.8.5 (LICENSE); which 1.3.1 (LICENSE); which 2.0.2 (LICENSE)
 
@@ -5045,7 +5275,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 113
+### Text 115
 
 Applies to: is-binary-path 2.1.0 (license)
 
@@ -5061,7 +5291,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 114
+### Text 116
 
 Applies to: is-core-module 2.16.1 (LICENSE)
 
@@ -5088,7 +5318,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 115
+### Text 117
 
 Applies to: is-extglob 2.1.1 (LICENSE); word-wrap 1.2.5 (LICENSE)
 
@@ -5116,7 +5346,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 116
+### Text 118
 
 Applies to: is-glob 4.0.3 (LICENSE); is-plain-object 5.0.0 (LICENSE); kind-of 6.0.3 (LICENSE)
 
@@ -5144,7 +5374,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 117
+### Text 119
 
 Applies to: jiti 1.21.7 (LICENSE); std-env 4.2.0 (LICENCE)
 
@@ -5172,7 +5402,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 118
+### Text 120
 
 Applies to: js-tokens 4.0.0 (LICENSE)
 
@@ -5200,7 +5430,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 119
+### Text 121
 
 Applies to: js-tokens 9.0.1 (LICENSE)
 
@@ -5228,9 +5458,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 120
+### Text 122
 
-Applies to: js-yaml 4.3.0 (LICENSE)
+Applies to: js-yaml 4.3.1 (LICENSE)
 
 ```text
 (The MIT License)
@@ -5256,7 +5486,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 121
+### Text 123
 
 Applies to: json-buffer 3.0.1 (LICENSE)
 
@@ -5285,7 +5515,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 122
+### Text 124
 
 Applies to: json-parse-even-better-errors 2.3.1 (LICENSE.md)
 
@@ -5317,7 +5547,7 @@ This library is a fork of 'better-json-errors' by Kat Marchán, extended and
 distributed under the terms of the MIT license above.
 ```
 
-### Text 123
+### Text 125
 
 Applies to: known-css-properties 0.37.0 (LICENSE)
 
@@ -5345,7 +5575,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 124
+### Text 126
 
 Applies to: levn 0.4.1 (LICENSE); optionator 0.9.4 (LICENSE); prelude-ls 1.2.1 (LICENSE); type-check 0.4.0 (LICENSE)
 
@@ -5374,7 +5604,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 125
+### Text 127
 
 Applies to: lightningcss 1.32.0 (LICENSE); lightningcss-win32-x64-msvc 1.32.0 (LICENSE)
 
@@ -5754,7 +5984,7 @@ This Source Code Form is "Incompatible With Secondary Licenses", as
 defined by the Mozilla Public License, v. 2.0.
 ```
 
-### Text 126
+### Text 128
 
 Applies to: lilconfig 3.1.3 (LICENSE)
 
@@ -5782,7 +6012,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 127
+### Text 129
 
 Applies to: lines-and-columns 1.2.4 (LICENSE)
 
@@ -5810,7 +6040,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 128
+### Text 130
 
 Applies to: lodash 4.18.1 (LICENSE); lodash.merge 4.6.2 (LICENSE)
 
@@ -5864,7 +6094,7 @@ licenses; we recommend you read them, as their terms may differ from the
 terms above.
 ```
 
-### Text 129
+### Text 131
 
 Applies to: lodash.truncate 4.4.2 (LICENSE)
 
@@ -5918,7 +6148,7 @@ licenses; we recommend you read them, as their terms may differ from the
 terms above.
 ```
 
-### Text 130
+### Text 132
 
 Applies to: magic-string 0.30.21 (LICENSE)
 
@@ -5932,7 +6162,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 131
+### Text 133
 
 Applies to: marked 18.0.2 (LICENSE.md)
 
@@ -5983,7 +6213,7 @@ Redistribution and use in source and binary forms, with or without modification,
 This software is provided by the copyright holders and contributors “as is” and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the copyright owner or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
 ```
 
-### Text 132
+### Text 134
 
 Applies to: mathml-tag-names 2.1.3 (license)
 
@@ -6012,7 +6242,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 133
+### Text 135
 
 Applies to: mdn-data 2.27.1 (LICENSE)
 
@@ -6135,7 +6365,7 @@ For more information, please see
 <http://creativecommons.org/publicdomain/zero/1.0/>
 ```
 
-### Text 134
+### Text 136
 
 Applies to: merge2 1.4.1 (LICENSE)
 
@@ -6163,7 +6393,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 135
+### Text 137
 
 Applies to: mime-db 1.52.0 (LICENSE)
 
@@ -6193,7 +6423,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 136
+### Text 138
 
 Applies to: mime-types 2.1.35 (LICENSE)
 
@@ -6223,7 +6453,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 137
+### Text 139
 
 Applies to: ms 2.1.3 (license.md)
 
@@ -6251,7 +6481,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 138
+### Text 140
 
 Applies to: mz 2.7.0 (LICENSE)
 
@@ -6279,9 +6509,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 139
+### Text 141
 
-Applies to: nanoid 3.3.16 (LICENSE)
+Applies to: nanoid 3.3.18 (LICENSE)
 
 ```text
 The MIT License (MIT)
@@ -6306,7 +6536,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 140
+### Text 142
 
 Applies to: node-releases 2.0.37 (LICENSE)
 
@@ -6334,7 +6564,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 141
+### Text 143
 
 Applies to: normalize-path 3.0.0 (LICENSE)
 
@@ -6362,7 +6592,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 142
+### Text 144
 
 Applies to: object-assign 4.1.1 (license); pify 2.3.0 (license)
 
@@ -6390,7 +6620,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 143
+### Text 145
 
 Applies to: object-hash 3.0.0 (LICENSE)
 
@@ -6418,7 +6648,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 144
+### Text 146
 
 Applies to: obug 2.1.4 (LICENSE)
 
@@ -6448,7 +6678,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 145
+### Text 147
 
 Applies to: path-parse 1.0.7 (LICENSE)
 
@@ -6476,7 +6706,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 146
+### Text 148
 
 Applies to: pathe 2.0.3 (LICENSE)
 
@@ -6553,7 +6783,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 147
+### Text 149
 
 Applies to: picocolors 1.1.1 (LICENSE)
 
@@ -6575,7 +6805,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 148
+### Text 150
 
 Applies to: picomatch 2.3.2 (LICENSE); picomatch 4.0.4 (LICENSE); picomatch 4.0.5 (LICENSE); picomatch 4.0.5 (LICENSE)
 
@@ -6603,7 +6833,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 149
+### Text 151
 
 Applies to: pirates 4.0.7 (LICENSE)
 
@@ -6631,7 +6861,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 150
+### Text 152
 
 Applies to: postcss-html 1.8.1 (LICENSE)
 
@@ -6659,7 +6889,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 151
+### Text 153
 
 Applies to: postcss-import 15.1.0 (LICENSE)
 
@@ -6686,7 +6916,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 152
+### Text 154
 
 Applies to: postcss-js 4.1.0 (LICENSE)
 
@@ -6713,7 +6943,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 153
+### Text 155
 
 Applies to: postcss-load-config 6.0.1 (LICENSE)
 
@@ -6740,7 +6970,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 154
+### Text 156
 
 Applies to: postcss-nested 6.2.0 (LICENSE)
 
@@ -6767,7 +6997,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 155
+### Text 157
 
 Applies to: postcss-resolve-nested-selector 0.1.6 (LICENSE)
 
@@ -6796,7 +7026,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 156
+### Text 158
 
 Applies to: postcss-safe-parser 6.0.0 (LICENSE); postcss-safe-parser 7.0.1 (LICENSE)
 
@@ -6823,7 +7053,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 157
+### Text 159
 
 Applies to: postcss-selector-parser 6.1.2 (LICENSE-MIT); postcss-selector-parser 7.1.4 (LICENSE-MIT)
 
@@ -6852,7 +7082,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 158
+### Text 160
 
 Applies to: postcss-value-parser 4.2.0 (LICENSE)
 
@@ -6881,7 +7111,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 159
+### Text 161
 
 Applies to: prettier 3.9.6 (LICENSE)
 
@@ -6895,7 +7125,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 160
+### Text 162
 
 Applies to: proxy-from-env 2.1.0 (LICENSE)
 
@@ -6922,7 +7152,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 161
+### Text 163
 
 Applies to: queue-microtask 1.2.3 (LICENSE); run-parallel 1.2.0 (LICENSE)
 
@@ -6949,7 +7179,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 162
+### Text 164
 
 Applies to: read-cache 1.0.0 (LICENSE)
 
@@ -6976,7 +7206,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 163
+### Text 165
 
 Applies to: readdirp 3.6.0 (LICENSE)
 
@@ -7004,7 +7234,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 164
+### Text 166
 
 Applies to: require-from-string 2.0.2 (license)
 
@@ -7032,7 +7262,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 165
+### Text 167
 
 Applies to: resolve 1.22.12 (LICENSE)
 
@@ -7060,7 +7290,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 166
+### Text 168
 
 Applies to: reusify 1.1.0 (LICENSE)
 
@@ -7088,7 +7318,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 167
+### Text 169
 
 Applies to: rolldown 1.1.5 (LICENSE)
 
@@ -7120,7 +7350,7 @@ end of terms and conditions
 The licenses of externally maintained libraries from which parts of the Software is derived are listed [here](https://github.com/rolldown/rolldown/blob/main/THIRD-PARTY-LICENSE).
 ```
 
-### Text 168
+### Text 170
 
 Applies to: siginfo 2.0.0 (LICENSE)
 
@@ -7140,7 +7370,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 169
+### Text 171
 
 Applies to: signal-exit 4.1.0 (LICENSE.txt)
 
@@ -7163,7 +7393,7 @@ WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
 ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 170
+### Text 172
 
 Applies to: slice-ansi 4.0.0 (license)
 
@@ -7180,7 +7410,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 171
+### Text 173
 
 Applies to: source-map-js 1.2.1 (LICENSE)
 
@@ -7214,7 +7444,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### Text 172
+### Text 174
 
 Applies to: stylelint 16.26.1 (LICENSE)
 
@@ -7241,7 +7471,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 173
+### Text 175
 
 Applies to: sucrase 3.35.1 (LICENSE)
 
@@ -7269,7 +7499,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 174
+### Text 176
 
 Applies to: supports-hyperlinks 3.2.0 (license)
 
@@ -7286,7 +7516,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 175
+### Text 177
 
 Applies to: supports-preserve-symlinks-flag 1.0.0 (LICENSE)
 
@@ -7314,7 +7544,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 176
+### Text 178
 
 Applies to: svg-tags 1.0.0 (LICENSE)
 
@@ -7342,7 +7572,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 177
+### Text 179
 
 Applies to: table 6.9.0 (LICENSE)
 
@@ -7373,7 +7603,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### Text 178
+### Text 180
 
 Applies to: tailwindcss 3.4.19 (LICENSE)
 
@@ -7401,7 +7631,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 179
+### Text 181
 
 Applies to: thenify 3.3.1 (LICENSE)
 
@@ -7429,7 +7659,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 180
+### Text 182
 
 Applies to: thenify-all 1.6.0 (LICENSE)
 
@@ -7457,7 +7687,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 181
+### Text 183
 
 Applies to: tinybench 2.9.0 (LICENSE); tinyrainbow 3.1.0 (LICENCE)
 
@@ -7485,7 +7715,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 182
+### Text 184
 
 Applies to: tinyexec 1.2.4 (LICENSE)
 
@@ -7513,7 +7743,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 183
+### Text 185
 
 Applies to: tinyglobby 0.2.17 (LICENSE)
 
@@ -7541,7 +7771,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 184
+### Text 186
 
 Applies to: type-fest 0.20.2 (license)
 
@@ -7557,7 +7787,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 185
+### Text 187
 
 Applies to: update-browserslist-db 1.2.3 (LICENSE)
 
@@ -7584,7 +7814,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 186
+### Text 188
 
 Applies to: uri-js 4.4.1 (LICENSE)
 
@@ -7602,7 +7832,7 @@ THIS SOFTWARE IS PROVIDED BY GARY COURT "AS IS" AND ANY EXPRESS OR IMPLIED WARRA
 The views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of Gary Court.
 ```
 
-### Text 187
+### Text 189
 
 Applies to: util-deprecate 1.0.2 (LICENSE)
 
@@ -7633,7 +7863,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 188
+### Text 190
 
 Applies to: vditor 3.11.2 (LICENSE)
 
@@ -7661,7 +7891,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 189
+### Text 191
 
 Applies to: vite 8.1.5 (LICENSE.md)
 
@@ -9955,7 +10185,7 @@ Repository: https://github.com/websockets/ws
 > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 190
+### Text 192
 
 Applies to: vitest 4.1.10 (LICENSE.md)
 
@@ -10773,7 +11003,7 @@ Repository: git+https://github.com/websockets/ws.git
 > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 191
+### Text 193
 
 Applies to: vue-eslint-parser 9.4.3 (LICENSE)
 
@@ -10801,7 +11031,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 192
+### Text 194
 
 Applies to: vue-router 4.6.4 (LICENSE)
 
@@ -10829,7 +11059,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 193
+### Text 195
 
 Applies to: why-is-node-running 2.3.0 (LICENSE)
 
@@ -10857,7 +11087,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 194
+### Text 196
 
 Applies to: write-file-atomic 5.0.1 (LICENSE.md)
 
@@ -10869,7 +11099,7 @@ Permission to use, copy, modify, and/or distribute this software for any purpose
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 195
+### Text 197
 
 Applies to: xml-name-validator 4.0.0 (LICENSE.txt)
 

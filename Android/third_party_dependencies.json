@@ -2,7 +2,7 @@
   "schema_version": 1,
   "variant": "release",
   "configuration": "releaseRuntimeClasspath",
-  "inputs_sha256": "cb82b697835fcc172e70d668741bfd49a217b5ef471f4ac24126a170b31134da",
+  "inputs_sha256": "5e2b8f13d311ec5b6c47e3e9a60dc3af5251fdb0837c284bbee446238722cf18",
   "artifacts": [
     {
       "name": "androidx.activity:activity",
