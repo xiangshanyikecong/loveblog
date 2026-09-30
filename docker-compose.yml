@@ -78,6 +78,11 @@ services:
     container_name: love-node-api
     restart: unless-stopped
     logging: *default-logging
+    # 镜像内为非 root 用户（uid/gid 10001）。Windows/macOS 的 Docker Desktop
+    # 对 bind mount 权限透明，默认值即可；Linux 上若 ./server/uploads 归当前
+    # 用户所有，请以 `BACKEND_UID=$(id -u) BACKEND_GID=$(id -g) docker compose up`
+    # 启动，保证容器内进程可写挂载目录。
+    user: "${BACKEND_UID:-10001}:${BACKEND_GID:-10001}"
     environment:
       APP_NAME: Love Node API
       APP_ENV: development

@@ -124,17 +124,22 @@ object NetworkModule {
      * Dedicated client for cottage WebSockets: shares the auth cookie jar but
      * deliberately omits [HostSelectionInterceptor] (the WS URL is built
      * absolutely, so no rewrite is needed) and uses no read timeout since the
-     * socket is long-lived.
+     * socket is long-lived. The TLS policy mirrors the main client so chat /
+     * media sockets get the same release-time modern-TLS restriction.
      */
     @Provides
     @Singleton
     @Named("ws")
-    fun provideWebSocketOkHttp(cookieJar: AuthCookieJar): OkHttpClient =
-        OkHttpClient.Builder()
+    fun provideWebSocketOkHttp(cookieJar: AuthCookieJar): OkHttpClient {
+        val builder = OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.SECONDS)
-            .build()
+        if (!BuildConfig.DEBUG) {
+            builder.connectionSpecs(listOf(modernTlsSpec()))
+        }
+        return builder.build()
+    }
 
     @Provides
     @Singleton

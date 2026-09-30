@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
@@ -35,14 +35,6 @@ from app.services.security import (
 from app.services.audit import write_audit_log
 
 router = APIRouter(prefix="/security", tags=["security"])
-
-
-def _get_client_ip(request: Request) -> str | None:
-    """获取客户端 IP"""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else None
 
 
 @router.get("/users", response_model=SecurityListResponse)

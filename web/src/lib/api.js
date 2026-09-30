@@ -31,7 +31,10 @@ function hasCustomScheme(value) {
 const SAFE_REMOTE_ASSET_PROTOCOLS = new Set(["http:", "https:"]);
 
 function isSafeInlineAssetUrl(value) {
-  return /^(?:blob:|data:(?:image|audio|video)\/)/i.test(value);
+  // Image allowlist is bitmap-only: data:image/svg+xml is deliberately
+  // rejected because SVG is a script-execution vector if it is ever handed
+  // to a navigation/iframe sink. Audio/video data URLs cannot execute script.
+  return /^(?:blob:|data:(?:image\/(?:png|gif|jpe?g|webp|avif)|audio\/|video\/))/i.test(value);
 }
 
 function trimTrailingSlash(value) {
@@ -158,6 +161,10 @@ export function resolveAssetUrl(path = "") {
 }
 
 export function rewriteAssetUrlsInHtml(html = "") {
+  // SECURITY: this parses the input with innerHTML. The caller MUST pass
+  // already-sanitized HTML (the article view sanitizes with DOMPurify before
+  // calling this). Never feed raw server/user HTML through here — do the
+  // sanitization first or extend this function to sanitize internally.
   const rawHtml = String(html || "");
   if (!rawHtml || typeof document === "undefined") {
     return rawHtml;

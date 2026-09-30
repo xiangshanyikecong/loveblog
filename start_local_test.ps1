@@ -334,7 +334,7 @@ $backendCommand = @"
 $databaseEnvCommand
 $redisEnvCommand
 Set-Location -LiteralPath $(Quote-PS $BackendDir)
-& $(Quote-PS $venvPython) -m uvicorn app.main:app --reload --host 0.0.0.0 --port $BackendPort
+& $(Quote-PS $venvPython) -m uvicorn app.main:app --reload --host 127.0.0.1 --port $BackendPort
 "@
 Start-ConsoleWindow -Title "Love Backend" -Command $backendCommand
 
@@ -352,7 +352,7 @@ $frontendCommand = @"
 `$env:VITE_API_BASE_URL = '/api'
 `$env:BACKEND_PROXY_TARGET = 'http://127.0.0.1:$BackendPort'
 Set-Location -LiteralPath $(Quote-PS $WebDir)
-& $(Quote-PS $npmPath) run dev -- --host 0.0.0.0 --port $FrontendPort
+& $(Quote-PS $npmPath) run dev -- --host 127.0.0.1 --port $FrontendPort
 "@
 Start-ConsoleWindow -Title "Love Frontend" -Command $frontendCommand
 

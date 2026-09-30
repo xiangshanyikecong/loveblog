@@ -24,4 +24,12 @@ COPY NOTICE THIRD_PARTY_LICENSES.md /app/
 
 EXPOSE 8000
 
+# 非 root 运行：应用仅需要写 /app/uploads、/app/backups（均为挂载卷）与 /tmp。
+# 固定 uid/gid 10001，宿主机按该 uid 调整挂载目录属主（deploy.sh 自动执行；
+# 也可用 compose 的 BACKEND_UID/BACKEND_GID 覆盖）。
+RUN groupadd --gid 10001 appgroup \
+    && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin appuser \
+    && chown -R appuser:appgroup /app
+USER appuser
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

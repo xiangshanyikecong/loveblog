@@ -23,19 +23,10 @@ from datetime import datetime, timezone
 from fastapi import Request
 from sqlalchemy.orm import Session
 
+from app.core.net import get_real_client_ip
 from app.models.login_device import LoginDevice
 
 _MAX_UA_LENGTH = 512
-
-
-def _client_ip(request: Request) -> str | None:
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip.strip()
-    return request.client.host if request.client else None
 
 
 def _device_hash(user_agent: str | None, ip: str | None) -> str:
@@ -79,7 +70,10 @@ def _friendly_device_name(user_agent: str | None) -> str:
 def record_login_device(db: Session, user, request: Request) -> LoginDevice:
     """Insert or refresh the device row for this login. Caller commits if needed."""
     user_agent = (request.headers.get("User-Agent") or "")[:_MAX_UA_LENGTH] or None
-    ip = _client_ip(request)
+    # Spoof-resistant extraction (X-Real-IP from our proxy, then the XFF *last*
+    # hop). The first XFF segment is client-controlled and would let a login
+    # forge arbitrary IPs into the device list and mint unbounded device rows.
+    ip = get_real_client_ip(request)
     dhash = _device_hash(user_agent, ip)
 
     device = (

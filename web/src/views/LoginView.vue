@@ -147,9 +147,11 @@ async function completeLogin(payload) {
 
   showMessage(canManageContent.value ? t("auth.loginSuccess") : t("auth.loginSuccessLimited"));
 
-  const redirect = typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
-    ? route.query.redirect
-    : { name: "dashboard" };
+  // 仅接受站内路径：必须以单个 "/" 开头（"//" 是协议相对 URL，会指向外部
+  // 站点），也不接受 "/\..." 之类变体。
+  const rawRedirect = typeof route.query.redirect === "string" ? route.query.redirect : "";
+  const redirect =
+    /^\/(?!\/)[^\\]*$/.test(rawRedirect) ? rawRedirect : { name: "dashboard" };
   router.push(redirect);
 }
 

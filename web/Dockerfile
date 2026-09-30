@@ -1,9 +1,9 @@
-FROM node:20-alpine
+FROM node:20.20-alpine3.22
 
 WORKDIR /app
 
-COPY package.json /app/package.json
-RUN npm install
+COPY package.json package-lock.json /app/
+RUN npm ci
 
 COPY . /app
 COPY public/NOTICE public/THIRD_PARTY_LICENSES.md /app/

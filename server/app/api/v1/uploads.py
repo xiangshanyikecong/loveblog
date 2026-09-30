@@ -14,7 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from uuid import uuid4
 
 import httpx
@@ -26,6 +26,7 @@ from app.core.media import (
     ALL_IMAGE_TYPES,
     MediaPolicy,
     compute_storage_stats,
+    extension_for_mime,
     process_image,
     validate_mime_type,
 )
@@ -370,10 +371,11 @@ def _persist_image_bytes(
             thumb_file.write_bytes(result.thumbnail)
             thumbnail_url = _build_relative_upload_url(thumb_file)
     else:
-        # Pillow unavailable: raw save with original extension
+        # Pillow unavailable: raw save. The extension MUST come from the
+        # validated content type — the original filename's suffix is
+        # attacker-controlled ("x.html") and would land as executable HTML.
         logger.warning(_pillow_missing)
-        suffix = PurePosixPath(original_name or "file").suffix.lower() or ".jpg"
-        stored_file = storage_dir / f"{stem}{suffix}"
+        stored_file = storage_dir / f"{stem}{extension_for_mime(content_type)}"
         stored_file.write_bytes(raw_bytes)
         thumbnail_url = None
 

@@ -389,6 +389,21 @@ mkdir -p server/uploads/{albums,articles,avatars,timeline,videos}
 mkdir -p server/backups
 mkdir -p nginx/ssl nginx/ssl-challenge nginx/certbot/etc
 mkdir -p nginx/conf.d
+# backend 容器以非 root uid 10001 运行（见 server/Dockerfile），两个 bind mount
+# 的属主必须与之匹配，否则容器无法写上传/备份目录。以 root 执行时自动修正；
+# 非 root 执行（如 docker 组用户）则校验属主并给出修复指引。
+UPLOAD_UID="$(stat -c %u server/uploads 2>/dev/null || echo 0)"
+BACKUP_UID="$(stat -c %u server/backups 2>/dev/null || echo 0)"
+if [ "$(id -u)" = "0" ]; then
+    chown -R 10001:10001 server/uploads server/backups
+elif [ "$UPLOAD_UID" = "10001" ] && [ "$BACKUP_UID" = "10001" ]; then
+    echo -e "${GREEN}✅ server/uploads、server/backups 属主已是 uid 10001${NC}"
+else
+    echo -e "${RED}❌ server/uploads / server/backups 属主不是 10001（backend 容器以该 uid 运行），且未以 root 执行。${NC}"
+    echo "   请运行: sudo chown -R 10001:10001 server/uploads server/backups"
+    echo "   （或在 compose 中用 BACKEND_UID/BACKEND_GID 匹配目录当前属主）"
+    exit 1
+fi
 # love-journal.conf include 的片段文件缺失会让 nginx 容器启动即崩溃，且要等
 # 镜像拉取完、健康检查超时后才暴露——这里提前快速失败并给出修复指引。
 for snippet in $(grep -hoE '/etc/nginx/snippets/[A-Za-z0-9._-]+' nginx/conf.d/*.conf 2>/dev/null | sort -u); do
@@ -497,6 +512,8 @@ if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-postgres-prod'; 
     if docker exec love-postgres-prod sh -c \
         'pg_dump -U "${POSTGRES_USER:-love}" -d "${POSTGRES_DB:-love_node}"' \
         | gzip > "$PREDEPLOY_DB_FILE"; then
+        # 全库 dump 含全部用户数据，收紧为仅属主可读。
+        chmod 600 "$PREDEPLOY_DB_FILE"
         echo -e "${GREEN}✅ 数据库已备份到 ${PREDEPLOY_DB_FILE}${NC}"
     else
         # 备份失败不直接终止部署（例如 postgres 正处于恢复中的临时状态），

@@ -232,7 +232,7 @@ else
                 echo "   ⚠️  该值不能为空，请重新输入" > /dev/tty
             fi
         done
-        eval "$var='$answer'"
+        printf -v "$var" '%s' "$answer"
     }
 
     # 环境变量优先（支持非交互一键安装）

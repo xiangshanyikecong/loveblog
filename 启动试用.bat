@@ -5,7 +5,7 @@ chcp 65001 >nul
 title 恋爱记本地环境
 
 echo [1/2] 启动后端 API (http://localhost:8000) ...
-start "恋爱记-后端" cmd /k "cd /d %~dp0server && .venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+start "恋爱记-后端" cmd /k "cd /d %~dp0server && .venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
 
 echo [2/2] 启动前端 Web (http://localhost:5173) ...
 start "恋爱记-前端" cmd /k "cd /d %~dp0web && npm run dev"

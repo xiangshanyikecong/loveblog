@@ -47,16 +47,21 @@ jobs:
             file: ./netease-api/Dockerfile
 
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v4.3.0（SHA pin，防上游 tag 劫持——本工作流持
+      # packages: write，被劫持的 Action 可推送投毒镜像）
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
       - name: Set up QEMU (arm64 模拟)
-        uses: docker/setup-qemu-action@v3
+        # docker/setup-qemu-action v3.7.0
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        # docker/setup-buildx-action v3.12.0
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        # docker/login-action v3.7.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -64,7 +69,8 @@ jobs:
 
       - name: 提取镜像标签
         id: meta
-        uses: docker/metadata-action@v5
+        # docker/metadata-action v5.10.0
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051
         with:
           images: ${{ env.IMAGE_PREFIX }}/loveblog-${{ matrix.name }}
           tags: |
@@ -77,7 +83,8 @@ jobs:
             type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
 
       - name: 构建并推送
-        uses: docker/build-push-action@v6
+        # docker/build-push-action v6.19.2
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}

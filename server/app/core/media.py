@@ -64,6 +64,17 @@ _EXT_MAP: dict[str, str] = {
 ALL_IMAGE_TYPES: frozenset[str] = frozenset(_PILLOW_FORMAT)
 
 
+def extension_for_mime(content_type: str) -> str:
+    """Return the storage extension for a whitelisted image MIME type.
+
+    Upload endpoints must derive the on-disk extension from this mapping —
+    never from the client-supplied original filename, whose suffix is
+    attacker-controlled (``x.html`` would be stored as executable HTML).
+    Unknown types fall back to ``.jpg`` (the Pillow default).
+    """
+    return _EXT_MAP.get(content_type.lower().strip(), ".jpg")
+
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -87,11 +98,15 @@ class MediaPolicy:
     def from_setting(cls, setting) -> "MediaPolicy":
         """Build a MediaPolicy from a SiteSetting ORM object."""
         raw_types = getattr(setting, "allowed_image_types", "") or ""
-        allowed = [
+        requested = [
             t.strip().lower()
             for t in raw_types.split(",")
             if t.strip()
         ]
+        # Intersect with the types the pipeline actually supports. The setting
+        # is partner-editable, so an unrestricted list would let a partner add
+        # e.g. image/svg+xml — script-capable content served from our origin.
+        allowed = [t for t in requested if t in ALL_IMAGE_TYPES]
         if not allowed:
             allowed = list(ALL_IMAGE_TYPES)
 

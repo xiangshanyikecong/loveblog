@@ -75,6 +75,9 @@ describe("asset URL allowlist", () => {
   it("rejects executable and non-media data schemes", () => {
     expect(resolveAssetUrl("javascript:alert(1)")).toBe("");
     expect(resolveAssetUrl("data:text/html,<script>alert(1)</script>")).toBe("");
+    // SVG is a script-execution vector: the inline-asset allowlist is
+    // bitmap-only by design.
+    expect(resolveAssetUrl("data:image/svg+xml;base64,AA==")).toBe("");
   });
 
   it("allows expected remote and inline media schemes", () => {
@@ -82,5 +85,9 @@ describe("asset URL allowlist", () => {
       .toBe("https://cdn.example.test/photo.jpg");
     expect(resolveAssetUrl("data:image/png;base64,AA=="))
       .toBe("data:image/png;base64,AA==");
+    expect(resolveAssetUrl("data:image/jpeg;base64,AA=="))
+      .toBe("data:image/jpeg;base64,AA==");
+    expect(resolveAssetUrl("data:video/mp4;base64,AA=="))
+      .toBe("data:video/mp4;base64,AA==");
   });
 });

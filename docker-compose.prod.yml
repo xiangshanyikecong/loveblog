@@ -43,12 +43,16 @@ services:
           memory: 256m
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      # redis-cli reads REDISCLI_AUTH for auth, keeping the password out of
-      # the process arguments (and thus off `docker inspect` / `ps` listings).
+      # redis-cli reads REDISCLI_AUTH for auth. The password never appears in
+      # process arguments: it is written (umask 077) to a config file and the
+      # argv only names that file.
       REDISCLI_AUTH: ${REDIS_PASSWORD}
     # AOF 持久化（everysec）：硬重启最多丢 ~1 秒写入。默认 RDB 快照间隔
     # 可达分钟级，会导致加密存的网易云 Cookie 等数据在异常重启后丢失。
-    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    command:
+      - sh
+      - -c
+      - umask 077; printf 'requirepass %s\n' "$$REDIS_PASSWORD" > /tmp/redis.conf; exec redis-server /tmp/redis.conf --appendonly yes
     volumes:
       - redis_data:/data
     networks:
@@ -100,6 +104,9 @@ services:
     container_name: love-backend-prod
     restart: always
     logging: *default-logging
+    # 与镜像内非 root 用户一致（uid/gid 10001）。宿主机挂载目录由 deploy.sh
+    # 自动 chown；若自定义运行 uid，请同步覆盖这两个变量并自行调整目录属主。
+    user: "${BACKEND_UID:-10001}:${BACKEND_GID:-10001}"
     # backend 是内存大头（uvicorn + 数据集快照 + 备份构建），给 1 GiB 余量；
     # pids 限制防止 fork 炸弹。资源限制防 OOM 拖垮宿主机。
     # Compose v5 不允许 pids_limit 与 deploy.resources.limits 共存，统一走 deploy。
@@ -245,7 +252,6 @@ services:
       - ./nginx/snippets:/etc/nginx/snippets:ro  # 共享安全头片段（add_header 继承修复）
       - ./nginx/ssl:/etc/nginx/ssl:ro  # SSL 证书目录
       - ./nginx/ssl-challenge:/var/www/certbot:ro  # ACME 挑战目录（certbot webroot 申请/续期）
-      - ./server/uploads:/var/www/uploads:ro  # 静态文件服务
     depends_on:
       - web
       - backend

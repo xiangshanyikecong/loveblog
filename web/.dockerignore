@@ -1,3 +1,5 @@
 node_modules
 dist
-.env
+# 覆盖 .env 及一切 .env.* 变体：本地 Vite 环境文件（如 .env.production 里的
+# VITE_* 值）会被 Vite 内联进公开的构建产物，绝不能随 COPY . 进镜像。
+.env*
