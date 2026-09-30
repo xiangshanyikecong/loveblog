@@ -37,10 +37,14 @@ services:
     # cookie 密文）。dev 用固定弱口令 love，仅供本机；生产见 prod compose 的
     # ${REDIS_PASSWORD}。
     command: ["redis-server", "--requirepass", "love"]
+    environment:
+      # redis-cli reads REDISCLI_AUTH for auth, keeping the password out of
+      # the process arguments (and thus off `ps` listings).
+      REDISCLI_AUTH: love
     ports:
       - "127.0.0.1:6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "love", "ping"]
+      test: ["CMD", "redis-cli", "--no-auth-warning", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -113,7 +117,7 @@ services:
       retries: 10
       start_period: 10s
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   web:
     build:
@@ -128,7 +132,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
 
 volumes:
   postgres_data:
