@@ -15,11 +15,13 @@
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.config import settings
+from app.core.push_endpoint import PushEndpointError, validate_web_push_endpoint
 from app.db.session import get_db
 from app.models.fcm_device_token import FcmDeviceToken
 from app.models.push_subscription import PushSubscription
@@ -45,6 +47,34 @@ from app.services.notification_delivery import (
 )
 
 router = APIRouter(prefix="/push", tags=["push"])
+
+
+def _enforce_device_cap(db: Session, model, user_id: int) -> None:
+    """Refuse registrations beyond ``push_max_devices_per_user``.
+
+    Delivery fans out to every stored destination, so an unbounded table is
+    both an amplification vector and an SSRF payload multiplier.
+    """
+    cap = max(1, int(settings.push_max_devices_per_user))
+    current = db.query(model).filter(model.user_id == user_id).count()
+    if current >= cap:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Device registration limit reached ({cap})",
+        )
+
+
+def _commit_or_conflict(db: Session, detail: str) -> None:
+    """Commit, mapping a concurrent duplicate registration to HTTP 409.
+
+    The unique constraint on ``endpoint`` / ``token`` is the only race-free
+    arbiter; the pre-checks above narrow the window but cannot close it.
+    """
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail) from exc
 
 
 @router.get("/public-key", response_model=PushPublicKeyResponse)
@@ -103,12 +133,24 @@ def upsert_push_subscription(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> PushSubscriptionResponse:
+    # The server POSTs to this URL on every delivery, so the destination policy
+    # is enforced at registration: https, a DNS name (never an IP literal), no
+    # local/single-label host, and a recognized push-provider suffix.
+    try:
+        endpoint = validate_web_push_endpoint(payload.endpoint)
+    except PushEndpointError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
     now = datetime.now(timezone.utc)
-    item = db.query(PushSubscription).filter(PushSubscription.endpoint == payload.endpoint).first()
+    item = db.query(PushSubscription).filter(PushSubscription.endpoint == endpoint).first()
     if item is None:
+        _enforce_device_cap(db, PushSubscription, current_user.id)
         item = PushSubscription(
             user_id=current_user.id,
-            endpoint=payload.endpoint,
+            endpoint=endpoint,
             p256dh=payload.keys.p256dh,
             auth=payload.keys.auth,
             expiration_time=payload.expiration_time,
@@ -119,7 +161,16 @@ def upsert_push_subscription(
         )
         db.add(item)
     else:
-        item.user_id = current_user.id
+        # A subscription belongs to the account that registered it. Without this
+        # check anyone holding another user's endpoint (a leaked backup, a shared
+        # browser profile) could rebind it to themselves and have the server
+        # deliver attacker-controlled notification content to the victim's
+        # device — a ready-made phishing channel.
+        if item.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Push endpoint is already registered to another account",
+            )
         item.p256dh = payload.keys.p256dh
         item.auth = payload.keys.auth
         item.expiration_time = payload.expiration_time
@@ -128,7 +179,7 @@ def upsert_push_subscription(
         item.fail_count = 0
         item.last_seen_at = now
 
-    db.commit()
+    _commit_or_conflict(db, "Push endpoint is already registered")
     db.refresh(item)
     return item
 
@@ -185,6 +236,7 @@ def upsert_fcm_token(
     now = datetime.now(timezone.utc)
     item = db.query(FcmDeviceToken).filter(FcmDeviceToken.token == payload.token).first()
     if item is None:
+        _enforce_device_cap(db, FcmDeviceToken, current_user.id)
         item = FcmDeviceToken(
             user_id=current_user.id,
             token=payload.token,
@@ -197,7 +249,15 @@ def upsert_fcm_token(
         )
         db.add(item)
     else:
-        item.user_id = current_user.id
+        # Device tokens are per-installation secrets: rebinding someone else's
+        # token would route their pushes to an account we control. FCM token
+        # rotation on the *same* device is handled by the client deleting the
+        # old token first (see PushRepository.unregisterFcmToken).
+        if item.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="FCM token is already registered to another account",
+            )
         item.platform = payload.platform
         item.device_name = payload.device_name
         item.app_version = payload.app_version
@@ -205,7 +265,7 @@ def upsert_fcm_token(
         item.fail_count = 0
         item.last_seen_at = now
 
-    db.commit()
+    _commit_or_conflict(db, "FCM token is already registered")
     db.refresh(item)
     return item
 

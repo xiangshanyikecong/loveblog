@@ -22,7 +22,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
@@ -411,10 +411,10 @@ def list_messages(
 ) -> ChatHistoryResponse:
     ensure_partner(current_user)
 
-    released = release_due_future_messages(db)
-    if released:
-        db.commit()
-
+    # Pure read, like every other GET: due-but-unreleased future messages
+    # stay invisible here until a write-side call (POST /chat/read fires on
+    # page load, POST /chat/messages on send) runs the release and broadcasts
+    # the CHAT_MESSAGE events. A GET must never mutate state.
     query = _visible_message_query(db)
     if before_id is not None:
         query = query.filter(ChatMessage.id < before_id)
@@ -813,17 +813,23 @@ def chat_state(
     current_user: User = Depends(get_current_user),
 ) -> ChatStateResponse:
     ensure_partner(current_user)
-    released = release_due_future_messages(db)
-    if released:
-        db.commit()
+    # Pure read: a GET must not mutate state. Future messages that are due but
+    # not yet released are still counted as unread here (visible_at <= now) so
+    # the badge stays correct until a partner's next write-side call
+    # (POST /chat/read, /chat/messages …) runs the actual release. Otherwise a
+    # link previewer crawling this URL would trip the release as a side effect.
     counterpart = resolve_counterpart(db, current_user)
+    now = datetime.now(timezone.utc)
     unread = (
         db.query(func.count(ChatMessage.id))
         .filter(
             ChatMessage.sender_id != current_user.id,
             ChatMessage.read_at.is_(None),
             ChatMessage.deleted_at.is_(None),
-            ChatMessage.released_at.is_not(None),
+            or_(
+                ChatMessage.released_at.is_not(None),
+                ChatMessage.visible_at <= now,
+            ),
         )
         .scalar()
         or 0

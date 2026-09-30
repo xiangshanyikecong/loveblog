@@ -258,8 +258,9 @@ def list_message_versions(
     if not VisibilityPolicy.can_manage_message(message, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No permission to view message history")
 
-    record_message_version(db, message, current_user, "current snapshot")
-    db.commit()
+    # Pure read: version rows are written by the update/rollback paths. A GET
+    # must not append a "current snapshot" row — re-opening this view (or a
+    # crawler with a session) would grow the versions table on every request.
     versions = list_content_versions(db, content_type="message", content_id=msg_id)
     return ContentVersionListResponse(
         items=[version_to_response(item) for item in versions],

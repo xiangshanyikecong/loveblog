@@ -102,6 +102,22 @@ def _coerce_rate(value: Any) -> float:
     return min(_MAX_RATE, max(_MIN_RATE, rate))
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Coerce a WebSocket/state field to a non-negative int.
+
+    Clients can send ``"abc"``/``null`` for numeric fields; a bare ``int()``
+    raise would close the sender's own WebSocket (and crash snapshots over
+    legacy rows). Clamp malformed or negative input to the default instead.
+    """
+    if isinstance(value, bool):
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 0 else default
+
+
 def next_event_seq(redis_client: Redis) -> int:
     return int(redis_client.incr(ROOM_EVENT_SEQ))
 
@@ -115,10 +131,10 @@ def get_current_position_ms(state: dict[str, str]) -> int:
     if not state:
         return 0
     paused = state.get("paused", "1") == "1"
-    base_position = int(state.get("position_ms", "0") or "0")
+    base_position = _safe_int(state.get("position_ms"))
     if paused:
         return base_position
-    started_at = int(state.get("started_at_ms", "0") or "0")
+    started_at = _safe_int(state.get("started_at_ms"))
     if started_at == 0:
         return base_position
     rate = _coerce_rate(state.get("rate", "1"))
@@ -128,7 +144,7 @@ def get_current_position_ms(state: dict[str, str]) -> int:
 def _get_state_unlocked(redis_client: Redis) -> dict[str, Any]:
     """Snapshot the room for the route layer."""
     raw = redis_client.hgetall(ROOM_CURRENT) or {}
-    event_seq = int(redis_client.get(ROOM_EVENT_SEQ) or 0)
+    event_seq = _safe_int(redis_client.get(ROOM_EVENT_SEQ))
 
     if raw and raw.get("source_url"):
         current = {
@@ -140,7 +156,7 @@ def _get_state_unlocked(redis_client: Redis) -> dict[str, Any]:
             "position_ms": get_current_position_ms(raw),
             "rate": _coerce_rate(raw.get("rate", "1")),
             "started_by": raw.get("started_by") or None,
-            "event_seq": int(raw.get("event_seq") or 0),
+            "event_seq": _safe_int(raw.get("event_seq")),
             "server_ts_ms": _now_ms(),
         }
     else:
@@ -186,7 +202,7 @@ def _apply_event_unlocked(
                 "source_kind": str(payload.get("source_kind") or ""),
                 "started_by": origin_uid,
                 "started_at_ms": str(now),
-                "position_ms": str(int(payload.get("position_ms", 0) or 0)),
+                "position_ms": str(_safe_int(payload.get("position_ms"))),
                 "paused": "1",
                 "rate": "1",
                 "event_seq": str(seq),
@@ -196,7 +212,7 @@ def _apply_event_unlocked(
         redis_client.hset(
             ROOM_CURRENT,
             mapping={
-                "position_ms": str(int(payload.get("position_ms", 0) or 0)),
+                "position_ms": str(_safe_int(payload.get("position_ms"))),
                 "paused": "0",
                 "started_at_ms": str(now),
                 "event_seq": str(seq),
@@ -206,7 +222,7 @@ def _apply_event_unlocked(
         redis_client.hset(
             ROOM_CURRENT,
             mapping={
-                "position_ms": str(int(payload.get("position_ms", 0) or 0)),
+                "position_ms": str(_safe_int(payload.get("position_ms"))),
                 "paused": "1",
                 "started_at_ms": str(now),
                 "event_seq": str(seq),
@@ -216,7 +232,7 @@ def _apply_event_unlocked(
         redis_client.hset(
             ROOM_CURRENT,
             mapping={
-                "position_ms": str(int(payload.get("position_ms", 0) or 0)),
+                "position_ms": str(_safe_int(payload.get("position_ms"))),
                 "started_at_ms": str(now),
                 "event_seq": str(seq),
             },
@@ -228,7 +244,7 @@ def _apply_event_unlocked(
             ROOM_CURRENT,
             mapping={
                 "rate": str(rate),
-                "position_ms": str(int(payload.get("position_ms", 0) or 0)),
+                "position_ms": str(_safe_int(payload.get("position_ms"))),
                 "started_at_ms": str(now),
                 "event_seq": str(seq),
             },

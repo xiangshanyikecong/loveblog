@@ -111,6 +111,13 @@ class Settings(BaseSettings):
     web_push_vapid_public_key: str = ""
     web_push_vapid_private_key: str = ""
     web_push_subject: str = "mailto:noreply@love-node"
+    # Comma-separated extra host suffixes accepted as Web Push endpoints, for
+    # self-hosted push services. The built-in list covers the browser vendors
+    # (see app.core.push_endpoint); anything else must be opted into here.
+    web_push_endpoint_extra_hosts: str = ""
+    # Per-account cap on stored push subscriptions / FCM device tokens. Stops a
+    # single account from filling the table that every notification fans out to.
+    push_max_devices_per_user: int = 10
     fcm_push_enabled: bool = False
     fcm_service_account_file: str = ""
     fcm_service_account_json: str = ""

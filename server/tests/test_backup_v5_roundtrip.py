@@ -192,13 +192,17 @@ class BackupV6RoundTripTests(unittest.TestCase):
                 "ledger_entries",
                 "period_cycles",
                 "listen_local_tracks",
-                "push_subscriptions",
-                "fcm_device_tokens",
                 "chat_favorites",
                 "chat_pinned_quotes",
                 "chat_key",
             ):
                 self.assertEqual(manifest["counts"][section], 1)
+
+            # Device push credentials never leave the server: devices
+            # re-register after a restore, and a leaked archive must not
+            # carry the standing ability to wake them.
+            self.assertEqual(manifest["counts"]["push_subscriptions"], 0)
+            self.assertEqual(manifest["counts"]["fcm_device_tokens"], 0)
 
             target = TargetSession()
             result = _import_data_json(target, payload)
@@ -221,8 +225,10 @@ class BackupV6RoundTripTests(unittest.TestCase):
             self.assertEqual(target.query(LedgerEntry).one().amount_cents, 12345)
             self.assertEqual(target.query(PeriodCycle).one().end_date, date(2026, 7, 5))
             self.assertEqual(target.query(ListenLocalTrack).one().artists, ["A", "B"])
-            self.assertEqual(target.query(PushSubscription).count(), 1)
-            self.assertEqual(target.query(FcmDeviceToken).count(), 1)
+            self.assertEqual(target.query(PushSubscription).count(), 0)
+            self.assertEqual(target.query(FcmDeviceToken).count(), 0)
+            self.assertEqual(result["push_subscriptions"], {"created": 0, "skipped": 0})
+            self.assertEqual(result["fcm_device_tokens"], {"created": 0, "skipped": 0})
             self.assertEqual(target.query(Notification).one().delivery_status, "delivered")
             self.assertEqual(result["listen_local_tracks"]["created"], 1)
 
@@ -235,6 +241,21 @@ class BackupV6RoundTripTests(unittest.TestCase):
             self.assertFalse(second["chat_key"]["restored"])
             self.assertEqual(target.query(Coupon).count(), 1)
             self.assertEqual(target.query(ChatMessageFavorite).count(), 1)
+
+            # An archive from an older version may still carry push
+            # credentials; the importer must ignore them outright.
+            payload["push_subscriptions"] = [
+                {"sid": "push-legacy", "user_uid": a.uid, "endpoint": "https://push.example/legacy"}
+            ]
+            payload["fcm_device_tokens"] = [
+                {"tid": "fcm-legacy", "user_uid": b.uid, "token": "legacy-token"}
+            ]
+            third = _import_data_json(target, payload)
+            target.commit()
+            self.assertEqual(third["push_subscriptions"], {"created": 0, "skipped": 1})
+            self.assertEqual(third["fcm_device_tokens"], {"created": 0, "skipped": 1})
+            self.assertEqual(target.query(PushSubscription).count(), 0)
+            self.assertEqual(target.query(FcmDeviceToken).count(), 0)
         finally:
             source_engine.dispose()
             target_engine.dispose()

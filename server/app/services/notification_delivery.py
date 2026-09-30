@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 
 from app.core.config import settings
+from app.core.push_endpoint import is_deliverable_web_push_endpoint
 from app.models.fcm_device_token import FcmDeviceToken
 from app.models.push_subscription import PushSubscription
 from app.models.notification import Notification
@@ -422,6 +423,17 @@ def _deliver_web_push(
     needs_commit = False
     failed_sids: list[str] = []
     for item in subscriptions:
+        # Re-check the destination before POSTing: rows may predate the
+        # registration policy or have arrived via a backup restore, and this
+        # loop is where the server would actually issue the outbound request.
+        if not is_deliverable_web_push_endpoint(item.endpoint):
+            item.is_active = False
+            needs_commit = True
+            logger.warning(
+                "Deactivating push subscription %s with an unsafe endpoint host",
+                item.sid,
+            )
+            continue
         try:
             webpush(
                 subscription_info=_push_subscription_info(item),

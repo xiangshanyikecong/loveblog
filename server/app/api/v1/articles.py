@@ -577,8 +577,9 @@ def list_article_versions(
     if not can_co_edit(article.author.uid, article.partner_can_edit, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No permission to view article history")
 
-    record_article_version(db, article, current_user, "current snapshot")
-    db.commit()
+    # Pure read: version rows are written by the update/rollback paths. A GET
+    # must not append a "current snapshot" row — re-opening this view (or a
+    # crawler with a session) would grow the versions table on every request.
     versions = list_content_versions(db, content_type="article", content_id=aid)
     return ContentVersionListResponse(
         items=[version_to_response(item) for item in versions],

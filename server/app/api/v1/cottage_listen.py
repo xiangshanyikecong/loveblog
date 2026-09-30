@@ -172,6 +172,26 @@ def _login_ip_for(redis_client, owner_uid: str) -> str | None:
     return cookie_vault.get_login_ip(redis_client, owner_uid)
 
 
+# QR login sessions are bound to the partner who generated the unikey. NetEase
+# hands the MUSIC_U cookie to whoever *polls* the key at code 803, so without
+# this binding anyone who learns another partner's unikey could claim the
+# scanned account's cookie for themselves.
+_QR_OWNER_TTL_SECONDS = 600
+
+
+def _qr_owner_key(unikey: str) -> str:
+    return f"cottage:listen:qr-owner:{unikey}"
+
+
+def _bind_qr_owner(redis_client, unikey: str, user_uid: str) -> None:
+    redis_client.set(_qr_owner_key(unikey), user_uid, ex=_QR_OWNER_TTL_SECONDS)
+
+
+def _qr_owner_matches(redis_client, unikey: str, user_uid: str) -> bool:
+    owner = redis_client.get(_qr_owner_key(unikey))
+    return owner is None or str(owner) == user_uid
+
+
 def _require_partner_cookie(redis_client, user_uid: str) -> str:
     """Decrypt and return the user's NetEase cookie, or raise 409.
 
@@ -207,12 +227,25 @@ def _broadcast(event_type: str, payload: dict[str, Any], origin_uid: str) -> Non
     cottage_realtime.schedule_coroutine(ws_manager.broadcast(event))
 
 
+# Operator-facing text per upstream failure kind. The raw exception message is
+# only logged, never returned: it can contain the internal service base_url or
+# httpx transport details.
+_UPSTREAM_MESSAGES = {
+    "timeout": "网易云音乐服务响应超时",
+    "http_error": "网易云音乐服务连接失败",
+    "parse_error": "网易云音乐服务响应异常",
+    "unsupported": "该功能未启用",
+}
+
+
 def _handle_netease_error(exc: netease_client.NeteaseError, redis_client, user_uid: str) -> NoReturn:
     """Common mapping of upstream errors to HTTP responses.
 
     On ``login_required`` we eagerly delete the partner's stored cookie and
     broadcast a ``COOKIE_EXPIRED`` event so the frontend can show its UI
-    affordance. On other kinds we return HTTP 502 with structured detail.
+    affordance. On other kinds we return HTTP 502 with structured detail —
+    the message is normalized per kind because httpx exception text can embed
+    the internal upstream base_url, which has no business in an API response.
     """
     if exc.kind == "login_required":
         cookie_vault.delete_cookie(redis_client, user_uid)
@@ -223,7 +256,7 @@ def _handle_netease_error(exc: netease_client.NeteaseError, redis_client, user_u
         )
     raise HTTPException(
         status_code=status.HTTP_502_BAD_GATEWAY,
-        detail={"code": f"netease_{exc.kind}", "message": exc.message},
+        detail={"code": f"netease_{exc.kind}", "message": _UPSTREAM_MESSAGES.get(exc.kind, "网易云服务暂时不可用")},
     )
 
 
@@ -343,6 +376,7 @@ def get_qr_key(
         # NeteaseCloudMusicApi returns a data: URL when qrimg=true.
         if not qrimg.startswith("data:"):
             qrimg = f"data:text/plain;base64,{base64.b64encode(qrimg.encode()).decode()}"
+        _bind_qr_owner(redis_client, str(unikey), current_user.uid)
         return QrKeyResponse(unikey=str(unikey), qr_image_data_url=qrimg)
     except netease_client.NeteaseError as exc:
         _handle_netease_error(exc, redis_client, current_user.uid)
@@ -370,6 +404,10 @@ def check_qr_status(
     if code == 802:
         return QrStatusResponse(status="scanned")
     if code == 803:
+        # The cookie must land with the partner who initiated this QR session;
+        # a unikey from a different account cannot be claimed here.
+        if not _qr_owner_matches(redis_client, key, current_user.uid):
+            return QrStatusResponse(status="forbidden", message="该二维码不属于当前账号")
         cookie = result.get("cookie")
         if not cookie:
             return QrStatusResponse(status="error", message="upstream missing cookie")

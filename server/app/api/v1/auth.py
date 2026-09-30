@@ -397,13 +397,24 @@ def login(request: Request, payload: LoginRequest, response: Response, db: Sessi
                 headers={"X-2FA-Required": "totp"},
             )
         if not _verify_second_factor(db, user, payload.totp_code):
+            # Count second-factor failures on the same throttle as password
+            # failures: knowing the password must not grant an unlimited number
+            # of 2FA guesses. Reusing the counter adds no new lockout vector —
+            # whoever can trip it already knows the password and could freeze
+            # the account with wrong passwords anyway.
+            failed_count, freeze_minutes = record_failed_login(db, user)
             write_audit_log(
                 db,
                 action="auth.login",
                 result="failure",
                 actor_username=payload.username,
-                detail={"reason": "invalid_totp"},
+                detail={"reason": "invalid_totp", "failed_attempts": failed_count},
             )
+            if freeze_minutes:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Too many failed attempts. Account frozen for {freeze_minutes} minutes.",
+                )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid verification code",

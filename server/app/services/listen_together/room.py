@@ -52,6 +52,53 @@ ROOM_STATE_LOCK = "cottage_listen:state_lock"
 NEXT_LOCK_TTL_MS = 2000
 STATE_LOCK_TTL_MS = 30_000
 STATE_LOCK_WAIT_MS = 5_000
+# Cap the shared play queue so a misbehaving (or malicious) client cannot
+# grow it without bound and exhaust Redis memory. A couple cannot legitimately
+# queue thousands of tracks before any get played.
+MAX_QUEUE_LENGTH = 200
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Coerce a WebSocket/state field to a non-negative int.
+
+    Web payloads and legacy Redis rows can still contain ``"abc"`` or
+    ``null``. ``int(...)`` on those raises inside the room path and used to
+    close the caller's own WebSocket (or crash a room snapshot). Clamp
+    malformed or negative input to the default instead. Booleans are rejected
+    even though Python treats them as integers: JSON ``true`` is not a
+    meaningful playback position or sequence number.
+    """
+    if isinstance(value, bool):
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed >= 0 else default
+
+
+def _queue_length(redis_client: Redis) -> int:
+    """Return queue length while supporting the tiny Redis fakes in tests."""
+    try:
+        return int(redis_client.llen(ROOM_QUEUE))
+    except AttributeError:
+        return len(redis_client.lrange(ROOM_QUEUE, 0, -1) or [])
+
+
+def _trim_queue(redis_client: Redis) -> None:
+    """Trim a legacy overlong queue without dropping its oldest tracks."""
+    if _queue_length(redis_client) <= MAX_QUEUE_LENGTH:
+        return
+    try:
+        redis_client.ltrim(ROOM_QUEUE, 0, MAX_QUEUE_LENGTH - 1)
+    except AttributeError:
+        # Small in-memory fakes do not implement LTRIM. Keep the same oldest
+        # entries and rebuild the list so tests exercise the production policy.
+        items = list(redis_client.lrange(ROOM_QUEUE, 0, MAX_QUEUE_LENGTH - 1) or [])
+        redis_client.delete(ROOM_QUEUE)
+        if items:
+            redis_client.rpush(ROOM_QUEUE, *items)
+
 
 _QUEUE_REMOVE_LUA = """
 local current = redis.call('LINDEX', KEYS[1], tonumber(ARGV[1]))
@@ -185,10 +232,10 @@ def get_current_position_ms(state: dict[str, str]) -> int:
     if not state:
         return 0
     paused = state.get("paused", "1") == "1"
-    base_position = int(state.get("position_ms", "0") or "0")
+    base_position = _safe_int(state.get("position_ms"))
     if paused:
         return base_position
-    started_at = int(state.get("started_at_ms", "0") or "0")
+    started_at = _safe_int(state.get("started_at_ms"))
     if started_at == 0:
         return base_position
     return base_position + max(0, _now_ms() - started_at)
@@ -205,7 +252,7 @@ def _get_state_unlocked(redis_client: Redis) -> dict[str, Any]:
 
     raw_current = redis_client.hgetall(ROOM_CURRENT) or {}
     raw_queue = list(redis_client.lrange(ROOM_QUEUE, 0, -1) or [])
-    event_seq = int(redis_client.get(ROOM_EVENT_SEQ) or 0)
+    event_seq = _safe_int(redis_client.get(ROOM_EVENT_SEQ))
 
     # Parse queue items - they can be either JSON strings (new format) or plain song_ids (legacy)
     queue = []
@@ -236,10 +283,10 @@ def _get_state_unlocked(redis_client: Redis) -> dict[str, Any]:
             "song_id": raw_current.get("song_id"),
             "song_meta": song_meta_dict,  # May be None if not stored or parse failed
             "started_by": raw_current.get("started_by"),
-            "started_at_ms": int(raw_current.get("started_at_ms") or 0),
+            "started_at_ms": _safe_int(raw_current.get("started_at_ms")),
             "position_ms": get_current_position_ms(raw_current),
             "paused": raw_current.get("paused", "0") == "1",
-            "event_seq": int(raw_current.get("event_seq") or 0),
+            "event_seq": _safe_int(raw_current.get("event_seq")),
             "server_ts_ms": _now_ms(),
         }
     else:
@@ -291,7 +338,7 @@ def _apply_event_unlocked(
         broadcast_payload = dict(payload)
 
         if type_ == "PLAY":
-            position_ms = int(payload.get("position_ms", 0) or 0)
+            position_ms = _safe_int(payload.get("position_ms"))
             song_id = str(payload.get("song_id") or "")
             # Store song_meta in Redis if provided (for better state recovery)
             song_meta_json = ""
@@ -322,7 +369,7 @@ def _apply_event_unlocked(
                 started_by_uid=origin_uid,
             )
         elif type_ == "PAUSE":
-            position_ms = int(payload.get("position_ms", 0) or 0)
+            position_ms = _safe_int(payload.get("position_ms"))
             redis_client.hset(
                 ROOM_CURRENT,
                 mapping={
@@ -333,7 +380,7 @@ def _apply_event_unlocked(
                 },
             )
         elif type_ == "SEEK":
-            position_ms = int(payload.get("position_ms", 0) or 0)
+            position_ms = _safe_int(payload.get("position_ms"))
             redis_client.hset(
                 ROOM_CURRENT,
                 mapping={
@@ -413,14 +460,24 @@ def _apply_event_unlocked(
                     # Ensure song_id is in the metadata.
                     song_data["song_id"] = song_id
 
-                try:
-                    song_json = json.dumps(song_data)
-                    redis_client.rpush(ROOM_QUEUE, song_json)
-                    # Ensure broadcast includes the full metadata.
-                    broadcast_payload["song_meta"] = song_data
-                except Exception:
-                    # Fallback to legacy format if JSON serialization fails.
-                    redis_client.rpush(ROOM_QUEUE, song_id)
+                # Refuse to grow the queue past the cap. ltrim after rpush would
+                # silently drop the *oldest* entries (the ones the couple still
+                # expects to play next); instead we reject the append at the
+                # boundary and tell the partner their track was dropped. The
+                # trim first also shrinks a legacy queue that predates the cap.
+                _trim_queue(redis_client)
+                if _queue_length(redis_client) >= MAX_QUEUE_LENGTH:
+                    broadcast_payload["queue_full"] = True
+                    broadcast_payload["queue_max"] = MAX_QUEUE_LENGTH
+                else:
+                    try:
+                        song_json = json.dumps(song_data)
+                        redis_client.rpush(ROOM_QUEUE, song_json)
+                        # Ensure broadcast includes the full metadata.
+                        broadcast_payload["song_meta"] = song_data
+                    except Exception:
+                        # Fallback to legacy format if JSON serialization fails.
+                        redis_client.rpush(ROOM_QUEUE, song_id)
         elif type_ == "QUEUE_REMOVE":
             song_id = str(payload.get("song_id") or "")
             raw_index = payload.get("index")

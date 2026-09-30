@@ -155,7 +155,16 @@ def create_vault_entry(
     current_user: User = Depends(get_current_user),
 ) -> VaultEntryResponse:
     ensure_partner(current_user)
-    if db.query(VaultMeta).filter(VaultMeta.id == 1).first() is None:
+    # Take the same meta-row lock rekey uses, so a re-key can never run
+    # concurrently with an insert and strand a fresh entry under a stale
+    # key. SQLite (dev/tests) ignores FOR UPDATE but is single-writer anyway.
+    meta = (
+        db.query(VaultMeta)
+        .filter(VaultMeta.id == 1)
+        .with_for_update()
+        .first()
+    )
+    if meta is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=get_message("error.vault_not_initialized"))
     entry = VaultEntry(
         author_id=current_user.id,
@@ -182,6 +191,17 @@ def update_vault_entry(
     current_user: User = Depends(get_current_user),
 ) -> VaultEntryResponse:
     ensure_partner(current_user)
+    # Lock the meta row so an update/delete cannot interleave with a re-key
+    # (an entry updated mid-rekey would carry the old key's ciphertext).
+    meta = (
+        db.query(VaultMeta)
+        .filter(VaultMeta.id == 1)
+        .with_for_update()
+        .first()
+    )
+    if meta is None:
+        # The vault must exist for an entry update/re-key to be meaningful.
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=get_message("error.vault_not_initialized"))
     entry = (
         db.query(VaultEntry)
         .options(joinedload(VaultEntry.author))
@@ -257,7 +277,16 @@ def rekey_vault(
     payload would become permanently undecryptable once the meta changes).
     """
     ensure_partner(current_user)
-    meta = db.query(VaultMeta).filter(VaultMeta.id == 1).first()
+    # Lock the vault meta row for the whole re-key transaction. Without the
+    # lock a concurrently-created entry (posted between our snapshot and the
+    # commit) would be stored under the OLD salt/verifier and become
+    # undecryptable the moment the new meta commits — a data-loss window.
+    meta = (
+        db.query(VaultMeta)
+        .filter(VaultMeta.id == 1)
+        .with_for_update()
+        .first()
+    )
     if meta is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=get_message("error.vault_not_initialized"))
 

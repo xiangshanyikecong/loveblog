@@ -20,6 +20,43 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.core.media import ALL_IMAGE_TYPES
 
 
+# Storage-location fields. These are operator-facing labels rather than paths
+# the backend resolves, but they are still written to the DB and displayed, so
+# both the settings form and a backup restore validate them identically:
+# a relative path locked inside the uploads tree, with no traversal segments.
+_PATH_FIELDS = (
+    "uploads_root",
+    "articles_path",
+    "albums_path",
+    "avatar_path",
+    "timeline_path",
+    "videos_path",
+)
+
+
+def validate_storage_path(value: str | None) -> str | None:
+    """Normalize and validate one stored-path field; raise on anything unsafe.
+
+    These fields are operator-facing storage labels. They must never become
+    absolute paths, Windows drive paths, or traversal sequences, so neither the
+    settings form nor a backup restore can repoint them outside the deployment
+    root.
+    """
+    if value is None:
+        return None
+    normalized = value.strip().replace("\\", "/")
+    if not normalized:
+        raise ValueError("Field cannot be blank")
+    if normalized.startswith("~") or ":" in normalized:
+        # "~" home-relative and drive/scheme-prefixed ("C:/...") forms both
+        # escape the deployment directory wherever these labels are resolved.
+        raise ValueError("Field must be a relative path without a drive prefix")
+    segments = [segment for segment in normalized.split("/") if segment]
+    if not segments or any(segment in {".", ".."} for segment in segments):
+        raise ValueError("Field must not contain '.', '..' or empty segments")
+    return "/".join(segments)
+
+
 class SiteSettingResponse(BaseModel):
     site_name: str
     love_start_date: datetime | None
@@ -68,12 +105,14 @@ class SiteSettingUpdateRequest(BaseModel):
             return None
         return value
 
-    @field_validator(
-        "site_name", "uploads_root", "articles_path", "albums_path",
-        "avatar_path", "timeline_path", "videos_path",
-    )
+    @field_validator(*_PATH_FIELDS)
     @classmethod
-    def validate_non_blank(cls, value: str | None) -> str | None:
+    def validate_paths(cls, value: str | None) -> str | None:
+        return validate_storage_path(value)
+
+    @field_validator("site_name")
+    @classmethod
+    def validate_site_name(cls, value: str | None) -> str | None:
         if value is None:
             return None
         normalized = value.strip()

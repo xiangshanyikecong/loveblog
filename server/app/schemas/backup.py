@@ -30,6 +30,10 @@ class BackupScheduleUpdateRequest(BaseModel):
         normalized = value.strip().replace("\\", "/")
         if not normalized or normalized.startswith("/") or ".." in normalized.split("/"):
             raise ValueError("Backup directory must be a relative path")
+        # Windows drive-relative forms ("C:/...") pass the leading-slash check
+        # but still escape the working directory on bare-metal Windows.
+        if ":" in normalized:
+            raise ValueError("Backup directory must not contain a drive prefix")
         return normalized
 
 

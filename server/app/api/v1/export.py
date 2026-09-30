@@ -24,6 +24,7 @@ GET  /v1/export/preflight        – preview current data counts (no file create
 POST /v1/export/restore          – upload a backup ZIP, preflight-check, then restore
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -65,7 +66,6 @@ from app.models.event import Event, EventType
 from app.models.event import Visibility as EventVisibility
 from app.models.game_match import GameMatch
 from app.models.coupon import Coupon
-from app.models.fcm_device_token import FcmDeviceToken
 from app.models.ledger_entry import LedgerEntry
 from app.models.listen_history import ListenHistoryEntry
 from app.models.listen_local_track import ListenLocalTrack
@@ -76,13 +76,13 @@ from app.models.mood import MoodCheckin
 from app.models.mood_idempotency import MoodIdempotencyRecord
 from app.models.notification import Notification
 from app.models.period_cycle import PeriodCycle
-from app.models.push_subscription import PushSubscription
 from app.models.site_setting import SiteSetting
 from app.models.user import User, UserRole
 from app.models.vault import VaultEntry, VaultMeta
 from app.models.watch import WatchSource
 from app.models.wish import Wish
 from app.schemas.backup import AutoBackupRunResponse, BackupScheduleResponse, BackupScheduleUpdateRequest
+from app.schemas.site_setting import validate_storage_path
 from app.services.audit import write_audit_log
 from app.services.notifications import notify_partners, partner_recipients
 from app.services.upload_references import rebuild_upload_references
@@ -473,8 +473,14 @@ def _load_all_data(db: Session) -> dict[str, Any]:
     )
     period_cycles = db.query(PeriodCycle).options(joinedload(PeriodCycle.author)).all()
     listen_local_tracks = db.query(ListenLocalTrack).all()
-    push_subscriptions = db.query(PushSubscription).options(joinedload(PushSubscription.user)).all()
-    fcm_device_tokens = db.query(FcmDeviceToken).options(joinedload(FcmDeviceToken.user)).all()
+    # Push subscription endpoints and FCM device tokens are long-lived
+    # per-device credentials and are NEVER exported: a leaked archive that
+    # carries them lets its holder deliver attacker-controlled notifications
+    # to the couple's devices until every device re-registers. Restores ignore
+    # these sections outright (see _import_data_json); devices re-register on
+    # their next launch, so an archive never needs them.
+    push_subscriptions: list = []
+    fcm_device_tokens: list = []
     # E2EE vault: opaque ciphertext only (no plaintext is ever stored), but it
     # must be backed up or a lost DB means the couple's encrypted notes are gone
     # forever. The passphrase is never part of the backup.
@@ -1652,16 +1658,39 @@ def _restore_users(db: Session, users_data: list[dict], index: dict[str, User]) 
     return {"created": created, "matched": matched}
 
 
+def _safe_notification_link(link: Any) -> str | None:
+    """Keep only site-relative notification links out of a restored archive.
+
+    Notification links are handed to the service worker on tap; an absolute
+    cross-origin URL would turn every future notification tap into navigation
+    to an attacker-chosen page. In-app links are always server-relative paths.
+    """
+    if not link:
+        return None
+    text = str(link).strip()
+    if text.startswith("/") and not text.startswith("//") and len(text) <= 255:
+        return text
+    return None
+
+
 def _resolve_author(db: Session, index: dict[str, User], uid: Any, fallback: User | None) -> User | None:
+    """Resolve a backup ``author_uid`` to a live user row.
+
+    Resolution is deliberately limited to the accounts the archive itself
+    describes (``index`` is built by ``_restore_users`` from the backup's own
+    ``users`` list). An earlier version fell back to looking up *any* uid in the
+    database, so a crafted archive could attribute forged articles / moments /
+    ledger entries to an arbitrary live account just by naming its uid.
+
+    A uid the archive does not describe degrades to the caller's fallback
+    (usually a partner, or ``None`` to skip the row), matching how the importer
+    treats other unresolvable references.
+    """
     if not uid:
         return fallback
     cached = index.get(uid)
     if cached is not None:
         return cached
-    user = db.query(User).filter(User.uid == uid).first()
-    if user is not None:
-        index[uid] = user
-        return user
     return fallback
 
 
@@ -1686,6 +1715,7 @@ def _import_data_json(db: Session, data_json: dict) -> dict:
     # ── Shared E2EE chat KDF metadata ────────────────────────────────────
     chat_key_data = data_json.get("chat_key") or {}
     chat_key_restored = False
+    chat_key_skip_reason: str | None = None
     if chat_key_data and db.query(ChatKey).first() is None:
         creator = _resolve_author(db, index, chat_key_data.get("creator_uid"), fallback_user)
         required = (
@@ -1695,28 +1725,42 @@ def _import_data_json(db: Session, data_json: dict) -> dict:
             chat_key_data.get("verifier_hash"),
         )
         if creator is not None and all(required):
-            restored_key = ChatKey(
-                user_id=creator.id,
-                salt=chat_key_data["salt"],
-                kdf=chat_key_data.get("kdf") or "PBKDF2",
-                kdf_hash=chat_key_data.get("kdf_hash") or "SHA-256",
-                iterations=int(chat_key_data.get("iterations") or 210000),
-                algo=chat_key_data.get("algo") or "AES-GCM",
-                verifier_iv=chat_key_data["verifier_iv"],
-                verifier_cipher=chat_key_data["verifier_cipher"],
-                verifier_hash=chat_key_data["verifier_hash"],
-                needs_re_encrypt=bool(chat_key_data.get("needs_re_encrypt", False)),
-            )
-            created_at = _parse_iso_dt(chat_key_data.get("created_at"))
-            updated_at = _parse_iso_dt(chat_key_data.get("updated_at"))
-            if created_at:
-                restored_key.created_at = created_at
-            if updated_at:
-                restored_key.updated_at = updated_at
-            db.add(restored_key)
-            db.flush()
-            chat_key_restored = True
+            # Mirror the setup endpoint's consistency check so a corrupt (or
+            # doctored) archive cannot plant verifier material the clients
+            # would treat as a valid passphrase proof.
+            expected_hash = hashlib.sha256(
+                str(chat_key_data["verifier_cipher"]).encode("utf-8")
+            ).hexdigest()
+            if expected_hash != str(chat_key_data["verifier_hash"]):
+                chat_key_skip_reason = "verifier_hash_mismatch"
+                logger.warning(
+                    "Backup chat_key verifier_hash mismatch — refusing to restore E2EE key metadata"
+                )
+            else:
+                restored_key = ChatKey(
+                    user_id=creator.id,
+                    salt=chat_key_data["salt"],
+                    kdf=chat_key_data.get("kdf") or "PBKDF2",
+                    kdf_hash=chat_key_data.get("kdf_hash") or "SHA-256",
+                    iterations=int(chat_key_data.get("iterations") or 210000),
+                    algo=chat_key_data.get("algo") or "AES-GCM",
+                    verifier_iv=chat_key_data["verifier_iv"],
+                    verifier_cipher=chat_key_data["verifier_cipher"],
+                    verifier_hash=chat_key_data["verifier_hash"],
+                    needs_re_encrypt=bool(chat_key_data.get("needs_re_encrypt", False)),
+                )
+                created_at = _parse_iso_dt(chat_key_data.get("created_at"))
+                updated_at = _parse_iso_dt(chat_key_data.get("updated_at"))
+                if created_at:
+                    restored_key.created_at = created_at
+                if updated_at:
+                    restored_key.updated_at = updated_at
+                db.add(restored_key)
+                db.flush()
+                chat_key_restored = True
     result["chat_key"] = {"restored": chat_key_restored}
+    if chat_key_skip_reason:
+        result["chat_key"]["reason"] = chat_key_skip_reason
 
     # ── Site setting (config singleton, id=1) ─────────────────────────────
     setting_data = data_json.get("setting") or {}
@@ -1731,10 +1775,22 @@ def _import_data_json(db: Session, data_json: dict) -> dict:
         if love_start:
             setting.love_start_date = love_start
         for field in ("uploads_root", "articles_path", "albums_path", "avatar_path", "timeline_path", "videos_path"):
-            if setting_data.get(field):
-                setattr(setting, field, setting_data[field])
+            raw_value = setting_data.get(field)
+            if not raw_value:
+                continue
+            try:
+                setattr(setting, field, validate_storage_path(str(raw_value)))
+            except ValueError:
+                # A doctored (or corrupt) archive must not be able to repoint
+                # the deployment's storage roots and disable every upload at
+                # once. Keep the destination's current value instead.
+                logger.warning(
+                    "Ignoring unsafe storage path from backup: %s=%r", field, raw_value
+                )
+                skipped_paths = result.setdefault("site_setting", {}).setdefault("skipped_paths", [])
+                skipped_paths.append(field)
         db.flush()
-        result["site_setting"] = {"updated": True}
+        result.setdefault("site_setting", {})["updated"] = True
 
     # ── Articles (+ blocks) ───────────────────────────────────────────────
     a_created = a_skipped = 0
@@ -2606,66 +2662,21 @@ def _import_data_json(db: Session, data_json: dict) -> dict:
     result["listen_local_tracks"] = {"created": local_created, "skipped": local_skipped}
 
     # ── Push device registrations ─────────────────────────────────────────
-    push_created = push_skipped = 0
-    for item in data_json.get("push_subscriptions") or []:
-        user = _resolve_author(db, index, item.get("user_uid"), None)
-        sid = item.get("sid")
-        endpoint = item.get("endpoint")
-        if user is None or not endpoint or db.query(PushSubscription).filter(
-            (PushSubscription.sid == sid) | (PushSubscription.endpoint == endpoint)
-        ).first():
-            push_skipped += 1
-            continue
-        subscription = PushSubscription(
-            user_id=user.id,
-            endpoint=str(endpoint),
-            p256dh=str(item.get("p256dh") or ""),
-            auth=str(item.get("auth") or ""),
-            expiration_time=item.get("expiration_time"),
-            user_agent=item.get("user_agent"),
-            is_active=bool(item.get("is_active", True)),
-            fail_count=max(0, int(item.get("fail_count") or 0)),
+    # Device push credentials are never imported, even from older archives
+    # that still carry them: rows here are the standing ability to wake a
+    # specific browser/phone, so importing an archive's rows would hand every
+    # device channel listed in it to whoever controls the restore. Devices
+    # re-register on their next launch instead.
+    legacy_push_rows = len(data_json.get("push_subscriptions") or [])
+    legacy_fcm_rows = len(data_json.get("fcm_device_tokens") or [])
+    if legacy_push_rows or legacy_fcm_rows:
+        logger.warning(
+            "Ignoring %d push credential row(s) from the archive "
+            "(devices re-register themselves after a restore)",
+            legacy_push_rows + legacy_fcm_rows,
         )
-        if sid:
-            subscription.sid = sid
-        for field in ("last_seen_at", "created_at", "updated_at"):
-            value = _parse_iso_dt(item.get(field))
-            if value:
-                setattr(subscription, field, value)
-        db.add(subscription)
-        db.flush()
-        push_created += 1
-    result["push_subscriptions"] = {"created": push_created, "skipped": push_skipped}
-
-    fcm_created = fcm_skipped = 0
-    for item in data_json.get("fcm_device_tokens") or []:
-        user = _resolve_author(db, index, item.get("user_uid"), None)
-        tid = item.get("tid")
-        token = item.get("token")
-        if user is None or not token or db.query(FcmDeviceToken).filter(
-            (FcmDeviceToken.tid == tid) | (FcmDeviceToken.token == token)
-        ).first():
-            fcm_skipped += 1
-            continue
-        device = FcmDeviceToken(
-            user_id=user.id,
-            token=str(token),
-            platform=str(item.get("platform") or "android"),
-            device_name=item.get("device_name"),
-            app_version=item.get("app_version"),
-            is_active=bool(item.get("is_active", True)),
-            fail_count=max(0, int(item.get("fail_count") or 0)),
-        )
-        if tid:
-            device.tid = tid
-        for field in ("last_seen_at", "created_at", "updated_at"):
-            value = _parse_iso_dt(item.get(field))
-            if value:
-                setattr(device, field, value)
-        db.add(device)
-        db.flush()
-        fcm_created += 1
-    result["fcm_device_tokens"] = {"created": fcm_created, "skipped": fcm_skipped}
+    result["push_subscriptions"] = {"created": 0, "skipped": legacy_push_rows}
+    result["fcm_device_tokens"] = {"created": 0, "skipped": legacy_fcm_rows}
 
     # Notifications are user-facing history, not merely transient rows. Keep
     # their original delivery state so a restore does not resend old alerts.
@@ -2684,7 +2695,7 @@ def _import_data_json(db: Session, data_json: dict) -> dict:
             type=str(item.get("type") or "restored"),
             title=str(item.get("title") or ""),
             body=item.get("body"),
-            link=item.get("link"),
+            link=_safe_notification_link(item.get("link")),
             source_type=item.get("source_type"),
             source_id=item.get("source_id"),
             is_read=bool(item.get("is_read")),
@@ -2995,7 +3006,8 @@ async def restore_backup(
 ):
     """
     Upload a backup ZIP. After preflight checks pass, restore the uploads/ tree
-    from the archive and then re-import the database additively & idempotently
+    additively from the archive (existing files are never overwritten) and then
+    re-import the database additively & idempotently
     from data.json (rows matched by business key are skipped; only missing rows
     are recreated). The DB import runs in its own transaction: on any error it is
     rolled back and reported, leaving the just-copied uploads in place.
@@ -3029,16 +3041,35 @@ async def restore_backup(
         data_path = extract_dir / "data.json"
         data_json: dict = json.loads(data_path.read_text(encoding="utf-8"))
 
-        # ── Restore uploads ───────────────────────────────────────────────
+        # ── Restore uploads (additive, like the DB import) ────────────────
+        # Only files that do not exist yet are copied. An archive must never
+        # overwrite the media already on the server: a tampered or wrong ZIP
+        # would otherwise be able to replace every uploaded photo/video in one
+        # call. To genuinely replace a corrupted file, delete it first and
+        # re-run the restore.
         restored_uploads = False
+        skipped_uploads = 0
         src_uploads = extract_dir / "uploads"
         if src_uploads.exists():
-            if UPLOADS_ROOT.exists():
-                # Back-up current uploads before overwriting
-                bk_path = UPLOADS_ROOT.parent / f"uploads_bk_{_now_utc().strftime('%Y%m%d%H%M%S')}"
-                shutil.copytree(UPLOADS_ROOT, bk_path)
-            shutil.copytree(src_uploads, UPLOADS_ROOT, dirs_exist_ok=True)
+            UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
+            for src in src_uploads.rglob("*"):
+                dst = UPLOADS_ROOT / src.relative_to(src_uploads)
+                if src.is_dir():
+                    dst.mkdir(parents=True, exist_ok=True)
+                    continue
+                # Never overwrite existing media and never copy links — the
+                # ZIP extractor materialises regular files, but be explicit.
+                if dst.exists() or src.is_symlink():
+                    skipped_uploads += 1
+                    continue
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
             restored_uploads = True
+            if skipped_uploads:
+                logger.info(
+                    "Uploads restore skipped %d file(s) that already exist on the server",
+                    skipped_uploads,
+                )
 
         # ── Restore database (additive, idempotent) ───────────────────────
         # Recreate missing rows from data.json. Wrapped in its own try so a
@@ -3052,8 +3083,11 @@ async def restore_backup(
             db.commit()
         except Exception as exc:  # noqa: BLE001 — report, don't crash mid-restore
             db.rollback()
-            database_error = str(exc)
+            # The full traceback goes to the server log only; raw DB exception
+            # text (SQL fragments, table names, connection strings) must not be
+            # echoed back into the HTTP response.
             logger.exception("Database restore import failed")
+            database_error = f"{type(exc).__name__}: database import failed (see server logs)"
 
         # Audit logging commits on its own session; do it only after the import
         # is durably committed so a logging hiccup can't roll back the restore.
@@ -3084,6 +3118,7 @@ async def restore_backup(
             "operator_nickname": current_user.nickname,
             "counts": manifest.get("counts"),
             "restored_uploads": restored_uploads,
+            "skipped_uploads": skipped_uploads,
             "database_import": database_import,
             "database_error": database_error,
             "warnings": report["warnings"],
@@ -3096,7 +3131,7 @@ async def restore_backup(
         if database_error is not None:
             message = (
                 "媒体文件已恢复，但数据库导入失败，数据库未改动（已回滚）。"
-                f"错误：{database_error}"
+                "详细原因请查看服务端日志。"
             )
         elif database_import is not None:
             message = "备份恢复完成：媒体文件已更新，数据库内容已按业务键补齐（已存在的条目自动跳过）。"
@@ -3107,6 +3142,7 @@ async def restore_backup(
             "ok": database_error is None,
             "message": message,
             "restored_uploads": restored_uploads,
+            "skipped_uploads": skipped_uploads,
             "database_import": database_import,
             "database_error": database_error,
             "warnings": report["warnings"],
