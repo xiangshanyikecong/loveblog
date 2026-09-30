@@ -130,6 +130,14 @@ fun PushStatusCardContent(
                     }
                 }
             }
+            if (state.serverReady && state.clientReady && state.devices.isNotEmpty()) {
+                Text(
+                    "已注册设备：${state.devices.size} 台（" +
+                        state.devices.joinToString("、") { it.device_name ?: "未知设备" } + "）",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onOpenSetup, modifier = Modifier.weight(1f)) {
                     Text(if (state.serverReady && state.clientReady) "查看推送状态" else "配置推送")

@@ -370,12 +370,22 @@ async function uploadImageWithCompression(file, endpoint) {
   const formData = new FormData();
   formData.append("file", payload);
 
-  const { data } = await api.post(endpoint, formData, {
+  const config = {
     headers: {
       "Content-Type": "multipart/form-data", timeout: 60000
     }
-  });
-  return data;
+  };
+  try {
+    const { data } = await api.post(endpoint, formData, config);
+    return data;
+  } catch (error) {
+    // 弱网自愈（设计 §7.2）：网络类失败自动重试一次。纯上传无副作用顺序
+    // 约束，最坏情况服务端多存一个孤儿文件；拿到 HTTP 响应或用户取消则
+    // 不重试。
+    if (error?.response || error?.code === "ERR_CANCELED") throw error;
+    const { data } = await api.post(endpoint, formData, config);
+    return data;
+  }
 }
 
 export async function createCheckin(payload) {

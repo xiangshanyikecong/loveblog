@@ -17,6 +17,9 @@
 
 <template>
   <div class="content-section">
+    <p v-if="staleFrom" class="offline-stale-notice" role="status">
+      {{ $t('offline.staleNotice', { time: new Date(staleFrom).toLocaleString() }) }}
+    </p>
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
       <p>{{ t('articleDetail.loading') }}</p>
@@ -172,6 +175,7 @@ import { t } from "../locales";
 import { fetchArticle, postArticleComment, resolveAssetUrl, rewriteAssetUrlsInHtml } from "../lib/api";
 import { useAuth } from "../stores/auth";
 import { parseError } from "../utils/helpers";
+import { loadSnapshot, saveSnapshot } from "../lib/offline/snapshots";
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import CommentThread from "../components/CommentThread.vue";
@@ -190,6 +194,8 @@ const passwordInput = ref("");
 const accessError = ref("");
 const loadError = ref("");
 let loadGeneration = 0;
+// 离线快照回退时记录数据时间（null 表示展示的是实时数据）。
+const staleFrom = ref(null);
 
 // 检测是否有 Markdown 内容
 const hasMarkdownContent = computed(() => {
@@ -300,6 +306,11 @@ async function load({ password = "" } = {}) {
     const data = await fetchArticle(route.params.aid, { password });
     if (generation !== loadGeneration) return;
     article.value = data;
+    // 密码保护内容永不落盘（设计 §8 隐私边界）：仅无密码的成功拉取入快照。
+    if (!password) {
+      await saveSnapshot(`article:${route.params.aid}`, data);
+      staleFrom.value = null;
+    }
     requiresPassword.value = false;
     accessError.value = "";
     passwordInput.value = "";
@@ -311,7 +322,14 @@ async function load({ password = "" } = {}) {
       accessError.value = error.response.status === 403 ? t("articleDetail.passwordIncorrect") : "";
     } else {
       requiresPassword.value = false;
-      loadError.value = parseError(error);
+      // 离线/请求失败时退回最近一份快照，明确标注数据时间。
+      const snapshot = await loadSnapshot(`article:${route.params.aid}`);
+      if (snapshot) {
+        article.value = snapshot.payload;
+        staleFrom.value = snapshot.fetchedAt;
+      } else {
+        loadError.value = parseError(error);
+      }
     }
   } finally {
     if (generation === loadGeneration) loading.value = false;

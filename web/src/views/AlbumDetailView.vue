@@ -17,6 +17,9 @@
 
 <template>
   <div class="content-section">
+    <p v-if="staleFrom" class="offline-stale-notice" role="status">
+      {{ $t('offline.staleNotice', { time: new Date(staleFrom).toLocaleString() }) }}
+    </p>
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
       <p>{{ t('albumDetail.loading') }}</p>
@@ -198,6 +201,7 @@ import { t } from "../locales";
 import { fetchAlbum, postAlbumComment, resolveAssetUrl } from "../lib/api";
 import { useAuth } from "../stores/auth";
 import { parseError } from "../utils/helpers";
+import { loadSnapshot, saveSnapshot } from "../lib/offline/snapshots";
 import CommentThread from "../components/CommentThread.vue";
 
 const route = useRoute();
@@ -214,6 +218,8 @@ const passwordInput = ref("");
 const accessError = ref("");
 const loadError = ref("");
 let loadGeneration = 0;
+// 离线快照回退时记录数据时间（null 表示展示的是实时数据）。
+const staleFrom = ref(null);
 
 // ── 回忆播放 Slideshow ──────────────────────────────────────────────
 const slideshowActive = ref(false);
@@ -352,6 +358,11 @@ async function load({ password = "" } = {}) {
     const data = await fetchAlbum(route.params.alb_id, { password });
     if (generation !== loadGeneration) return;
     album.value = data;
+    // 密码保护内容永不落盘（设计 §8 隐私边界）：仅无密码的成功拉取入快照。
+    if (!password) {
+      await saveSnapshot(`album:${route.params.alb_id}`, data);
+      staleFrom.value = null;
+    }
     requiresPassword.value = false;
     accessError.value = "";
     passwordInput.value = "";
@@ -363,7 +374,14 @@ async function load({ password = "" } = {}) {
       accessError.value = error.response.status === 403 ? t('albumDetail.passwordIncorrect') : "";
     } else {
       requiresPassword.value = false;
-      loadError.value = parseError(error);
+      // 离线/请求失败时退回最近一份快照，明确标注数据时间。
+      const snapshot = await loadSnapshot(`album:${route.params.alb_id}`);
+      if (snapshot) {
+        album.value = snapshot.payload;
+        staleFrom.value = snapshot.fetchedAt;
+      } else {
+        loadError.value = parseError(error);
+      }
     }
   } finally {
     if (generation === loadGeneration) loading.value = false;

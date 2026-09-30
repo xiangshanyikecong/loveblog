@@ -153,6 +153,7 @@ import {
   patchArticle,
   rollbackArticleVersion,
 } from "../lib/api";
+import { removeArticleDraft } from "../lib/offline/drafts";
 import { confirmDialog } from "../lib/dialog";
 import { t } from "../locales";
 import { parseError, parseTags } from "../utils/helpers";
@@ -200,6 +201,8 @@ async function handleDelete(id) {
   if (!(await confirmDialog(t("adminArticles.confirmDelete"), { danger: true }))) return;
   try {
     await deleteArticle(id);
+    // 文章删除后本地草稿失去归属，一并清理（设计 §5.3）。
+    await removeArticleDraft(id);
     showMessage?.(t("adminArticles.deleteSuccess"));
     await loadArticles();
   } catch (error) {

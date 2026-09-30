@@ -98,7 +98,7 @@
         class="glass-card section-block album-card"
         @click="goToAlbum(item.alb_id)"
       >
-        <img v-if="item.cover_url" :src="resolveAssetUrl(item.cover_url)" :alt="item.title" class="album-cover" />
+        <img v-if="item.cover_url" :src="resolveAssetUrl(item.cover_url)" :alt="item.title" class="album-cover" loading="lazy" />
         <p class="entity-title">{{ item.title }}</p>
         <p class="entity-desc">{{ t('albums.mediaCount', { n: item.media_count }) }}</p>
         <p class="entity-desc">{{ item.description || t('albums.noDescription') }}</p>
