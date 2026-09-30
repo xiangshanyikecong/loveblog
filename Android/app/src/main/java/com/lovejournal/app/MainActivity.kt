@@ -20,6 +20,7 @@ package com.lovejournal.app
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -43,6 +44,14 @@ class MainActivity : ComponentActivity() {
         // Edge-to-edge：配合 M3 Scaffold 的 insets 处理，避免 Android 15+
         // 强制全面屏后状态栏图标与内容叠压，也让 imePadding 正常生效。
         enableEdgeToEdge()
+        // FLAG_SECURE blocks screenshots and excludes the window from the
+        // recents/thumbnail preview. The app surfaces private journal entries,
+        // E2EE chat, and vault contents — a task switcher snapshot would leak
+        // whatever was on screen to anyone holding the device.
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE,
+        )
         maybeRequestNotificationPermission()
         setContent {
             LoveJournalTheme {

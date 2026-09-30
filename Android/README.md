@@ -51,6 +51,18 @@ cd Android
 
 产物：`app/build/outputs/apk/debug/app-debug.apk`
 
+### 依赖完整性校验
+
+`gradle/verification-metadata.xml` 固定了每个依赖的 SHA-256。构建时 Gradle 会逐个校验，
+任何被篡改的产物（包括经过镜像分发时）都会直接让构建失败。新增/升级依赖后重新生成：
+
+```bash
+./gradlew --write-verification-metadata sha256 :app:testDebugUnitTest :app:compileReleaseKotlin
+```
+
+并把更新后的文件一并提交。依赖仓库顺序上 `google()` / `mavenCentral()` 优先，阿里云镜像
+仅作国内网络兜底（见 `settings.gradle.kts`）。
+
 ### 后端地址
 
 `API_BASE_URL` release 默认 `https://love.invalid/api/v1/`（占位域名，正式构建前必须修改）。

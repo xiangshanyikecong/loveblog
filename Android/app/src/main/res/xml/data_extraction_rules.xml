@@ -9,12 +9,19 @@
         <exclude domain="sharedpref" path="love_cookies.xml" />
         <exclude domain="sharedpref" path="love_cookies_enc.xml" />
         <exclude domain="sharedpref" path="love_server_config.xml" />
+        <!-- love_widget carries the "days together" counter, which reveals the
+             relationship start date. Although allowBackup=false is the primary
+             guard, exclude it explicitly so the value cannot leak via Google
+             cloud backup or device-to-device transfer on a rooted/modified
+             device where allowBackup may be bypassed. -->
+        <exclude domain="sharedpref" path="love_widget.xml" />
         <exclude domain="file" path="datastore/" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="love_cookies.xml" />
         <exclude domain="sharedpref" path="love_cookies_enc.xml" />
         <exclude domain="sharedpref" path="love_server_config.xml" />
+        <exclude domain="sharedpref" path="love_widget.xml" />
         <exclude domain="file" path="datastore/" />
     </device-transfer>
 </data-extraction-rules>

@@ -30,6 +30,9 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.CipherSuite
+import okhttp3.ConnectionSpec
+import okhttp3.TlsVersion
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
@@ -53,6 +56,36 @@ object NetworkModule {
         encodeDefaults = true
     }
 
+    /**
+     * TLS connection policy for release builds: TLS 1.2 / 1.3 only, and only
+     * modern cipher suites (forward secrecy with AEAD). The debug build keeps
+     * the system default to allow local HTTP (10.0.2.2) without bumping into a
+     * MODERN_TLS-only spec.
+     *
+     * Static certificate pinning is intentionally NOT used: this app is
+     * self-hosted and the server host is user-configurable, so a pre-baked pin
+     * would either lock everyone into one certificate or require the operator
+     * to rebuild the app on every cert rotation. The network_security_config
+     * already rejects cleartext and user-installed CAs on release; forbidding
+     * legacy TLS closes the remaining downgrade surface without that downside.
+     */
+    private fun modernTlsSpec(): ConnectionSpec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
+        .cipherSuites(
+            // AEAD + forward secrecy only — drop CBC / static-RSA suites that
+            // OkHttp's MODERN_TLS preset would otherwise still accept.
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+            CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+            CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+            CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+            CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+            CipherSuite.TLS_AES_128_GCM_SHA256,
+            CipherSuite.TLS_AES_256_GCM_SHA384,
+            CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+        )
+        .build()
+
     @Provides
     @Singleton
     fun provideOkHttp(
@@ -67,7 +100,7 @@ object NetworkModule {
                 HttpLoggingInterceptor.Level.NONE
             }
         }
-        return OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(hostSelectionInterceptor)
             .addInterceptor(authStatusInterceptor)
@@ -77,7 +110,14 @@ object NetworkModule {
             // Photo uploads can be large on slow links; the default 10s write
             // timeout truncated them, so allow a longer body-write window.
             .writeTimeout(60, TimeUnit.SECONDS)
-            .build()
+        // Debug builds allow the system default spec (needed for local HTTP to
+        // 10.0.2.2); release restricts to modern TLS only — and since
+        // network_security_config forbids cleartext on release, no CLEARTEXT
+        // spec is added here.
+        if (!BuildConfig.DEBUG) {
+            builder.connectionSpecs(listOf(modernTlsSpec()))
+        }
+        return builder.build()
     }
 
     /**
