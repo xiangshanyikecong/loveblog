@@ -661,7 +661,12 @@ import { parseError } from "../../../utils/helpers";
 
 const showMessage = inject("showMessage", () => {});
 const { t } = useI18n();
-const CHAT_DRAFT_STORAGE_KEY = "love_cottage_chat_draft_v1";
+// 草稿按账号隔离：key 带 uid 后缀，换账号登录不会把前一账号没发出去的
+// 私密消息回显进输入框。登出时（clearAuthState）该 key 会一并清除。
+const CHAT_DRAFT_STORAGE_KEY = () => {
+  const uid = window?.localStorage?.getItem("love_uid") || "";
+  return `love_cottage_chat_draft_v1:${uid || "anonymous"}`;
+};
 const RECALL_WINDOW_MS = 2 * 60 * 1000;
 const TYPING_IDLE_MS = 1800;
 
@@ -1284,9 +1289,11 @@ function replyToMessage(message) {
 
 function saveDraftToStorage() {
   if (typeof window === "undefined") return;
+  // 账号 uid 只有在 fetchMe() 成功后才写入 localStorage（见 onMounted）。
+  // 未登录/未取到时退回匿名 key，避免把前一个账号的草稿覆盖到新账号下。
   try {
     window.localStorage.setItem(
-      CHAT_DRAFT_STORAGE_KEY,
+      CHAT_DRAFT_STORAGE_KEY(),
       JSON.stringify({
         draft: draft.value,
         futureAtInput: futureAtInput.value
@@ -1300,7 +1307,7 @@ function saveDraftToStorage() {
 function restoreDraftFromStorage() {
   if (typeof window === "undefined") return;
   try {
-    const raw = window.localStorage.getItem(CHAT_DRAFT_STORAGE_KEY);
+    const raw = window.localStorage.getItem(CHAT_DRAFT_STORAGE_KEY());
     if (!raw) return;
     const data = JSON.parse(raw);
     draft.value = String(data?.draft || "");

@@ -168,7 +168,16 @@ export function rewriteAssetUrlsInHtml(html = "") {
 
   for (const element of container.querySelectorAll("img[src], source[src], video[src], audio[src]")) {
     if (element.hasAttribute("src")) {
-      element.setAttribute("src", resolveAssetUrl(element.getAttribute("src") || ""));
+      const raw = element.getAttribute("src") || "";
+      element.setAttribute("src", resolveAssetUrl(raw));
+      // External (cross-origin) images become a tracking pixel: they leak the
+      // viewer's IP and visit time to the remote host. Referrer-Policy already
+      // limits the referer on the page level; no-referrer on the request
+      // itself keeps the host from seeing even the origin when a third-party
+      // <img> is embedded in article HTML.
+      if (isAbsoluteUrl(raw) && !isInternalAssetPath(new URL(raw, runtimeOrigin || "http://localhost").pathname)) {
+        element.setAttribute("referrerpolicy", "no-referrer");
+      }
     }
   }
 

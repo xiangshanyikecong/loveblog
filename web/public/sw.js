@@ -65,7 +65,19 @@ async function putRuntimeCache(req, res) {
 }
 
 function withNotificationId(link, nid) {
-  const target = new URL(link || "/notifications", APP_ORIGIN);
+  // Notification links are server-controlled, but a restored archive could
+  // smuggle an absolute cross-origin URL (see _safe_notification_link on the
+  // backend). Never navigate off-origin from a notification tap; default to
+  // the in-app notifications page instead.
+  let target;
+  try {
+    target = new URL(link || "/notifications", APP_ORIGIN);
+  } catch {
+    target = new URL("/notifications", APP_ORIGIN);
+  }
+  if (target.origin !== APP_ORIGIN) {
+    target = new URL("/notifications", APP_ORIGIN);
+  }
   if (nid) {
     target.searchParams.set("_nid", nid);
   }

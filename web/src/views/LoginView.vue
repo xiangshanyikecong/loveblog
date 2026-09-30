@@ -135,6 +135,15 @@ function isTotpRequired(error) {
 async function completeLogin(payload) {
   const { data } = await api.post("/v1/auth/login", payload);
   setAuthToken(data.access_token, data.role, { newSession: true });
+  // 登录即记录 uid，聊天草稿等按账号隔离的本地数据依赖它分 key。
+  try {
+    const me = await api.get("/v1/auth/me");
+    if (me?.data?.uid) {
+      window.localStorage.setItem("love_uid", me.data.uid);
+    }
+  } catch (_) {
+    // uid 不是登录的硬性依赖；拿不到时草稿退回匿名 key，不阻塞登录。
+  }
 
   showMessage(canManageContent.value ? t("auth.loginSuccess") : t("auth.loginSuccessLimited"));
 

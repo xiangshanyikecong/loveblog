@@ -58,6 +58,9 @@ export function useAuth() {
         if (generation !== authGeneration || hasPendingLogout()) {
           return false;
         }
+        if (user?.uid) {
+          localStorage.setItem("love_uid", user.uid);
+        }
         setAuthToken("legacy", user.role);
         return true;
       })
@@ -103,6 +106,18 @@ export function useAuth() {
     currentUserRole.value = "";
     localStorage.removeItem("love_is_auth");
     localStorage.removeItem("love_role");
+    localStorage.removeItem("love_uid");
+    // 按账号隔离的本地草稿（聊天/编辑器）一并清除，共享电脑不留前任账号内容。
+    try {
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (key.startsWith("love_cottage_chat_draft_v1:")) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (_) {
+      // 存储不可用时静默跳过。
+    }
     // 隐私边界：登出即清空本机离线数据（草稿/写队列/只读快照）与 SW
     // 运行时缓存，覆盖共享电脑场景。存储不可用时静默跳过。
     wipeOfflineData().catch(() => {});
