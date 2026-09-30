@@ -18,4 +18,8 @@ httpx>=0.27
 cryptography==50.0.1
 slowapi>=0.1.9
 pywebpush>=2.0.3
+# 传递依赖（pywebpush -> py-vapid）。2.13.x 命中 CVE-2026-102266~102273
+# （含 CRITICAL 9.1 的算法混淆伪造），trivy 门禁会拦截镜像；显式下限强制
+# 解析到修复版。应用自身 JWT 用 python-jose，不直接 import jwt。
+PyJWT>=2.14.0
 firebase-admin>=6.5.0
