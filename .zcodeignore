@@ -1,0 +1,151 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Node / Vite
+node_modules/
+dist/
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.production.example
+.quickstart/
+
+# Uploads & Backups
+backups/
+server/uploads/*
+!server/uploads/.gitkeep
+server/backups/*
+!server/backups/.gitkeep
+
+# SSL Certificates
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+# ACME/certbot 数据（含账户私钥）与 HTTP-01 验证临时目录
+nginx/certbot/
+nginx/ssl-challenge/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local databases (may contain real user/partner data — never commit)
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
+
+# CodeArts assistant local cache
+.codeartsdoer/
+.cursor/
+.kiro/
+
+# SSH deploy daemon runtime artifacts
+server/_ssh_jobs/
+server/_ssh_daemon.status
+
+# Runtime state
+server/backup_history.json
+server/backup_schedule.json
+
+# IDE configs (personal, not shared team settings)
+.idea/
+.vscode/
+.arts/
+*.iml
+
+# AI assistant local configs
+.agents/
+.cc-config.json
+
+# Build logs
+build_output*.txt
+build_exit.txt
+
+# Test evidence screenshots
+a1-evidence/
+
+# One-off diagnostic/maintenance scripts (also excluded by flake8/pylint)
+# Root-level temp scripts
+_check_syntax*.py
+diagnose_*.sh
+diagnose_*.bat
+reset_database.bat
+test_listen_api.*
+test_queue_fix.py
+test-report.md
+TEST_PLAN_*.md
+hello.txt
+快速启动指南.txt
+私_backend_test.py
+
+# Server-level one-off scripts
+server/_mk_*.py
+server/_ssh*.py
+server/check_*.py
+server/diagnose_*.py
+server/fix_*.py
+server/inspect_*.py
+server/reset_*.py
+server/seed_*.py
+server/test_cottage_listen.py
+server/test_couple_avatars.py
+server/test_pydantic.py
+
+# Archived dev logs (contain local paths/credentials, not for public repo)
+docs/archive/
+
+# Misc local/temp artifacts
+netstat.txt
+temp-upload.png
+upload-response.json
+tmp_zip_test/
+_commit_msg.txt
+
+# Local archival clone from a previously embedded Git repository.
+# The root project owns server/ and web/ directly; never track this copy.
+/web-sever/
+
+# Non-web-server components (this repo = web-sever 前后端 only)
+ios/
+ios客户端/
+安卓客户端/
+中心服务器端/
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+bower_components/
+jspm_packages/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）
