@@ -26,7 +26,7 @@ import UIKit
 enum LoveTheme {
     /// Brand pink; dark mode brightens to the Android `LovePinkDarkScheme`.
     static let pink = dynamic(light: 0xE5_73_9B, dark: 0xFF_B1_C8)
-    static let pinkDeep = Color(hex: 0xC7_5A_82)
+    static let pinkDeep = Color(uiColor: UIColor(hex: 0xC7_5A_82))
     static let rose = dynamic(light: 0xFF_5C_8A, dark: 0xFF_7F_A0)
     static let peach = dynamic(light: 0xFF_9A_76, dark: 0xFF_B3_9C)
     static let lavender = dynamic(light: 0x9B_87_F5, dark: 0xB7_A8_FF)

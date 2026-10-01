@@ -214,9 +214,9 @@ public final class LoveAPIClient {
     }
 
     private func notifySessionExpired() {
-        guard let onSessionExpired else { return }
+        guard let handler = onSessionExpired else { return }
         DispatchQueue.main.async {
-            self.onSessionExpired?()
+            handler()
         }
     }
 
