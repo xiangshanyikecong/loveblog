@@ -112,9 +112,13 @@ struct LoginView: View {
                 ))
                 .keyboardType(.URL)
             }
-            Text(viewModel.isDebugBuild ? "login.server.hint.debug" : "login.server.hint.release")
-                .font(.caption2)
-                .foregroundStyle(LoveTheme.secondaryText)
+            if viewModel.isDebugBuild {
+                Text("login.server.hint.debug")
+            } else {
+                Text("login.server.hint.release")
+            }
+            .font(.caption2)
+            .foregroundStyle(LoveTheme.secondaryText)
             LoveSecondaryButton(
                 titleKey: "login.action.test_connection",
                 loading: viewModel.testingConnection

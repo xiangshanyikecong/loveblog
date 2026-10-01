@@ -160,7 +160,7 @@ public enum ServerAddress {
         if lowered == "10.0.2.2" { return false }
         if lowered == "localhost" { return false }
         if isIPLiteral(lowered) { return false }
-        if !lowercased(host).contains(".") { return false }
+        if !lowered.contains(".") { return false }
         return true
     }
 
@@ -170,7 +170,7 @@ public enum ServerAddress {
         if lowered == "10.0.2.2" { return true }
         if lowered == "localhost" { return true }
         if isIPLiteral(lowered) { return true }
-        return !lowercased(host).contains(".")
+        return !lowered.contains(".")
     }
 
     private static func hasExplicitPort(_ components: URLComponents) -> Bool {
