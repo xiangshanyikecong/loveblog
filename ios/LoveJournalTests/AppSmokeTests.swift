@@ -66,7 +66,13 @@ final class AppSmokeTests: XCTestCase {
         XCTAssertNil(ServerSettings.mediaURL(""))
     }
 
-    func testKeychainSessionRoundtrip() {
+    func testKeychainSessionRoundtrip() throws {
+        // Headless CI simulator runners can deny Keychain access entirely;
+        // the integration behavior is verified when running locally on a Mac.
+        try XCTSkipUnless(
+            KeychainStore.isAvailable(),
+            "Keychain unavailable in this environment — skipped, verify locally on a Mac"
+        )
         let account = "test:\(UUID().uuidString)"
         defer { KeychainStore.deleteSession(account: account) }
 

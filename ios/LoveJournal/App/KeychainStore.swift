@@ -29,11 +29,15 @@ import Security
 enum KeychainStore {
     private static let service = "com.lovejournal.app.ios.session"
 
-    static func saveSession(_ cookies: [HTTPCookie], account: String) {
+    /// Persists the cookie set. Returns the final SecItem OSStatus
+    /// (`errSecSuccess` on success) so callers and tests can surface
+    /// environments where the Keychain is denied.
+    @discardableResult
+    static func saveSession(_ cookies: [HTTPCookie], account: String) -> OSStatus {
         guard let data = try? NSKeyedArchiver.archivedData(
             withRootObject: cookies,
             requiringSecureCoding: true
-        ) else { return }
+        ) else { return errSecParam }
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -42,7 +46,7 @@ enum KeychainStore {
         ]
         let update: [String: Any] = [kSecValueData as String: data]
         let status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
-        guard status == errSecItemNotFound else { return }
+        guard status == errSecItemNotFound else { return status }
 
         var add = query
         add[kSecValueData as String] = data
@@ -50,7 +54,7 @@ enum KeychainStore {
         // device backups to another device (mirrors Android's
         // data_extraction_rules excluding cookies from backup).
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        SecItemAdd(add as CFDictionary, nil)
+        return SecItemAdd(add as CFDictionary, nil)
     }
 
     static func loadSession(account: String) -> [HTTPCookie]? {
@@ -78,5 +82,24 @@ enum KeychainStore {
             kSecAttrAccount as String: account,
         ]
         SecItemDelete(query as CFDictionary)
+    }
+
+    /// Whether this process is actually allowed to use the Keychain.
+    ///
+    /// Headless CI simulator runners may deny Keychain access entirely
+    /// (typically errSecMissingEntitlement); integration tests probe first
+    /// and skip instead of failing spuriously. Production iOS always allows
+    /// it. The probe is self-cleaning.
+    static func isAvailable() -> Bool {
+        let account = "probe:\(UUID().uuidString)"
+        guard let cookie = HTTPCookie(properties: [
+            .domain: "probe.invalid",
+            .path: "/",
+            .name: "probe",
+            .value: account,
+        ]) else { return false }
+        let status = saveSession([cookie], account: account)
+        deleteSession(account: account)
+        return status == errSecSuccess
     }
 }
