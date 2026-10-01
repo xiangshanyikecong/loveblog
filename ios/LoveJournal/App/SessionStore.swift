@@ -76,7 +76,7 @@ final class SessionStore {
 
     /// Fired by `LoveAPIClient` when any request proves the session is gone.
     func markSessionExpired() {
-        guard state != .loggedOut else { return }
+        if case .loggedOut = state { return }
         clearLocalSession()
         state = .loggedOut
     }

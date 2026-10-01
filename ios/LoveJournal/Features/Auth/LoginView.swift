@@ -112,10 +112,12 @@ struct LoginView: View {
                 ))
                 .keyboardType(.URL)
             }
-            if viewModel.isDebugBuild {
-                Text("login.server.hint.debug")
-            } else {
-                Text("login.server.hint.release")
+            Group {
+                if viewModel.isDebugBuild {
+                    Text("login.server.hint.debug")
+                } else {
+                    Text("login.server.hint.release")
+                }
             }
             .font(.caption2)
             .foregroundStyle(LoveTheme.secondaryText)
