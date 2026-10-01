@@ -1,3 +1,4 @@
+// swift-tools-version: 5.10
 /*
  * Love Journal - a private journal + blog + real-time interaction platform for couples.
  * Copyright (C) 2026 Love Journal Contributors
@@ -14,8 +15,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-// swift-tools-version: 5.10
 //
 // LoveCore is the platform-independent protocol layer shared by all Love
 // Journal iOS surfaces: address normalization, the REST client, DTOs, the
