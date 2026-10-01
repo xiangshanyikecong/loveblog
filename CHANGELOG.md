@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- iOS 客户端（SwiftUI，里程碑 M0 骨架）：新增 `ios/` 目录（此前 `ios/` 不随仓库分发）。
+  包含 `LoveCore` Swift 包（服务端地址归一化——逐条移植 Android `ServerAddress`
+  并配 17 个对应用例、Cookie 会话 REST 客户端、FastAPI detail 双形态错误解析、
+  宽容 DTO 解码）与应用层（服务器地址配置 + 健康检查探测、登录含 TOTP 两步验证
+  与冻结提示、首次初始化 bootstrap、自助找回密码、Keychain 会话持久化、
+  401 全局会话失效处理、六 Tab 主框架、品牌设计 tokens 与三语 String Catalog）；
+  CI 新增 `.github/workflows/ios.yml`（GitHub Actions macOS runner：
+  LoveCore `swift test` + XcodeGen 生成工程 + 模拟器构建与单测）
+
 ## [1.0.4-beta.5] - 2026-09-27
 
 ### Added

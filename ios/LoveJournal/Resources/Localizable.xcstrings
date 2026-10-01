@@ -1,0 +1,328 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "app.name" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Love Journal" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "恋愛記" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "恋爱记" } }
+      }
+    },
+    "app.tagline" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Carefully recording every day we love" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "愛し合う毎日を、ていねいに記録する" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "认真记录我们相爱的每一天" } }
+      }
+    },
+    "bootstrap.action.submit" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account & initialize" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "アカウントを作成して初期化" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "创建账号并初始化" } }
+      }
+    },
+    "bootstrap.date" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Love start date" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "恋愛開始日" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "恋爱开始日" } }
+      }
+    },
+    "bootstrap.date.toggle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set the love start date" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "恋愛開始日を設定する" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置恋爱开始日" } }
+      }
+    },
+    "bootstrap.nickname" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Nickname" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ニックネーム" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "昵称" } }
+      }
+    },
+    "bootstrap.note" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Creates the first partner account and the site settings. The token is the server's BOOTSTRAP_SETUP_TOKEN." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "最初のパートナーアカウントとサイト設定を作成します。トークンはサーバーの BOOTSTRAP_SETUP_TOKEN です。" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "创建第一位伴侣账号并写入站点设置。令牌即服务端 BOOTSTRAP_SETUP_TOKEN。" } }
+      }
+    },
+    "bootstrap.password" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password (8+ chars, letters & digits)" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パスワード（8文字以上・英数字混在）" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码（至少 8 位，含字母和数字）" } }
+      }
+    },
+    "bootstrap.site_name" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Site name" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サイト名" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "站点名称" } }
+      }
+    },
+    "bootstrap.site_name.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Love Journal" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "恋愛記" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "恋爱记" } }
+      }
+    },
+    "bootstrap.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Initialize your site" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サイトを初期化" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "初始化站点" } }
+      }
+    },
+    "bootstrap.token" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Bootstrap token" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "初期化トークン" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "初始化令牌" } }
+      }
+    },
+    "bootstrap.token.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "BOOTSTRAP_SETUP_TOKEN" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "BOOTSTRAP_SETUP_TOKEN" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "BOOTSTRAP_SETUP_TOKEN" } }
+      }
+    },
+    "bootstrap.username" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Username" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ユーザー名" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "用户名" } }
+      }
+    },
+    "common.cancel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "キャンセル" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
+      }
+    },
+    "common.done" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "完了" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "完成" } }
+      }
+    },
+    "common.version %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Version %@" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "バージョン %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "版本 %@" } }
+      }
+    },
+    "login.action.sign_in" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ログイン" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "登录" } }
+      }
+    },
+    "login.action.test_connection" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Test connection" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "接続テスト" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "测试连接" } }
+      }
+    },
+    "login.bootstrap.entry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "First time? Initialize the site" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "初めての場合：サイトを初期化" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "首次使用？初始化站点" } }
+      }
+    },
+    "login.password" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パスワード" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码" } }
+      }
+    },
+    "login.recovery.entry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Forgot password?" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パスワードをお忘れですか？" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "忘记密码？" } }
+      }
+    },
+    "login.section.account" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "アカウント" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "账号登录" } }
+      }
+    },
+    "login.section.server" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Server" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サーバー" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "服务器" } }
+      }
+    },
+    "login.server.address" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Server address" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サーバーアドレス" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "服务器地址" } }
+      }
+    },
+    "login.server.hint.debug" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Debug builds may reach private network addresses; for production enter https://your-domain or https://your-domain/api" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "デバッグ版はローカルネットワークのアドレスに接続できます。本番は https://あなたのドメイン または https://あなたのドメイン/api を入力してください" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "调试版可连接局域网私有地址；正式部署请填写 https://你的域名 或 https://你的域名/api" } }
+      }
+    },
+    "login.server.hint.release" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a TLS-enabled address, e.g. https://your-domain or https://your-domain/api" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "TLS が有効なアドレスを入力してください。例：https://あなたのドメイン" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请填写启用 TLS 的地址，例如 https://你的域名 或 https://你的域名/api" } }
+      }
+    },
+    "login.server.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "https://your-domain/api" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "https://あなたのドメイン/api" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "https://你的域名/api" } }
+      }
+    },
+    "login.totp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Two-factor code" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "2段階認証コード" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "两步验证码" } }
+      }
+    },
+    "login.totp.placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "6-digit code or recovery code" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "6桁のコードまたはリカバリーコード" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "6 位验证码或恢复码" } }
+      }
+    },
+    "login.username" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Username" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ユーザー名" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "用户名" } }
+      }
+    },
+    "menu.logout" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ログアウト" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "退出登录" } }
+      }
+    },
+    "menu.server %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Server: %@" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "サーバー：%@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "服务器：%@" } }
+      }
+    },
+    "placeholder.note %@" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming in milestone %@" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "マイルストーン %@ で実装予定" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此模块将在 %@ 里程碑实现" } }
+      }
+    },
+    "recovery.action.submit" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reset password" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パスワードをリセット" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重置密码" } }
+      }
+    },
+    "recovery.new_password" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password (8+ chars, letters & digits)" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "新しいパスワード（8文字以上・英数字混在）" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新密码（至少 8 位，含字母和数字）" } }
+      }
+    },
+    "recovery.note" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Requires the server's BOOTSTRAP_SETUP_TOKEN as the recovery token." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "リカバリートークンとしてサーバーの BOOTSTRAP_SETUP_TOKEN が必要です。" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "需要服务器 BOOTSTRAP_SETUP_TOKEN 作为恢复令牌。" } }
+      }
+    },
+    "recovery.success" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password reset. Sign in with the new password." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パスワードを更新しました。新しいパスワードでログインしてください。" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "密码已重置，请使用新密码登录。" } }
+      }
+    },
+    "recovery.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recover password" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "パスワードの再設定" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "找回密码" } }
+      }
+    },
+    "session.restoring" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Restoring session…" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "セッションを復元中…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在恢复会话…" } }
+      }
+    },
+    "tab.albums" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Albums" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "アルバム" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "相册" } }
+      }
+    },
+    "tab.articles" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Articles" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "記事" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "文章" } }
+      }
+    },
+    "tab.cottage" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cottage" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "小屋" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "小屋" } }
+      }
+    },
+    "tab.dashboard" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Home" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ホーム" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "首页" } }
+      }
+    },
+    "tab.events" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Events" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "記念日" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "纪念日" } }
+      }
+    },
+    "tab.messages" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Interactions" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "交流" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "互动" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

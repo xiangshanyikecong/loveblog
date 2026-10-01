@@ -1,0 +1,77 @@
+name: LoveJournal
+options:
+  bundleIdPrefix: com.lovejournal
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+# Language mode Swift 5 on the latest compiler: async/await, @Observable and
+# structured concurrency all work, while Sendable strictness stays advisory
+# until the codebase is exercised on real devices (relax to Swift 6 later).
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: "NO"
+
+packages:
+  LoveCore:
+    path: LoveCore
+
+targets:
+  LoveJournal:
+    type: application
+    platform: iOS
+    sources:
+      - path: LoveJournal
+    dependencies:
+      - package: LoveCore
+    info:
+      path: LoveJournal/Info.plist
+      properties:
+        CFBundleDisplayName: 恋爱记
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        ITSAppUsesNonExemptEncryption: false
+        # Debug builds and self-hosters on LAN need cleartext to private
+        # addresses (same policy as Android's network_security_config);
+        # public domains remain HTTPS-only via ATS defaults.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: "NO"
+
+  LoveJournalTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: LoveJournalTests
+    dependencies:
+      - target: LoveJournal
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+
+schemes:
+  LoveJournal:
+    build:
+      targets:
+        LoveJournal: all
+        LoveJournalTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - LoveJournalTests

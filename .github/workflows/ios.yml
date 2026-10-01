@@ -1,0 +1,70 @@
+name: ios
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  lovecore:
+    name: LoveCore unit tests (macOS host)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run swift test
+        working-directory: ios/LoveCore
+        run: swift test
+
+  app:
+    name: App build & tests (iOS Simulator)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          for tool in xcodegen xcbeautify; do
+            command -v "$tool" >/dev/null 2>&1 || brew install "$tool"
+          done
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project LoveJournal.xcodeproj \
+            -scheme LoveJournal \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO | xcbeautify --quiet
+      - name: Resolve simulator name
+        id: sim
+        run: |
+          SIM=$(xcrun simctl list devices available \
+            | grep -m1 'iPhone' \
+            | sed -E 's/^[[:space:]]+//' \
+            | sed -E 's/\([0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}\)//g; s/\(Shutdown\)//g; s/[[:space:]]+$//')
+          echo "name=${SIM}" >> "$GITHUB_OUTPUT"
+          echo "Using simulator: ${SIM}"
+      - name: Test
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project LoveJournal.xcodeproj \
+            -scheme LoveJournal \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }},OS=latest" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO | xcbeautify --quiet
+      - name: SwiftLint (advisory)
+        working-directory: ios
+        run: |
+          command -v swiftlint >/dev/null 2>&1 || brew install swiftlint
+          swiftlint lint --quiet || true

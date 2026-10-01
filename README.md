@@ -20,7 +20,7 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 - **实时**：WebSocket（「一起听」同步播放）
 - **富文本**：Vditor 编辑器
 - **第三方**：内置 `netease` 服务（NeteaseCloudMusicApi 维护分支，供「一起听」检索/取流）
-- **客户端**：Web（主端）、iOS（SwiftUI，封面 + 一起听）[尚属于开发中，未完成功能]、Android（Kotlin + Jetpack Compose，详见 `Android/README.md`）[尚属于开发中，未完成功能]
+- **客户端**：Web（主端）、iOS（SwiftUI + LoveCore，详见 `ios/README.md`）[开发中，里程碑见 `ios/README.md`]、Android（Kotlin + Jetpack Compose，详见 `Android/README.md`）[尚属于开发中，未完成功能]
 - **编排**：开发 `docker-compose.yml`；生产 `docker-compose.prod.yml`（含 nginx、PostgreSQL、Redis、netease）
 
 ## 功能总览
@@ -248,7 +248,7 @@ npm run dev
 ## 多端客户端
 
 - **Web**：主端，本仓库 `web/`
-- **iOS**：SwiftUI 客户端（未随本仓库开源，`ios/` 不在仓库范围内）
+- **iOS**：SwiftUI 客户端，本仓库 `ios/`（与 Android 对齐的全功能实现，按里程碑分期交付；纯逻辑下沉到 `LoveCore` Swift 包并有互通单测，CI 在 GitHub Actions macOS runner 上构建验证），详见 `ios/README.md`
 - **Android**：Kotlin + Jetpack Compose 客户端，`Android/`（覆盖文章 / 相册 / 留言 / 纪念日 / 时间线 / 回忆 / 评论 / 版本历史 / 胶囊 / 搜索 / 通知 / 回收站 + 小屋：聊天、收藏、撤回、置顶语录、媒体面板、心情、签到、心愿、每日一问 + 一起听、一起看、五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜 + 兑换券、提醒、计划、情侣账本、恋爱月报、足迹地图、生理期关怀 + 客户端加密保险箱 + 系统健康 / 存储统计 / 审计日志 / 安全用户 / 备份与自动同步 + 离线队列、Cookie 会话、FCM、桌面小组件、相机/相册上传 + App 内初始化引导与伴侣账号开通 + 头像上传），详见 `Android/README.md`。
 
 ## 工程约定
