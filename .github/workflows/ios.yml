@@ -42,8 +42,7 @@ jobs:
             -project LoveJournal.xcodeproj \
             -scheme LoveJournal \
             -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build/DerivedData \
-            CODE_SIGNING_ALLOWED=NO | xcbeautify --quiet
+            -derivedDataPath build/DerivedData | xcbeautify --quiet
       - name: Resolve simulator name
         id: sim
         run: |
@@ -57,12 +56,14 @@ jobs:
         working-directory: ios
         run: |
           set -o pipefail
+          # No CODE_SIGNING_ALLOWED=NO here: an unsigned test host has no
+          # keychain-access entitlement and Keychain roundtrip tests fail
+          # with errSecMissingEntitlement. Simulator builds sign ad hoc.
           xcodebuild test \
             -project LoveJournal.xcodeproj \
             -scheme LoveJournal \
-            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }},OS=latest" \
-            -derivedDataPath build/DerivedData \
-            CODE_SIGNING_ALLOWED=NO | xcbeautify --quiet
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }},OS=latest,arch=arm64" \
+            -derivedDataPath build/DerivedData | xcbeautify --quiet
       - name: SwiftLint (advisory)
         working-directory: ios
         run: |
