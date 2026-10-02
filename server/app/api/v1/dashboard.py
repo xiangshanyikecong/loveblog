@@ -313,6 +313,7 @@ def _build_dashboard(
             is_deleted=item.is_deleted,
             version=item.version,
             created_at=item.created_at,
+            updated_at=item.updated_at,
             author_uid=item.author.uid if item.author else None,
             author_nickname=item.author.nickname if item.author else None,
             visitor_name=item.visitor_name,

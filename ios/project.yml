@@ -62,6 +62,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.tests
         GENERATE_INFOPLIST_FILE: "YES"
 
+  LoveJournalUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: LoveJournalUITests
+    dependencies:
+      - target: LoveJournal
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.uitests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: LoveJournal
+
 schemes:
   LoveJournal:
     build:
@@ -75,3 +88,11 @@ schemes:
       gatherCoverageData: false
       targets:
         - LoveJournalTests
+  LoveJournalUI:
+    build:
+      targets:
+        LoveJournal: all
+    test:
+      config: Debug
+      targets:
+        - LoveJournalUITests

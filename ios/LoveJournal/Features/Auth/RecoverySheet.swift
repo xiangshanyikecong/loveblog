@@ -28,7 +28,6 @@ struct RecoverySheet: View {
     @State private var token = ""
     @State private var submitting = false
     @State private var error: String?
-    @State private var succeeded = false
 
     var body: some View {
         NavigationStack {
@@ -51,9 +50,6 @@ struct RecoverySheet: View {
                     if let error {
                         LoveErrorBanner(message: error)
                     }
-                    if succeeded {
-                        LoveSuccessBanner(message: NSLocalizedString("recovery.success", comment: ""))
-                    }
                     LovePrimaryButton(
                         titleKey: "recovery.action.submit",
                         loading: submitting
@@ -68,9 +64,10 @@ struct RecoverySheet: View {
                             ) {
                                 self.error = failure
                             } else {
+                                // Success: the view model closes the sheet;
+                                // there is no in-sheet success state to keep.
                                 self.error = nil
-                                self.succeeded = true
-                                self.username = viewModel.username
+                                dismiss()
                             }
                         }
                     }

@@ -78,6 +78,17 @@ enum ServerSettings {
     /// Origin used to fetch uploaded media, e.g. `https://demo.com`.
     static var mediaBase: String { ServerAddress.stripMediaApiPrefix(apiBase) }
 
+    /// WebSocket URL for a version-relative socket path, e.g.
+    /// `webSocketURL("/cottage/chat/ws")` → `ws(s)://host/v1/cottage/chat/ws`.
+    static func webSocketURL(path: String) -> URL? {
+        guard var components = URLComponents(string: apiBase) else { return nil }
+        components.scheme = components.scheme == "https" ? "wss" : "ws"
+        components.path = components.path + path
+        components.query = nil
+        components.fragment = nil
+        return components.url
+    }
+
     /// Resolves a server-relative media path (`/uploads/x.jpg`) to an
     /// absolute URL. Server responses may add fields/paths freely — absolute
     /// http(s) URLs pass through untouched.

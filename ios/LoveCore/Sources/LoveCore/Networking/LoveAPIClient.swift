@@ -164,6 +164,45 @@ public final class LoveAPIClient {
         }
     }
 
+    // MARK: - Multipart upload
+
+    /// Uploads one file as `POST {path}` multipart/form-data (field `file`).
+    /// Mirrors Android's UploadRepository: images are expected to be
+    /// pre-compressed by the caller (≤1600px JPEG q85); the server still
+    /// re-encodes per its media policy. Carries the session cookie.
+    public func upload(
+        _ path: String,
+        fileData: Data,
+        fileName: String,
+        mimeType: String,
+        formFields: [String: String] = [:]
+    ) async throws -> WriteDTOs.UploadResult {
+        let boundary = "LoveJournal-\(UUID().uuidString)"
+        var body = Data()
+
+        for (name, value) in formFields {
+            body.append(string: "--\(boundary)\r\n")
+            body.append(string: "Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n")
+            body.append(string: "\(value)\r\n")
+        }
+        body.append(string: "--\(boundary)\r\n")
+        body.append(
+            string: "Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n"
+        )
+        body.append(string: "Content-Type: \(mimeType)\r\n\r\n")
+        body.append(fileData)
+        body.append(string: "\r\n--\(boundary)--\r\n")
+
+        let url = try Self.makeURL(apiBase: baseURLProvider(), path: path)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = body
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        let (data, _) = try await perform(request, path: path)
+        return try Self.decode(WriteDTOs.UploadResult.self, from: data)
+    }
+
     // MARK: - Plumbing
 
     /// Builds the absolute request URL from the configured API base and a
@@ -231,15 +270,18 @@ public final class LoveAPIClient {
             handler()
         }
     }
-
-    /// Tolerant decoding: unknown JSON keys are ignored, dates accept both the
-    /// plain and fractional-second ISO-8601 forms FastAPI may emit.
+    /// Tolerant decoding: unknown JSON keys are ignored, dates accept the
+    /// plain and fractional-second ISO-8601 forms FastAPI may emit
+    /// (`...+00:00`, `...Z`) plus the timezone-less form the SQLite
+    /// development database can produce (interpreted as UTC).
     public static func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let raw = try container.decode(String.self)
-            if let date = Self.fractionalFormatter.date(from: raw) ?? Self.plainFormatter.date(from: raw) {
+            if let date = fractionalFormatter.date(from: raw)
+                ?? plainFormatter.date(from: raw)
+                ?? naiveFormatter.date(from: raw) {
                 return date
             }
             throw DecodingError.dataCorruptedError(
@@ -265,4 +307,17 @@ public final class LoveAPIClient {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
+    /// `2026-10-02T08:30:00` without any zone designator (dev SQLite).
+    private static let naiveFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter
+    }()
+}
+
+private extension Data {
+    mutating func append(string: String) {
+        append(Data(string.utf8))
+    }
 }

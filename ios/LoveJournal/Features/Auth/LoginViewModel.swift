@@ -82,9 +82,11 @@ final class LoginViewModel {
             ServerSettings.setAddress(serverAddress)
             connectionOk = message
             // The address is now effective; re-probe bootstrap status (the
-            // old cache is keyed by the previous address).
+            // old cache is keyed by the previous address). Probe with the
+            // normalized display address — the raw field does not equal it
+            // for inputs like `https://demo.com`.
             bootstrapCheckedFor = nil
-            await checkBootstrapStatus()
+            await checkBootstrapStatus(address: ServerSettings.displayAddress)
         } catch {
             self.error = LoginFlow.presentableMessage(error)
         }
@@ -151,8 +153,15 @@ final class LoginViewModel {
     /// Lazily checks whether the site still needs first-time initialization.
     /// Only probes when the field matches the currently effective server, so
     /// requests never go to an unconfirmed candidate address.
-    func checkBootstrapStatus() async {
-        let address = serverAddress.trimmingCharacters(in: .whitespaces)
+    ///
+    /// After `setAddress`, callers must pass the normalized
+    /// `ServerSettings.displayAddress` (mirrors Android's
+    /// `checkBootstrapStatus(serverConfig.displayAddress())`): the raw field
+    /// text does not round-trip through normalization — e.g. `https://demo.com`
+    /// becomes `https://demo.com/api` — so probing with the raw input would
+    /// always fail the guard and silently hide the bootstrap entry.
+    func checkBootstrapStatus(address explicitAddress: String? = nil) async {
+        let address = (explicitAddress ?? serverAddress).trimmingCharacters(in: .whitespaces)
         let invalid = address.isEmpty ||
             ServerSettings.validateInput(address) != nil ||
             address != ServerSettings.displayAddress
@@ -200,10 +209,16 @@ final class LoginViewModel {
 
         let isoStart: String?
         if dateEnabled, let startDate {
-            var calendar = Calendar(identifier: .gregorian)
-            calendar.timeZone = TimeZone(identifier: "UTC") ?? .current
-            let components = calendar.dateComponents([.year, .month, .day], from: startDate)
-            guard let dayStart = calendar.date(from: components) else {
+            // Extract y/m/d in the user's timezone so the calendar date shown
+            // by the DatePicker is preserved (a date-only picker keeps the
+            // time-of-day the bound Date was created with — extracting in UTC
+            // would shift the day for non-UTC zones), then re-anchor the
+            // picked day at UTC midnight for the server's datetime contract.
+            let userCalendar = Calendar(identifier: .gregorian)
+            let components = userCalendar.dateComponents([.year, .month, .day], from: startDate)
+            var utcCalendar = Calendar(identifier: .gregorian)
+            utcCalendar.timeZone = TimeZone(identifier: "UTC") ?? .current
+            guard let dayStart = utcCalendar.date(from: components) else {
                 return "恋爱开始日格式应为 yyyy-MM-dd"
             }
             isoStart = Self.utcISOFormatter.string(from: dayStart)
