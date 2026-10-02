@@ -166,14 +166,15 @@ public final class LoveAPIClient {
 
     // MARK: - Plumbing
 
-    private func buildRequest(
-        _ method: String,
-        _ path: String,
-        query: [URLQueryItem],
-        bodyData: Data?,
-        headers: [String: String]
-    ) throws -> URLRequest {
-        let apiBase = baseURLProvider()
+    /// Builds the absolute request URL from the configured API base and a
+    /// version-relative path (e.g. `/auth/login`). Static and pure so unit
+    /// tests can lock the URL joining for both deployment forms (reverse
+    /// proxy domain vs direct `:8000` backend).
+    public static func makeURL(
+        apiBase: String,
+        path: String,
+        query: [URLQueryItem] = []
+    ) throws -> URL {
         guard !apiBase.isEmpty else { throw APIError.serverNotConfigured }
         guard var components = URLComponents(string: apiBase) else {
             throw APIError.serverNotConfigured
@@ -181,6 +182,17 @@ public final class LoveAPIClient {
         components.path = components.path + path
         components.queryItems = query.isEmpty ? nil : query
         guard let url = components.url else { throw APIError.serverNotConfigured }
+        return url
+    }
+
+    private func buildRequest(
+        _ method: String,
+        _ path: String,
+        query: [URLQueryItem],
+        bodyData: Data?,
+        headers: [String: String]
+    ) throws -> URLRequest {
+        let url = try Self.makeURL(apiBase: baseURLProvider(), path: path, query: query)
 
         var request = URLRequest(url: url)
         request.httpMethod = method

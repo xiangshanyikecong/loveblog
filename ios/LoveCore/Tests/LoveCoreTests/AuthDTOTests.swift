@@ -24,23 +24,24 @@ final class AuthDTOTests: XCTestCase {
     func testTokenResponseDecodesPlaceholderToken() throws {
         // The body's access_token is the literal "http-only"; the real JWT
         // arrives via Set-Cookie. The DTO must decode this body without
-        // treating the placeholder as a credential.
+        // treating the placeholder as a credential. Note role serializes as
+        // the enum VALUE "PartnerA" (UserRole(str, Enum) → value "PartnerA").
         let data = Data(
-            #"{"access_token":"http-only","token_type":"bearer","expires_in":86400,"role":"partner_a"}"#.utf8
+            #"{"access_token":"http-only","token_type":"bearer","expires_in":86400,"role":"PartnerA"}"#.utf8
         )
         let response = try LoveAPIClient.decode(AuthDTOs.TokenResponse.self, from: data)
         XCTAssertEqual(response.accessToken, "http-only")
         XCTAssertEqual(response.expiresIn, 86_400)
-        XCTAssertEqual(response.role, "partner_a")
+        XCTAssertEqual(response.role, "PartnerA")
     }
 
     func testUserProfileDecodesWithUnknownFieldsTolerated() throws {
         let data = Data(
-            #"{"uid":"u1","username":"admin","nickname":"管理员","avatar":null,"role":"partner_a","session_version":3,"future_field":{"x":1}}"#
+            #"{"uid":"u1","username":"admin","nickname":"管理员","avatar":null,"role":"PartnerA","session_version":3,"future_field":{"x":1}}"#
                 .utf8
         )
         let profile = try LoveAPIClient.decode(AuthDTOs.UserProfile.self, from: data)
-        XCTAssertEqual(profile, AuthDTOs.UserProfile(uid: "u1", username: "admin", nickname: "管理员", avatar: nil, role: "partner_a"))
+        XCTAssertEqual(profile, AuthDTOs.UserProfile(uid: "u1", username: "admin", nickname: "管理员", avatar: nil, role: "PartnerA"))
     }
 
     func testLoginRequestOmitsAbsentTOTPCode() throws {
@@ -63,7 +64,9 @@ final class AuthDTOTests: XCTestCase {
             loveStartDate: "2024-05-01T00:00:00Z"
         )
         let json = try JSONSerialization.jsonObject(with: LoveAPIClient.encoder.encode(payload)) as? [String: Any]
-        XCTAssertEqual(json?["role"] as? String, "partner_a")
+        // The server's UserRole enum validates by value — "PartnerA", not the
+        // member name "partner_a" (the web client sends the capitalized form).
+        XCTAssertEqual(json?["role"] as? String, "PartnerA")
         XCTAssertEqual(json?["site_name"] as? String, "恋爱记")
         XCTAssertEqual(json?["love_start_date"] as? String, "2024-05-01T00:00:00Z")
         XCTAssertNil(json?["totp_code"])

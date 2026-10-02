@@ -83,6 +83,10 @@ public enum AuthDTOs {
 
     /// `POST /v1/auth/bootstrap` — creates Partner A plus site settings in one
     /// shot; requires the `X-Bootstrap-Token` header.
+    ///
+    /// Note: `role` must be the enum **value** (`"PartnerA"`), not the member
+    /// name — the server's `UserRole(str, Enum)` validates by value and the
+    /// web client sends the capitalized form.
     public struct BootstrapRegisterRequest: Encodable {
         public var username: String
         public var password: String
@@ -96,7 +100,7 @@ public enum AuthDTOs {
             username: String,
             password: String,
             nickname: String,
-            role: String = "partner_a",
+            role: String = "PartnerA",
             siteName: String? = nil,
             loveStartDate: String? = nil
         ) {
@@ -116,7 +120,8 @@ public enum AuthDTOs {
     }
 
     /// `POST /v1/auth/register` — the logged-in partner creates the second
-    /// partner account (one empty slot per role).
+    /// partner account (one empty slot per role). `role` uses the enum value
+    /// form (`"PartnerB"`), same caveat as `BootstrapRegisterRequest`.
     public struct RegisterRequest: Encodable {
         public var username: String
         public var password: String
