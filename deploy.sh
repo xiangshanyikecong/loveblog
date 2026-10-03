@@ -194,6 +194,11 @@ else
     COMPOSE="docker-compose --env-file .env.production"
 fi
 
+# 生产 Compose 文件列表：默认仅主文件；若下方"seccomp 兼容性探测"发现宿主机
+# 内核无法以默认 seccomp 运行新版 nginx 镜像，则自动追加 legacy 覆写文件。
+# 后续所有 compose 操作都必须经由该变量，否则 cron 续期等路径会漏掉覆写。
+PROD_COMPOSE_FILES="-f docker-compose.prod.yml"
+
 # 加载环境变量。逐行读取可保留密码中的空格/特殊字符，也不会把值当 shell
 # 命令执行（旧的 export $(... | xargs) 两者都做不到）。
 echo "📦 加载环境变量..."
@@ -313,7 +318,7 @@ renew_ssl() {
     if [ "$ok" != true ]; then
         if [ "$nginx_running" = true ]; then
             echo "   停止 nginx 以释放 80 端口..."
-            $COMPOSE -f docker-compose.prod.yml stop nginx
+            $COMPOSE $PROD_COMPOSE_FILES stop nginx
         fi
         if run_certbot standalone renew --standalone --quiet; then
             ok=true
@@ -373,7 +378,7 @@ if [ "$RENEW_SSL_ONLY" = true ]; then
     # standalone 续期可能临时停止过 nginx，确保其恢复运行
     if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'love-nginx-prod'; then
         echo "🚀 恢复 nginx 服务..."
-        $COMPOSE -f docker-compose.prod.yml up -d nginx
+        $COMPOSE $PROD_COMPOSE_FILES up -d nginx
     fi
     echo -e "${GREEN}✅ SSL 续期检查完成${NC}"
     exit 0
@@ -381,7 +386,7 @@ fi
 
 # 在停止任何现有服务前完成 Compose 配置校验，避免配置错误造成停机。
 echo "🔎 校验生产 Compose 配置..."
-$COMPOSE -f docker-compose.prod.yml config --quiet
+$COMPOSE $PROD_COMPOSE_FILES config --quiet
 
 # 创建必需的目录
 echo "📁 创建必需的目录..."
@@ -462,18 +467,43 @@ if [ "$BUILD_ON_SERVER" = true ]; then
     # 服务器本地构建（备用选项）：适合网络无法访问 GHCR、或自定义了
     # VITE_API_BASE_URL 等构建参数的场景。
     echo "📥 拉取基础镜像..."
-    $COMPOSE -f docker-compose.prod.yml pull postgres redis nginx
+    $COMPOSE $PROD_COMPOSE_FILES pull postgres redis nginx
 
     echo "🔨 在服务器上构建应用镜像..."
-    $COMPOSE -f docker-compose.prod.yml build --no-cache
+    $COMPOSE $PROD_COMPOSE_FILES build --no-cache
 else
     # 默认：拉取 GitHub Actions 预构建镜像（公开包，无需登录），避免在
     # 用户服务器上构建（慢、依赖网络、易因环境差异失败）。
     echo "📥 拉取预构建镜像（ghcr.io）..."
-    if ! $COMPOSE -f docker-compose.prod.yml pull; then
+    if ! $COMPOSE $PROD_COMPOSE_FILES pull; then
         echo -e "${YELLOW}⚠️  镜像拉取失败（可能是网络无法访问 ghcr.io）。${NC}"
         echo "   将尝试使用本地已有镜像继续；若本地无镜像，启动时会自动回退为在服务器上构建。"
         echo "   也可显式指定在服务器上构建：./deploy.sh --build"
+    fi
+fi
+
+# ---------- seccomp 兼容性探测（CentOS 7 / 3.10 等老内核主机） ----------
+# 现象：nginx 容器启动即崩并循环重启（restart: always），日志特征：
+#   nginx: [crit] pwrite() "/run/nginx.pid" failed (1: Operation not permitted)
+# 根因：老内核不存在新版 Alpine 镜像（musl/nginx）使用的较新系统调用；加载
+# Docker 内置 seccomp 规则时内核不认识的条目被跳过，运行时这些 syscall 号
+# 落到默认拒绝策略返回 EPERM，root 也写不了 pid 文件。与 Docker 版本无关。
+# 处理：用与部署完全相同的 nginx 镜像起一次性容器探测 3 秒；命中该特征时
+# 自动追加 docker-compose.legacy-docker.yml（仅对 nginx 关闭 seccomp 过滤）
+# 恢复服务。已实测验证：unconfined 下同镜像在同主机可正常运行。
+NGINX_IMAGE="$(grep -m1 -E '^[[:space:]]+image: nginx:' docker-compose.prod.yml | awk '{print $2}')"
+if [ -n "$NGINX_IMAGE" ] && docker image inspect "$NGINX_IMAGE" &> /dev/null; then
+    echo "🧪 探测宿主机内核与 $NGINX_IMAGE 的 seccomp 兼容性（约 3 秒）..."
+    PROBE_LOG="$(docker run --rm "$NGINX_IMAGE" timeout 3 nginx -g 'daemon off;' 2>&1 || true)"
+    if printf '%s\n' "$PROBE_LOG" | grep -q 'Operation not permitted'; then
+        echo -e "${YELLOW}⚠️  老内核 + Docker 内置 seccomp 无法运行新版 nginx 镜像（pwrite 返回 EPERM）${NC}"
+        if [ -f docker-compose.legacy-docker.yml ]; then
+            PROD_COMPOSE_FILES="$PROD_COMPOSE_FILES -f docker-compose.legacy-docker.yml"
+            echo -e "${YELLOW}   已自动追加 docker-compose.legacy-docker.yml（对 nginx 关闭 seccomp 过滤）以恢复服务${NC}"
+        else
+            echo -e "${RED}   缺少 docker-compose.legacy-docker.yml（重新执行 install-docker.sh 可补全），nginx 可能无法启动${NC}"
+        fi
+        echo "   根治方法：更换/升级操作系统（CentOS 7 已于 2024-06 EOL，3.10 内核无法运行新版镜像的 syscall）"
     fi
 fi
 
@@ -530,7 +560,7 @@ rollback_deployment() {
         rolled=true
     fi
     if [ "$rolled" = true ]; then
-        $COMPOSE -f docker-compose.prod.yml up -d backend web
+        $COMPOSE $PROD_COMPOSE_FILES up -d backend web
         echo -e "${YELLOW}⚠️  已回滚 backend/web 镜像。若数据库迁移已部分执行，请用部署前备份恢复${NC}"
     else
         echo -e "${YELLOW}⚠️  未找到部署前运行的镜像（可能是首次部署），无法自动回滚${NC}"
@@ -539,7 +569,7 @@ rollback_deployment() {
 
 # 启动服务
 echo "🚀 启动服务..."
-$COMPOSE -f docker-compose.prod.yml up -d --remove-orphans
+$COMPOSE $PROD_COMPOSE_FILES up -d --remove-orphans
 
 # 等待服务启动
 echo "⏳ 等待服务启动..."
@@ -553,7 +583,7 @@ RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     # Traverse TLS termination and the nginx /health/ready route. A direct backend
     # probe can pass while the certificate mount or reverse proxy is broken.
-    if $COMPOSE -f docker-compose.prod.yml exec -T nginx \
+    if $COMPOSE $PROD_COMPOSE_FILES exec -T nginx \
         wget --no-check-certificate --quiet --tries=1 --spider https://127.0.0.1/health/ready 2>/dev/null; then
         echo -e "${GREEN}✅ Nginx HTTPS 路由与后端服务健康${NC}"
         break
@@ -566,7 +596,7 @@ done
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     echo -e "${RED}❌ Nginx HTTPS 路由或后端服务启动失败${NC}"
     echo "查看日志："
-    $COMPOSE -f docker-compose.prod.yml logs nginx backend
+    $COMPOSE $PROD_COMPOSE_FILES logs nginx backend
     rollback_deployment
     exit 1
 fi
@@ -618,7 +648,7 @@ if [ "$PUB_VERIFY_OK" != "true" ]; then
     echo "    4. 网络波动"
     echo ""
     echo "  内部服务日志（供排查）："
-    $COMPOSE -f docker-compose.prod.yml logs --tail=30 nginx backend
+    $COMPOSE $PROD_COMPOSE_FILES logs --tail=30 nginx backend
     rollback_deployment
     exit 1
 fi
@@ -631,12 +661,12 @@ docker image prune -f >/dev/null 2>&1 || true
 # 显示服务状态
 echo ""
 echo "📊 服务状态："
-$COMPOSE -f docker-compose.prod.yml ps
+$COMPOSE $PROD_COMPOSE_FILES ps
 
 # 显示日志
 echo ""
 echo "📝 最近日志："
-$COMPOSE -f docker-compose.prod.yml logs --tail=20
+$COMPOSE $PROD_COMPOSE_FILES logs --tail=20
 
 echo ""
 echo -e "${GREEN}✅ 部署完成！${NC}"
@@ -647,10 +677,10 @@ echo "   API:  ${PUBLIC_ORIGIN}/api"
 echo "   API 文档: 生产环境默认不公开（本地开发访问 /docs）"
 echo ""
 echo "📋 常用命令："
-echo "   查看日志: $COMPOSE -f docker-compose.prod.yml logs -f"
-echo "   重启服务: $COMPOSE -f docker-compose.prod.yml restart"
-echo "   停止服务: $COMPOSE -f docker-compose.prod.yml down"
-echo "   进入后端: $COMPOSE -f docker-compose.prod.yml exec backend bash"
+echo "   查看日志: $COMPOSE $PROD_COMPOSE_FILES logs -f"
+echo "   重启服务: $COMPOSE $PROD_COMPOSE_FILES restart"
+echo "   停止服务: $COMPOSE $PROD_COMPOSE_FILES down"
+echo "   进入后端: $COMPOSE $PROD_COMPOSE_FILES exec backend bash"
 echo "   更新并部署: ./deploy.sh --update"
 echo "   服务器本地构建: ./deploy.sh --build"
 echo "   续期证书:   ./deploy.sh --renew-ssl"

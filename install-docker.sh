@@ -135,6 +135,17 @@ else
     sudo systemctl enable --now docker &> /dev/null || true
 fi
 
+# 老内核提示：CentOS 7（3.10 内核，2024-06 已 EOL）上，Docker 内置 seccomp 规则
+# 不含新版 Alpine 镜像使用的较新系统调用，nginx 会启动即崩
+# （pwrite() "Operation not permitted"）。deploy.sh 会自动探测并叠加
+# docker-compose.legacy-docker.yml 缓解；根治需升级操作系统。
+KERNEL_MAJOR="$(uname -r | cut -d. -f1)"
+if [ -n "$KERNEL_MAJOR" ] && [ "$KERNEL_MAJOR" -lt 4 ] 2>/dev/null; then
+    echo -e "${YELLOW}⚠️  检测到 ${KERNEL_MAJOR}.x 老内核（如 CentOS 7）。${NC}"
+    echo "   新版镜像需对 nginx 容器关闭 seccomp 才能运行（deploy.sh 将自动探测并处理）。"
+    echo "   该系统已停止维护，建议尽快迁移到受支持的系统（如 Debian 12 / Rocky 9）。"
+fi
+
 # ---- 3. 确定安装目录（在本项目目录内运行则直接用当前目录）----
 if [ -f "$(pwd)/docker-compose.prod.yml" ] && [ -f "$(pwd)/deploy.sh" ]; then
     INSTALL_DIR="$(pwd)"
@@ -206,6 +217,11 @@ else
     cp -f "$SRC_DIR/nginx/nginx.conf" "$INSTALL_DIR/nginx/"
     cp -f "$SRC_DIR/nginx/conf.d/love-journal.conf" "$INSTALL_DIR/nginx/conf.d/"
     cp -f "$SRC_DIR/nginx/snippets/security-headers.conf" "$INSTALL_DIR/nginx/snippets/"
+    # 旧内核（CentOS 7 / 3.10）seccomp 兼容覆写：deploy.sh 探测到问题时自动叠加。
+    # 旧版本的源码包可能不含此文件，缺失时跳过（deploy.sh 会提示但不阻断）。
+    if [ -f "$SRC_DIR/docker-compose.legacy-docker.yml" ]; then
+        cp -f "$SRC_DIR/docker-compose.legacy-docker.yml" "$INSTALL_DIR/"
+    fi
     chmod +x "$INSTALL_DIR/deploy.sh"
 fi
 cd "$INSTALL_DIR"
