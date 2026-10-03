@@ -58,16 +58,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.lovejournal.app.data.remote.dto.ArticleDetail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
+import com.lovejournal.app.data.remote.dto.ArticleDetail
 import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSectionTitle
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.ui.theme.LovePeach
 import com.lovejournal.app.ui.theme.LoveRose
 
@@ -79,14 +82,14 @@ fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
     BackHandler(state.detail != null) { viewModel.closeDetail() }
 
     state.message?.let { message ->
-        AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text("确定") } }, text = { Text(message) })
+        AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text(stringResource(R.string.btn_confirm)) } }, text = { Text(message.asString()) })
     }
     if (deleting) AlertDialog(
         onDismissRequest = { deleting = false },
-        title = { Text("删除文章？") },
-        text = { Text("删除后可在回收站恢复。") },
-        confirmButton = { TextButton(onClick = { deleting = false; viewModel.deleteCurrent() }) { Text("删除") } },
-        dismissButton = { TextButton(onClick = { deleting = false }) { Text("取消") } },
+        title = { Text(stringResource(R.string.articles_delete_title)) },
+        text = { Text(stringResource(R.string.articles_delete_msg)) },
+        confirmButton = { TextButton(onClick = { deleting = false; viewModel.deleteCurrent() }) { Text(stringResource(R.string.btn_delete)) } },
+        dismissButton = { TextButton(onClick = { deleting = false }) { Text(stringResource(R.string.btn_cancel)) } },
     )
     if (editing) ArticleEditor(state.detail, state.saving, onDismiss = { editing = false }, onSave = { title, excerpt, content, published, tags ->
         viewModel.save(title, excerpt, content, published, tags); editing = false
@@ -94,7 +97,7 @@ fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
 
     Scaffold(
         floatingActionButton = {
-            if (state.detail == null) ExtendedFloatingActionButton(onClick = { editing = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text("写文章") })
+            if (state.detail == null) ExtendedFloatingActionButton(onClick = { editing = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text(stringResource(R.string.articles_write)) })
         },
     ) { padding ->
         if (state.detail != null) ArticleDetailContent(
@@ -112,15 +115,15 @@ fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                item { LoveSectionTitle("我们的文章", "把想说的话，认真写给未来") }
+                item { LoveSectionTitle(stringResource(R.string.articles_title), stringResource(R.string.articles_subtitle)) }
                 if (state.loading) item { CircularProgressIndicator() }
-                state.error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
+                state.error?.let { item { Text(it.asString(), color = MaterialTheme.colorScheme.error) } }
                 if (!state.loading && state.articles.isEmpty()) item {
                     LoveEmptyState(
                         emoji = "✍️",
-                        title = "还没有文章",
-                        subtitle = "写下你们的第一个故事",
-                        actionLabel = "写文章",
+                        title = stringResource(R.string.articles_no_articles),
+                        subtitle = stringResource(R.string.articles_no_articles_sub),
+                        actionLabel = stringResource(R.string.articles_write),
                         onAction = { editing = true },
                     )
                 }
@@ -144,7 +147,7 @@ fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
                                         shape = MaterialTheme.shapes.extraLarge,
                                     ) {
                                         Text(
-                                            if (article.status == "Published") "已发布" else "草稿",
+                                            if (article.status == "Published") stringResource(R.string.articles_published) else stringResource(R.string.articles_draft),
                                             Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                             color = if (article.status == "Published") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                             style = MaterialTheme.typography.labelSmall,
@@ -189,11 +192,11 @@ private fun ArticleDetailContent(
     LazyColumn(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") }
+                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back)) }
                 Row {
-                    IconButton(onClick = onLoadVersions) { Icon(Icons.Default.History, "版本") }
-                    IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, "编辑") }
-                    IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除") }
+                    IconButton(onClick = onLoadVersions) { Icon(Icons.Default.History, stringResource(R.string.articles_versions)) }
+                    IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, stringResource(R.string.btn_edit)) }
+                    IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, stringResource(R.string.btn_delete)) }
                 }
             }
             Text(detail.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -202,16 +205,16 @@ private fun ArticleDetailContent(
         items(detail.blocks.sortedBy { it.sort_order }, key = { it.bid }) { Text(it.content, style = MaterialTheme.typography.bodyLarge) }
         if (versions.isNotEmpty()) item {
             Card { Column(Modifier.padding(12.dp)) {
-                Text("历史版本", fontWeight = FontWeight.Bold)
-                versions.forEach { version -> TextButton(onClick = { onRollback(version) }) { Text("回滚到版本 $version") } }
+                Text(stringResource(R.string.articles_history), fontWeight = FontWeight.Bold)
+                versions.forEach { version -> TextButton(onClick = { onRollback(version) }) { Text(stringResource(R.string.articles_rollback, version)) } }
             } }
         }
-        item { Text("评论", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
-        items(detail.comments, key = { it.cid }) { Text("${it.author_nickname ?: "用户"}：${it.content}") }
+        item { Text(stringResource(R.string.articles_comment), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+        items(detail.comments, key = { it.cid }) { Text("${it.author_nickname ?: stringResource(R.string.albums_user)}：${it.content}") }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(comment, { comment = it }, label = { Text("写评论") }, modifier = Modifier.weight(1f))
-                Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text("发送") }
+                OutlinedTextField(comment, { comment = it }, label = { Text(stringResource(R.string.articles_write_comment)) }, modifier = Modifier.weight(1f))
+                Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text(stringResource(R.string.btn_send)) }
             }
         }
     }
@@ -231,15 +234,15 @@ private fun ArticleEditor(
     var published by remember(detail?.aid) { mutableStateOf(detail?.status == "Published") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (detail == null) "新建文章" else "编辑文章") },
+        title = { Text(if (detail == null) stringResource(R.string.articles_new_title) else stringResource(R.string.articles_edit_title)) },
         text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(title, { title = it }, label = { Text("标题") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(excerpt, { excerpt = it }, label = { Text("摘要") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(content, { content = it }, label = { Text("正文") }, minLines = 5, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(tags, { tags = it }, label = { Text("标签，逗号分隔") }, modifier = Modifier.fillMaxWidth())
-            Row { Checkbox(published, { published = it }); Text("发布") }
+            OutlinedTextField(title, { title = it }, label = { Text(stringResource(R.string.articles_title_label)) }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(excerpt, { excerpt = it }, label = { Text(stringResource(R.string.articles_excerpt_label)) }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(content, { content = it }, label = { Text(stringResource(R.string.articles_content_label)) }, minLines = 5, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(tags, { tags = it }, label = { Text(stringResource(R.string.articles_tags_label)) }, modifier = Modifier.fillMaxWidth())
+            Row { Checkbox(published, { published = it }); Text(stringResource(R.string.articles_publish_checkbox)) }
         } },
-        confirmButton = { Button(onClick = { onSave(title, excerpt, content, published, tags) }, enabled = !saving) { Text("保存") } },
-        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("取消") } },
+        confirmButton = { Button(onClick = { onSave(title, excerpt, content, published, tags) }, enabled = !saving) { Text(stringResource(R.string.btn_save)) } },
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }

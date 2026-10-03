@@ -19,9 +19,13 @@ package com.lovejournal.app.ui.events
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.EventCreateRequest
 import com.lovejournal.app.data.remote.dto.EventResponse
 import com.lovejournal.app.data.repository.EventsRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +36,7 @@ import javax.inject.Inject
 data class EventsUiState(
     val loading: Boolean = false,
     val events: List<EventResponse> = emptyList(),
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -43,8 +47,8 @@ class EventsViewModel @Inject constructor(
     private val _state = MutableStateFlow(EventsUiState())
     val state: StateFlow<EventsUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -55,7 +59,7 @@ class EventsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.list().fold(
                 onSuccess = { _state.value = EventsUiState(events = it) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
@@ -70,7 +74,7 @@ class EventsViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank() || date.isBlank()) {
-            _message.value = "请填写标题和日期"
+            _message.value = uiText(R.string.events_error_title_date_required)
             return
         }
         val request = EventCreateRequest(
@@ -88,11 +92,11 @@ class EventsViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = {
-                    _message.value = if (existing == null) "已添加" else "已保存"
+                    _message.value = if (existing == null) uiText(R.string.msg_added) else uiText(R.string.msg_saved)
                     onDone()
                     refresh()
                 },
-                onFailure = { _message.value = it.message ?: "保存失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -101,10 +105,10 @@ class EventsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.delete(event.eid).fold(
                 onSuccess = {
-                    _message.value = "已删除"
+                    _message.value = uiText(R.string.msg_deleted)
                     refresh()
                 },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

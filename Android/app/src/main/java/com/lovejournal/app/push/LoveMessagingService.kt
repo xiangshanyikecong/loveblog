@@ -63,7 +63,7 @@ class LoveMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
         val type = data["type"] ?: message.notification?.let { "message" }
-        val title = message.notification?.title ?: data["title"] ?: "恋爱记"
+        val title = message.notification?.title ?: data["title"] ?: getString(R.string.app_name)
         val body = message.notification?.body ?: data["body"] ?: ""
         showNotification(this, type, title, body)
     }

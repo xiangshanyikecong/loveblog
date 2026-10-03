@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.recyclebin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.RecycleBinItemDto
 import com.lovejournal.app.data.repository.RecycleBinRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +36,7 @@ data class RecycleBinUiState(
     val loading: Boolean = false,
     val items: List<RecycleBinItemDto> = emptyList(),
     val total: Int = 0,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -43,8 +47,8 @@ class RecycleBinViewModel @Inject constructor(
     private val _state = MutableStateFlow(RecycleBinUiState())
     val state: StateFlow<RecycleBinUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -58,7 +62,7 @@ class RecycleBinViewModel @Inject constructor(
                     _state.value = RecycleBinUiState(items = it.items, total = it.total)
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -67,8 +71,8 @@ class RecycleBinViewModel @Inject constructor(
     fun restore(item: RecycleBinItemDto) {
         viewModelScope.launch {
             repository.restore(item.type, item.id).fold(
-                onSuccess = { _message.value = "已恢复"; refresh() },
-                onFailure = { _message.value = it.message ?: "恢复失败" },
+                onSuccess = { _message.value = uiText(R.string.recycle_bin_msg_restored); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -76,8 +80,8 @@ class RecycleBinViewModel @Inject constructor(
     fun deleteForever(item: RecycleBinItemDto) {
         viewModelScope.launch {
             repository.deleteForever(item.type, item.id).fold(
-                onSuccess = { _message.value = "已永久删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.recycle_bin_msg_deleted_forever); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -85,8 +89,8 @@ class RecycleBinViewModel @Inject constructor(
     fun clearAll() {
         viewModelScope.launch {
             repository.clear().fold(
-                onSuccess = { _message.value = "回收站已清空"; refresh() },
-                onFailure = { _message.value = it.message ?: "清空失败" },
+                onSuccess = { _message.value = uiText(R.string.recycle_bin_msg_cleared); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

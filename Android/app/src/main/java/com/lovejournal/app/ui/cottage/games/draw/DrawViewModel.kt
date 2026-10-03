@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.cottage.games.draw
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.repository.DrawRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,8 +46,8 @@ data class DrawUiState(val connected: Boolean = false, val selfUid: String? = nu
 class DrawViewModel @Inject constructor(private val repository: DrawRepository, session: SessionManager) : ViewModel() {
     private val _state = MutableStateFlow(DrawUiState())
     val state: StateFlow<DrawUiState> = _state.asStateFlow()
-    private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toast: SharedFlow<String> = _toast
+    private val _toast = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val toast: SharedFlow<UiText> = _toast
     init {
         viewModelScope.launch { _state.value = _state.value.copy(selfUid = session.sessionFlow.first().uid) }
         viewModelScope.launch { repository.state().onSuccess { _state.value = _state.value.copy(snapshot = it) } }
@@ -63,7 +67,7 @@ class DrawViewModel @Inject constructor(private val repository: DrawRepository, 
                     _state.value = _state.value.copy(segments = _state.value.segments + DrawSegment(m.groupValues[1].toFloat(), m.groupValues[2].toFloat(), m.groupValues[3].toFloat(), m.groupValues[4].toFloat()))
                 }
             }
-            "ERROR" -> _toast.tryEmit(payload?.get("message")?.jsonPrimitive?.contentOrNull ?: "操作失败")
+            "ERROR" -> _toast.tryEmit(payload?.get("message")?.jsonPrimitive?.contentOrNull?.let { UiText.Raw(it) } ?: uiText(R.string.msg_operation_failed))
         }
     }
     fun stroke(segment: DrawSegment) { _state.value = _state.value.copy(segments = _state.value.segments + segment); repository.send("""{"type":"STROKE","payload":{"segs":[{"sid":"android","x0":${segment.x0},"y0":${segment.y0},"x1":${segment.x1},"y1":${segment.y1},"color":"#1e293b","size":5,"eraser":false}]}}""") }
@@ -71,7 +75,7 @@ class DrawViewModel @Inject constructor(private val repository: DrawRepository, 
     fun newGame() = repository.send("""{"type":"NEW_GAME","payload":{}}""")
     fun nextRound() = repository.send("""{"type":"NEXT_ROUND","payload":{}}""")
     fun guess(text: String) { if (text.isNotBlank()) repository.send("""{"type":"GUESS","payload":{"text":${jsonString(text.trim())}}}""") }
-    fun invite() = viewModelScope.launch { repository.invite().fold(onSuccess = { _toast.tryEmit("已邀请对方") }, onFailure = { _toast.tryEmit(it.message ?: "邀请失败") }) }
+    fun invite() = viewModelScope.launch { repository.invite().fold(onSuccess = { _toast.tryEmit(uiText(R.string.game_invite_sent)) }, onFailure = { _toast.tryEmit(it.toUiText()) }) }
     override fun onCleared() { repository.disconnect(); super.onCleared() }
     private fun jsonString(value: String): String = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 }

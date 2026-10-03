@@ -83,10 +83,14 @@ interface SyncQueueDao {
     @Insert
     suspend fun enqueue(item: SyncQueueEntity): Long
 
-    @Query("SELECT * FROM sync_queue WHERE scope = :scope ORDER BY createdAt ASC")
-    suspend fun pending(scope: String): List<SyncQueueEntity>
+    // 只取「未死信且已到重试时间」的条目：退避期内与死信不会被重放。
+    @Query(
+        "SELECT * FROM sync_queue WHERE scope = :scope AND dead = 0 AND nextAttemptAt <= :now " +
+            "ORDER BY createdAt ASC",
+    )
+    suspend fun due(scope: String, now: Long): List<SyncQueueEntity>
 
-    @Query("SELECT COUNT(*) FROM sync_queue WHERE scope = :scope")
+    @Query("SELECT COUNT(*) FROM sync_queue WHERE scope = :scope AND dead = 0")
     fun pendingCount(scope: String): Flow<Int>
 
     @Query("DELETE FROM sync_queue WHERE id = :id")
@@ -95,6 +99,12 @@ interface SyncQueueDao {
     @Query("DELETE FROM sync_queue")
     suspend fun clear()
 
-    @Query("UPDATE sync_queue SET retryCount = retryCount + 1, lastError = :error WHERE id = :id")
-    suspend fun markFailure(id: Long, error: String?)
+    @Query(
+        "UPDATE sync_queue SET retryCount = retryCount + 1, lastError = :error, nextAttemptAt = :nextAttemptAt " +
+            "WHERE id = :id",
+    )
+    suspend fun markFailure(id: Long, error: String?, nextAttemptAt: Long)
+
+    @Query("UPDATE sync_queue SET dead = 1, lastError = :error WHERE id = :id")
+    suspend fun markDead(id: Long, error: String?)
 }

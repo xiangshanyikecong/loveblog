@@ -82,6 +82,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -93,14 +95,19 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.ChatMessageResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.asString
+import com.lovejournal.app.ui.components.uiText
 import com.lovejournal.app.ui.theme.LoveMint
 
 @Composable
 fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val listState = rememberLazyListState()
     var draft by remember { mutableStateOf("") }
     // "寄给未来" — when non-null, the next send() schedules the message
@@ -159,7 +166,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
             ) {
                 AsyncImage(
                     model = url,
-                    contentDescription = "图片预览",
+                    contentDescription = stringResource(R.string.timeline_image_preview_desc),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -168,7 +175,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
     }
 
     LaunchedEffect(Unit) {
-        viewModel.toast.collect { snackbar.showSnackbar(it) }
+        viewModel.toast.collect { snackbar.showSnackbar(it.asString(context)) }
     }
     // Only auto-scroll when the user is already near the bottom — same
     // pattern as the Web client (isNearBottom, <120px threshold). This
@@ -206,7 +213,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                             state.e2eeUnlocked -> Icons.Outlined.LockOpen
                             else -> Icons.Outlined.Lock
                         },
-                        contentDescription = "端到端加密",
+                        contentDescription = stringResource(R.string.chat_e2ee_label),
                         tint = when {
                             !state.e2eeInitialized -> MaterialTheme.colorScheme.onSurfaceVariant
                             state.e2eeUnlocked -> MaterialTheme.colorScheme.tertiary
@@ -217,11 +224,11 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 IconButton(onClick = { showSearch = !showSearch }) {
                     Icon(
                         Icons.Default.Search,
-                        contentDescription = "搜索聊天记录",
+                        contentDescription = stringResource(R.string.chat_search_history),
                         tint = if (showSearch) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                     )
                 }
-                IconButton(onClick = viewModel::openTools) { Icon(Icons.Default.MoreVert, "聊天工具") }
+                IconButton(onClick = viewModel::openTools) { Icon(Icons.Default.MoreVert, stringResource(R.string.chat_tools)) }
             }
             if (showSearch) {
                 ChatSearchPanel(
@@ -253,7 +260,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { viewModel.poke() }) {
-                    Icon(Icons.Filled.Favorite, contentDescription = "戳一戳", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.chat_poke), tint = MaterialTheme.colorScheme.primary)
                 }
                 OutlinedTextField(
                     value = draft,
@@ -261,7 +268,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                         draft = it
                         viewModel.onInputChanged(it)
                     },
-                    placeholder = { Text("发条悄悄话…") },
+                    placeholder = { Text(stringResource(R.string.chat_send_whisper)) },
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(
@@ -277,7 +284,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                     } else {
                         Icon(
                             Icons.Outlined.Image,
-                            contentDescription = "发送图片",
+                            contentDescription = stringResource(R.string.chat_send_image),
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
@@ -285,7 +292,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 IconButton(onClick = { showScheduleDialog = true }) {
                     Icon(
                         Icons.Filled.Schedule,
-                        contentDescription = "寄给未来",
+                        contentDescription = stringResource(R.string.chat_send_to_future),
                         tint = if (scheduleAt != null) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -296,14 +303,14 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel()) {
                 }) {
                     Icon(
                         Icons.AutoMirrored.Filled.Send,
-                        contentDescription = if (scheduleAt == null) "发送" else "寄给未来",
+                        contentDescription = if (scheduleAt == null) stringResource(R.string.btn_send) else stringResource(R.string.chat_send_to_future),
                         tint = if (scheduleAt != null) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
                     )
                 }
             }
             if (scheduleAt != null) {
                 Text(
-                    text = "✉️ 这条悄悄话会在 ${formatScheduleLabel(scheduleAt!!)} 出现",
+                    text = stringResource(R.string.chat_schedule_hint, formatScheduleLabel(scheduleAt!!)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -329,12 +336,12 @@ private fun PresenceHeader(nickname: String?, online: Boolean, typing: Boolean, 
                     shape = CircleShape,
                 ),
         )
-        Text(nickname ?: "TA", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text(nickname ?: stringResource(R.string.chat_partner_default), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         val status = when {
-            !connected -> "连接中…"
-            typing -> "正在输入…"
-            online -> "在线"
-            else -> "离线"
+            !connected -> stringResource(R.string.chat_connecting)
+            typing -> stringResource(R.string.chat_typing)
+            online -> stringResource(R.string.chat_online)
+            else -> stringResource(R.string.chat_offline)
         }
         Text(status, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -369,7 +376,7 @@ private fun MessageBubble(
                     if (!isSelf) SenderName(message.sender_nickname)
                     AsyncImage(
                         model = resolvedUrl,
-                        contentDescription = "图片消息",
+                        contentDescription = stringResource(R.string.chat_image_message),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .widthIn(max = 240.dp)
@@ -390,7 +397,7 @@ private fun MessageBubble(
                     if (!isSelf) SenderName(message.sender_nickname)
                     AsyncImage(
                         model = resolvedUrl,
-                        contentDescription = "贴纸消息",
+                        contentDescription = stringResource(R.string.chat_sticker_message),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.widthIn(max = 120.dp).heightIn(max = 120.dp),
                     )
@@ -400,7 +407,11 @@ private fun MessageBubble(
                     bubbleColor,
                     isSelf,
                     message.sender_nickname,
-                    if (message.audio_duration_sec != null) "♪ 语音消息 · ${message.audio_duration_sec}s" else "♪ 语音消息",
+                    if (message.audio_duration_sec != null) {
+                        stringResource(R.string.chat_voice_message_duration, message.audio_duration_sec)
+                    } else {
+                        stringResource(R.string.chat_voice_message)
+                    },
                 )
                 // 文本消息 + 各类兜底（已撤回 / 媒体地址缺失）。
                 else -> ChatBubble(
@@ -408,24 +419,24 @@ private fun MessageBubble(
                     isSelf,
                     message.sender_nickname,
                     when {
-                        message.is_recalled -> "消息已撤回"
-                        message.type == "image" -> "[图片]"
-                        message.type == "sticker" -> "[贴纸]"
+                        message.is_recalled -> stringResource(R.string.chat_msg_recalled)
+                        message.type == "image" -> stringResource(R.string.chat_msg_image)
+                        message.type == "sticker" -> stringResource(R.string.chat_msg_sticker)
                         else -> message.content ?: ""
                     },
                 )
             }
         IconButton(onClick = { menu = true }) {
             if (message.is_favorite) {
-                Icon(Icons.Filled.Star, contentDescription = "收藏", tint = Color(0xFFFFD700))
+                Icon(Icons.Filled.Star, contentDescription = stringResource(R.string.chat_favorite), tint = Color(0xFFFFD700))
             } else {
-                Icon(Icons.Default.MoreHoriz, contentDescription = "更多")
+                Icon(Icons.Default.MoreHoriz, contentDescription = stringResource(R.string.action_more))
             }
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text(if (message.is_favorite) "取消收藏" else "收藏") }, onClick = { menu = false; onFavorite() })
-            DropdownMenuItem(text = { Text("置顶语录") }, onClick = { menu = false; onPin() })
-            if (message.can_recall && !message.is_recalled) DropdownMenuItem(text = { Text("撤回") }, onClick = { menu = false; onRecall() })
+            DropdownMenuItem(text = { Text(if (message.is_favorite) stringResource(R.string.chat_unfavorite) else stringResource(R.string.chat_favorite)) }, onClick = { menu = false; onFavorite() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.chat_pin_quote)) }, onClick = { menu = false; onPin() })
+            if (message.can_recall && !message.is_recalled) DropdownMenuItem(text = { Text(stringResource(R.string.chat_recall)) }, onClick = { menu = false; onRecall() })
         }
         }
     }
@@ -461,15 +472,15 @@ private fun ChatToolsDialog(state: ChatUiState, onDismiss: () -> Unit, onClearPi
     val memory = state.memoryCard
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("聊天回忆") },
+        title = { Text(stringResource(R.string.chat_memories)) },
         text = { LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            state.pinnedQuote?.message?.let { item { Text("置顶：${it.content ?: "[媒体消息]"}"); TextButton(onClick = onClearPin) { Text("取消置顶") } } }
-            memory?.let { item { Text("今日 ${it.total_messages} 条 · 我 ${it.self_messages} · TA ${it.partner_messages}"); Text("关键词：${it.keywords.joinToString("、") { word -> "${word.keyword}(${word.count})" }}") } }
-            if (state.favorites.isNotEmpty()) { item { Text("收藏", fontWeight = FontWeight.Bold) }; items(state.favorites, key = { "fav-${it.mid}" }) { Text(it.content ?: "[媒体消息]") } }
-            if (state.future.isNotEmpty()) { item { Text("未来消息", fontWeight = FontWeight.Bold) }; items(state.future, key = { "future-${it.mid}" }) { Text(it.content ?: "[媒体消息]") } }
-            state.mediaPanel?.let { panel -> item { Text("媒体：图片 ${panel.images.size} · 贴纸 ${panel.stickers.size} · 语音 ${panel.voices.size}") } }
+            state.pinnedQuote?.message?.let { item { Text(stringResource(R.string.chat_pinned, it.content ?: stringResource(R.string.chat_media_placeholder))); TextButton(onClick = onClearPin) { Text(stringResource(R.string.chat_unpin)) } } }
+            memory?.let { item { Text(stringResource(R.string.chat_today_count, it.total_messages, it.self_messages, it.partner_messages)); Text(stringResource(R.string.chat_keywords, it.keywords.joinToString("、") { word -> "${word.keyword}(${word.count})" })) } }
+            if (state.favorites.isNotEmpty()) { item { Text(stringResource(R.string.chat_favorites), fontWeight = FontWeight.Bold) }; items(state.favorites, key = { "fav-${it.mid}" }) { Text(it.content ?: stringResource(R.string.chat_media_placeholder)) } }
+            if (state.future.isNotEmpty()) { item { Text(stringResource(R.string.chat_future_messages), fontWeight = FontWeight.Bold) }; items(state.future, key = { "future-${it.mid}" }) { Text(it.content ?: stringResource(R.string.chat_media_placeholder)) } }
+            state.mediaPanel?.let { panel -> item { Text(stringResource(R.string.chat_media_panel, panel.images.size, panel.stickers.size, panel.voices.size)) } }
         } },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("关闭") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_close)) } },
     )
 }
 
@@ -500,13 +511,13 @@ private fun ScheduleDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                 Spacer(Modifier.size(8.dp))
-                Text("寄给未来")
+                Text(stringResource(R.string.chat_schedule_title))
             }
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "把此刻的话藏到以后。消息会在你指定的时间准时出现，仅你们两人可见。",
+                    text = stringResource(R.string.chat_schedule_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -519,7 +530,7 @@ private fun ScheduleDialog(
                             pickedDate = now.toLocalDate()
                             pickedTime = now.plusHours(1).toLocalTime().withSecond(0).withNano(0)
                         },
-                        label = { Text("1 小时后") },
+                        label = { Text(stringResource(R.string.chat_1h_later)) },
                     )
                     AssistChip(
                         onClick = {
@@ -527,7 +538,7 @@ private fun ScheduleDialog(
                             pickedDate = now.toLocalDate()
                             pickedTime = now.plusDays(1).toLocalTime().withSecond(0).withNano(0)
                         },
-                        label = { Text("明天现在") },
+                        label = { Text(stringResource(R.string.chat_tomorrow_now)) },
                     )
                     AssistChip(
                         onClick = {
@@ -536,7 +547,7 @@ private fun ScheduleDialog(
                             pickedTime = LocalDateTime.of(tomorrow.toLocalDate(), java.time.LocalTime.of(0, 0))
                                 .toLocalTime()
                         },
-                        label = { Text("明天 0 点") },
+                        label = { Text(stringResource(R.string.chat_tomorrow_midnight)) },
                     )
                 }
                 Row(
@@ -548,7 +559,7 @@ private fun ScheduleDialog(
                         onValueChange = { raw ->
                             runCatching { java.time.LocalDate.parse(raw) }.getOrNull()?.let { pickedDate = it }
                         },
-                        label = { Text("日期 (YYYY-MM-DD)") },
+                        label = { Text(stringResource(R.string.chat_date_label)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
@@ -557,13 +568,13 @@ private fun ScheduleDialog(
                         onValueChange = { raw ->
                             runCatching { java.time.LocalTime.parse(raw) }.getOrNull()?.let { pickedTime = it }
                         },
-                        label = { Text("时间 (HH:mm)") },
+                        label = { Text(stringResource(R.string.chat_time_label)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                 }
                 Text(
-                    text = "将于 ${formatter.format(combined)} 出现",
+                    text = stringResource(R.string.chat_will_appear, formatter.format(combined)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary,
                 )
@@ -574,9 +585,9 @@ private fun ScheduleDialog(
             TextButton(
                 enabled = isFuture,
                 onClick = { onConfirm(candidate) },
-            ) { Text(if (isFuture) "确认" else "请选未来时间") }
+            ) { Text(if (isFuture) stringResource(R.string.chat_confirm_schedule) else stringResource(R.string.chat_select_future_time)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }
 
@@ -608,7 +619,7 @@ private fun ChatSearchPanel(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = onQuery,
-                placeholder = { Text("搜索悄悄话…", style = MaterialTheme.typography.bodySmall) },
+                placeholder = { Text(stringResource(R.string.chat_search_placeholder), style = MaterialTheme.typography.bodySmall) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -620,7 +631,7 @@ private fun ChatSearchPanel(
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
                         Text(
-                            " 搜索中…",
+                            " " + stringResource(R.string.chat_searching),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -630,7 +641,7 @@ private fun ChatSearchPanel(
                     val results = state.searchResults
                     if (results.isNullOrEmpty()) {
                         Text(
-                            "没有找到相关消息",
+                            stringResource(R.string.chat_search_no_results),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 8.dp),
@@ -654,7 +665,7 @@ private fun ChatSearchPanel(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                     Text(
-                                        msg.content ?: if (msg.type == "image") "[图片]" else "[消息]",
+                                        msg.content ?: if (msg.type == "image") stringResource(R.string.chat_msg_image) else stringResource(R.string.chat_msg_any),
                                         style = MaterialTheme.typography.bodySmall,
                                         maxLines = 2,
                                     )
@@ -681,14 +692,14 @@ private fun E2eeDialog(
     initialized: Boolean,
     unlocked: Boolean,
     onDismiss: () -> Unit,
-    onUnlock: (String, (String?) -> Unit) -> Unit,
-    onSetup: (String, (String?) -> Unit) -> Unit,
-    onRekey: (String, (String?) -> Unit) -> Unit,
+    onUnlock: (String, (UiText?) -> Unit) -> Unit,
+    onSetup: (String, (UiText?) -> Unit) -> Unit,
+    onRekey: (String, (UiText?) -> Unit) -> Unit,
 ) {
     var passphrase by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
 
     val isSetup = !initialized
     val isRekey = initialized && unlocked
@@ -697,11 +708,11 @@ private fun E2eeDialog(
         if (busy) return
         error = null
         when {
-            passphrase.length < 6 -> error = "口令至少 6 位"
-            isSetup && passphrase != confirm -> error = "两次输入不一致"
+            passphrase.length < 6 -> error = uiText(R.string.chat_e2ee_passphrase_min)
+            isSetup && passphrase != confirm -> error = uiText(R.string.chat_e2ee_passphrase_mismatch)
             else -> {
                 busy = true
-                val callback: (String?) -> Unit = { err ->
+                val callback: (UiText?) -> Unit = { err ->
                     busy = false
                     if (err == null) onDismiss() else error = err
                 }
@@ -716,14 +727,14 @@ private fun E2eeDialog(
 
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
-        title = { Text(if (isSetup) "开启加密聊天" else if (isRekey) "更换共享口令" else "解锁加密聊天") },
+        title = { Text(if (isSetup) stringResource(R.string.chat_e2ee_setup_title) else if (isRekey) stringResource(R.string.chat_e2ee_rekey_title) else stringResource(R.string.chat_e2ee_unlock_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     when {
-                        isSetup -> "设置一个只有你们俩知道的共享口令。之后发出的悄悄话将在本机加密，服务器也无法查看。对方需在网页端/手机端输入同一口令解锁。"
-                        isRekey -> "输入新口令（至少 6 位）。更换后双方都需要用新口令重新解锁。"
-                        else -> "输入共享口令以解密聊天记录。口令只在本机派生密钥，不会上传。"
+                        isSetup -> stringResource(R.string.chat_e2ee_setup_desc)
+                        isRekey -> stringResource(R.string.chat_e2ee_rekey_desc)
+                        else -> stringResource(R.string.chat_e2ee_unlock_desc)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -731,7 +742,7 @@ private fun E2eeDialog(
                 OutlinedTextField(
                     value = passphrase,
                     onValueChange = { passphrase = it },
-                    label = { Text(if (isSetup || isRekey) "新口令" else "共享口令") },
+                    label = { Text(if (isSetup || isRekey) stringResource(R.string.chat_e2ee_new_passphrase) else stringResource(R.string.chat_e2ee_shared_passphrase)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     enabled = !busy,
@@ -740,18 +751,18 @@ private fun E2eeDialog(
                     OutlinedTextField(
                         value = confirm,
                         onValueChange = { confirm = it },
-                        label = { Text("确认口令") },
+                        label = { Text(stringResource(R.string.chat_e2ee_confirm_passphrase)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         enabled = !busy,
                     )
                 }
                 if (error != null) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(error!!.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
                 if (unlocked) {
                     Text(
-                        "✓ 当前已解锁",
+                        stringResource(R.string.chat_e2ee_unlocked),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.tertiary,
                     )
@@ -763,10 +774,10 @@ private fun E2eeDialog(
                 if (busy) {
                     CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
                 } else {
-                    Text(if (isSetup) "开启" else if (isRekey) "更换" else "解锁")
+                    Text(if (isSetup) stringResource(R.string.chat_e2ee_enable) else if (isRekey) stringResource(R.string.chat_e2ee_change) else stringResource(R.string.chat_e2ee_unlock_btn))
                 }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("关闭") } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text(stringResource(R.string.btn_close)) } },
     )
 }

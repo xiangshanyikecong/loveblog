@@ -52,11 +52,19 @@ object DatabaseModule {
         }
     }
 
+    // v3: 离线队列支持指数退避与死信（nextAttemptAt / dead）。
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE sync_queue ADD COLUMN nextAttemptAt INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE sync_queue ADD COLUMN dead INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): LoveDatabase =
         Room.databaseBuilder(context, LoveDatabase::class.java, "love.db")
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
 
     @Provides

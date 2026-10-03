@@ -61,13 +61,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSectionTitle
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.asString
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -103,14 +107,14 @@ fun SettingsScreen(
         when {
             state.loading && state.setting == null ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("加载中…")
+                    Text(stringResource(R.string.status_loading))
                 }
             state.setting == null ->
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    state.error?.let { Text("加载失败：$it", color = MaterialTheme.colorScheme.error) }
+                    state.error?.let { Text(stringResource(R.string.msg_load_failed_with_error, it.asString()), color = MaterialTheme.colorScheme.error) }
                     AccountEntryButtons(onOpenSecurity, onOpenPrivacy, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses)
                     LogoutButton(onLogout)
                 }
@@ -158,8 +162,8 @@ private fun SettingsForm(
     uploadingAvatar: Boolean,
     inviting: Boolean,
     inviteSucceeded: Boolean,
-    message: String?,
-    inviteMessage: String?,
+    message: UiText?,
+    inviteMessage: UiText?,
     onSave: (siteName: String?, loveStartDateIso: String?, allowRegistration: Boolean?) -> Unit,
     onPickAvatar: () -> Unit,
     onInvite: (username: String, password: String, nickname: String) -> Unit,
@@ -194,13 +198,13 @@ private fun SettingsForm(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        LoveSectionTitle("站点设置", "管理名称、纪念日和注册权限")
-        message?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
+        LoveSectionTitle(stringResource(R.string.settings_site_settings), stringResource(R.string.settings_site_settings_sub))
+        message?.let { Text(it.asString(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
         LoveSoftCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("基础信息", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            OutlinedTextField(value = siteName, onValueChange = { siteName = it }, label = { Text("站点名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) { Text("恋爱开始日 · ${loveDate?.toString() ?: "未设置"}") }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Column { Text("允许新用户注册"); Text("关闭后仅现有账号可登录", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Switch(checked = allowReg, onCheckedChange = { allowReg = it }) }
+            Text(stringResource(R.string.settings_basic_info), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            OutlinedTextField(value = siteName, onValueChange = { siteName = it }, label = { Text(stringResource(R.string.settings_site_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_love_start_date, loveDate?.toString() ?: stringResource(R.string.settings_love_start_date_not_set))) }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Column { Text(stringResource(R.string.settings_allow_registration)); Text(stringResource(R.string.settings_allow_registration_sub), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Switch(checked = allowReg, onCheckedChange = { allowReg = it }) }
         } }
         Button(
             onClick = {
@@ -213,9 +217,9 @@ private fun SettingsForm(
             enabled = !saving,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(if (saving) "保存中…" else "保存设置")
+            Text(if (saving) stringResource(R.string.status_saving) else stringResource(R.string.btn_save_settings))
         }
-        LoveSectionTitle("个人资料", "头像与邀请另一半")
+        LoveSectionTitle(stringResource(R.string.settings_profile), stringResource(R.string.settings_profile_sub))
         AvatarCard(
             avatarUrl = avatarUrl,
             uploading = uploadingAvatar,
@@ -233,7 +237,7 @@ private fun SettingsForm(
             onInviteNicknameChange = { inviteNickname = it },
             onInvite = onInvite,
         )
-        LoveSectionTitle("账户与维护")
+        LoveSectionTitle(stringResource(R.string.settings_account_maintenance))
         LoveSoftCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { AccountEntryButtons(onOpenSecurity, onOpenPrivacy, onOpenRecycleBin, onOpenAdminTools, onOpenLicenses) } }
         LogoutButton(onLogout)
     }
@@ -251,9 +255,9 @@ private fun SettingsForm(
                         loveDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                     }
                     showDatePicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }
@@ -286,7 +290,7 @@ private fun AvatarCard(
             } else {
                 AsyncImage(
                     model = avatarUrl,
-                    contentDescription = "我的头像",
+                    contentDescription = stringResource(R.string.settings_my_avatar),
                     modifier = Modifier
                         .size(56.dp)
                         .clip(CircleShape),
@@ -294,14 +298,14 @@ private fun AvatarCard(
                 )
             }
             Column(Modifier.weight(1f)) {
-                Text("我的头像", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("上传后对方也会看到你的新头像", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.settings_my_avatar), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.settings_my_avatar_sub), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             OutlinedButton(onClick = onPickAvatar, enabled = !uploading) {
                 if (uploading) {
                     CircularProgressIndicator(Modifier.size(16.dp).padding(2.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("换头像")
+                    Text(stringResource(R.string.settings_change_avatar))
                 }
             }
         }
@@ -313,7 +317,7 @@ private fun AvatarCard(
 private fun InvitePartnerCard(
     inviting: Boolean,
     inviteSucceeded: Boolean,
-    inviteMessage: String?,
+    inviteMessage: UiText?,
     inviteUsername: String,
     onInviteUsernameChange: (String) -> Unit,
     invitePassword: String,
@@ -324,17 +328,17 @@ private fun InvitePartnerCard(
 ) {
     LoveSoftCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("邀请另一半", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.settings_invite_partner), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
-                "站点有且仅有两个伴侣名额。填写下方信息为对方开通账号，开通后 TA 即可用该账号登录。",
+                stringResource(R.string.settings_invite_partner_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             OutlinedTextField(
                 value = inviteUsername,
                 onValueChange = onInviteUsernameChange,
-                label = { Text("对方用户名") },
-                supportingText = { Text("3-32 位小写字母、数字或下划线") },
+                label = { Text(stringResource(R.string.settings_partner_username)) },
+                supportingText = { Text(stringResource(R.string.auth_username_hint)) },
                 enabled = !inviting,
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -342,9 +346,9 @@ private fun InvitePartnerCard(
             OutlinedTextField(
                 value = invitePassword,
                 onValueChange = onInvitePasswordChange,
-                label = { Text("对方密码") },
+                label = { Text(stringResource(R.string.settings_partner_password)) },
                 visualTransformation = PasswordVisualTransformation(),
-                supportingText = { Text("至少 8 位，且同时包含字母和数字") },
+                supportingText = { Text(stringResource(R.string.auth_password_hint)) },
                 enabled = !inviting,
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -352,14 +356,14 @@ private fun InvitePartnerCard(
             OutlinedTextField(
                 value = inviteNickname,
                 onValueChange = onInviteNicknameChange,
-                label = { Text("对方昵称") },
+                label = { Text(stringResource(R.string.settings_partner_nickname)) },
                 enabled = !inviting,
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             inviteMessage?.let {
                 Text(
-                    it,
+                    it.asString(),
                     color = if (inviteSucceeded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                 )
@@ -369,7 +373,7 @@ private fun InvitePartnerCard(
                 enabled = !inviting && inviteUsername.isNotBlank() && invitePassword.isNotBlank() && inviteNickname.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(if (inviting) "开通中…" else "为 TA 开通账号")
+                Text(if (inviting) stringResource(R.string.settings_inviting) else stringResource(R.string.settings_invite_partner_btn))
             }
         }
     }
@@ -384,25 +388,25 @@ private fun AccountEntryButtons(
     onOpenLicenses: () -> Unit,
 ) {
     OutlinedButton(onClick = onOpenSecurity, modifier = Modifier.fillMaxWidth()) {
-        Text("账号安全（修改密码 / 两步验证 / 登录设备）")
+        Text(stringResource(R.string.settings_account_security))
     }
     OutlinedButton(onClick = onOpenPrivacy, modifier = Modifier.fillMaxWidth()) {
-        Text("隐私中心（数据与加密状态）")
+        Text(stringResource(R.string.settings_privacy_center))
     }
     OutlinedButton(onClick = onOpenRecycleBin, modifier = Modifier.fillMaxWidth()) {
-        Text("回收站")
+        Text(stringResource(R.string.settings_recycle_bin))
     }
     OutlinedButton(onClick = onOpenAdminTools, modifier = Modifier.fillMaxWidth()) {
-        Text("服务器工具（健康 / 审计 / 用户 / 备份）")
+        Text(stringResource(R.string.settings_admin_tools))
     }
     OutlinedButton(onClick = onOpenLicenses, modifier = Modifier.fillMaxWidth()) {
-        Text("开源许可证与版权声明")
+        Text(stringResource(R.string.settings_open_licenses))
     }
 }
 
 @Composable
 private fun LogoutButton(onLogout: () -> Unit) {
     OutlinedButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
-        Text("退出登录", color = MaterialTheme.colorScheme.error)
+        Text(stringResource(R.string.btn_logout), color = MaterialTheme.colorScheme.error)
     }
 }

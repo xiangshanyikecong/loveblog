@@ -62,15 +62,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CheckInResponse
 import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 
 @Composable
@@ -94,7 +97,7 @@ fun CheckinScreen(viewModel: CheckinViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -105,11 +108,20 @@ fun CheckinScreen(viewModel: CheckinViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(
+                            stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""),
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        LoveEmptyState("📍", "还没有报备", "TA 还没有报备，发一条让 TA 安心吧", actionLabel = "发报备", onAction = { editorOpen = true })
+                        LoveEmptyState(
+                            "📍",
+                            stringResource(R.string.checkin_no_checkins),
+                            stringResource(R.string.checkin_no_checkins_sub),
+                            actionLabel = stringResource(R.string.checkin_action),
+                            onAction = { editorOpen = true },
+                        )
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -130,7 +142,7 @@ fun CheckinScreen(viewModel: CheckinViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "发报备")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.checkin_action))
         }
     }
 
@@ -155,7 +167,7 @@ private fun CheckinCard(checkin: CheckInResponse, mediaUrl: (String?) -> String?
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    checkin.author_nickname.ifBlank { "TA" },
+                    checkin.author_nickname.ifBlank { stringResource(R.string.common_partner) },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -179,7 +191,7 @@ private fun CheckinCard(checkin: CheckInResponse, mediaUrl: (String?) -> String?
                     checkin.media_urls.forEach { url ->
                         AsyncImage(
                             model = mediaUrl(url),
-                            contentDescription = "报备照片",
+                            contentDescription = stringResource(R.string.checkin_photo),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(100.dp)
@@ -235,13 +247,13 @@ private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Un
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("发一条报备") },
+        title = { Text(stringResource(R.string.checkin_send_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("此刻想对 TA 说…") },
+                    label = { Text(stringResource(R.string.checkin_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(8.dp))
@@ -253,7 +265,7 @@ private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Un
                     },
                     enabled = !draft.uploading,
                 ) {
-                    Text(if (draft.uploading) "上传中…" else "添加照片")
+                    Text(if (draft.uploading) stringResource(R.string.status_uploading) else stringResource(R.string.btn_add_photo))
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(
@@ -273,9 +285,9 @@ private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Un
                         Spacer(Modifier.size(6.dp))
                         Text(
                             when {
-                                draft.locating -> "定位中…"
-                                draft.latitude != null && draft.longitude != null -> "重新定位"
-                                else -> "分享位置"
+                                draft.locating -> stringResource(R.string.status_locating)
+                                draft.latitude != null && draft.longitude != null -> stringResource(R.string.checkin_relocate)
+                                else -> stringResource(R.string.checkin_share_location)
                             },
                         )
                     }
@@ -285,13 +297,13 @@ private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Un
                         draft.locationPermissionDenied
                     ) {
                         TextButton(onClick = { viewModel.clearLocation() }) {
-                            Text("不分享")
+                            Text(stringResource(R.string.checkin_dont_share))
                         }
                     }
                 }
                 draft.locationMessage?.let {
                     Text(
-                        text = it,
+                        text = it.asString(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -306,14 +318,14 @@ private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Un
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 AsyncImage(
                                     model = viewModel.mediaUrl(url),
-                                    contentDescription = "待发送照片",
+                                    contentDescription = stringResource(R.string.checkin_pending_photo),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .size(80.dp)
                                         .clip(RoundedCornerShape(8.dp)),
                                 )
                                 TextButton(onClick = { viewModel.removePhoto(url) }) {
-                                    Text("移除", style = MaterialTheme.typography.labelSmall)
+                                    Text(stringResource(R.string.checkin_remove), style = MaterialTheme.typography.labelSmall)
                                 }
                             }
                         }
@@ -326,18 +338,19 @@ private fun CheckinEditorDialog(viewModel: CheckinViewModel, onDismiss: () -> Un
                 onClick = { viewModel.submit(content) { onDismiss() } },
                 enabled = !draft.submitting && !draft.uploading,
             ) {
-                Text(if (draft.submitting) "提交中…" else "报备")
+                Text(if (draft.submitting) stringResource(R.string.status_submitting) else stringResource(R.string.btn_checkin_submit))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }
 
+@Composable
 private fun LocationLine(checkin: CheckInResponse): String? {
-    checkin.location_text?.takeIf { it.isNotBlank() }?.let { return "位置：$it" }
+    checkin.location_text?.takeIf { it.isNotBlank() }?.let { return stringResource(R.string.checkin_location, it) }
     return when (checkin.location_status) {
-        "permission_denied" -> "位置：未授权"
-        "lookup_failed" -> "位置：解析失败"
+        "permission_denied" -> stringResource(R.string.checkin_location_denied)
+        "lookup_failed" -> stringResource(R.string.checkin_location_failed)
         else -> null
     }
 }

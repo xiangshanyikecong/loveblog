@@ -19,9 +19,13 @@ package com.lovejournal.app.ui.cottage.period
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.PeriodResponse
 import com.lovejournal.app.data.remote.dto.PeriodSummaryResponse
 import com.lovejournal.app.data.repository.PeriodRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +37,7 @@ data class PeriodUiState(
     val loading: Boolean = false,
     val items: List<PeriodResponse> = emptyList(),
     val summary: PeriodSummaryResponse? = null,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -44,8 +48,8 @@ class PeriodViewModel @Inject constructor(
     private val _state = MutableStateFlow(PeriodUiState())
     val state: StateFlow<PeriodUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -61,7 +65,7 @@ class PeriodViewModel @Inject constructor(
                     _state.value = PeriodUiState(items = list.items, summary = summary)
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -74,8 +78,8 @@ class PeriodViewModel @Inject constructor(
                 endDate = endDate,
                 note = note?.trim()?.ifBlank { null },
             ).fold(
-                onSuccess = { _message.value = "已记录"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "记录失败" },
+                onSuccess = { _message.value = uiText(R.string.period_msg_recorded); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -86,7 +90,7 @@ class PeriodViewModel @Inject constructor(
      */
     fun update(cycle: PeriodResponse, startDate: String, endDate: String?, note: String?, onDone: () -> Unit) {
         if (!endDate.isNullOrBlank() && endDate < startDate) {
-            _message.value = "结束日期不能早于开始日期"
+            _message.value = uiText(R.string.period_error_end_before_start)
             return
         }
         viewModelScope.launch {
@@ -96,8 +100,8 @@ class PeriodViewModel @Inject constructor(
                 endDate = endDate?.ifBlank { null },
                 note = note?.trim()?.ifBlank { null },
             ).fold(
-                onSuccess = { _message.value = "已保存"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "保存失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_saved); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -105,8 +109,8 @@ class PeriodViewModel @Inject constructor(
     fun delete(cycle: PeriodResponse) {
         viewModelScope.launch {
             repository.delete(cycle.pcid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

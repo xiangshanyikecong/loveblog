@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.capsules
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CapsuleResponse
 import com.lovejournal.app.data.repository.CapsuleRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +35,7 @@ import javax.inject.Inject
 data class CapsuleUiState(
     val loading: Boolean = false,
     val items: List<CapsuleResponse> = emptyList(),
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -42,8 +46,8 @@ class CapsuleViewModel @Inject constructor(
     private val _state = MutableStateFlow(CapsuleUiState())
     val state: StateFlow<CapsuleUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -54,20 +58,20 @@ class CapsuleViewModel @Inject constructor(
         viewModelScope.launch {
             repository.list().fold(
                 onSuccess = { _state.value = CapsuleUiState(items = it) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
 
     fun add(content: String, openAtIso: String, onDone: () -> Unit) {
         if (content.isBlank()) {
-            _message.value = "写点想对未来说的话吧"
+            _message.value = uiText(R.string.capsules_msg_say_something)
             return
         }
         viewModelScope.launch {
             repository.create(content.trim(), openAtIso).fold(
-                onSuccess = { _message.value = "已封存，到时间才能开启"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "封存失败" },
+                onSuccess = { _message.value = uiText(R.string.capsules_msg_sealed); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -75,8 +79,8 @@ class CapsuleViewModel @Inject constructor(
     fun delete(capsule: CapsuleResponse) {
         viewModelScope.launch {
             repository.delete(capsule.uuid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

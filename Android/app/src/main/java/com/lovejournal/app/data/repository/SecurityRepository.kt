@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.ChangePasswordRequest
@@ -30,6 +31,8 @@ import com.lovejournal.app.data.remote.dto.TotpEnableRequest
 import com.lovejournal.app.data.remote.dto.TotpEnableResponse
 import com.lovejournal.app.data.remote.dto.TotpSetupResponse
 import com.lovejournal.app.data.remote.dto.TotpStatusResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,16 +49,16 @@ class SecurityRepository @Inject constructor(
     private val session: SessionManager,
 ) {
     private suspend fun currentUid(): String =
-        session.sessionFlow.first().uid ?: throw IllegalStateException("未登录")
+        session.sessionFlow.first().uid ?: throw UiTextException(uiText(R.string.msg_session_expired))
 
     suspend fun changePassword(oldPassword: String, newPassword: String): Result<Unit> = runCatching {
         val response = api.changePassword(currentUid(), ChangePasswordRequest(oldPassword, newPassword))
         if (!response.isSuccessful) {
-            throw IllegalStateException(
+            throw UiTextException(
                 when (response.code()) {
-                    400 -> "旧密码不正确"
-                    422 -> "新密码不符合要求（至少 8 位，且同时包含字母和数字）"
-                    else -> "修改失败 (${response.code()})"
+                    400 -> uiText(R.string.security_error_wrong_old_password)
+                    422 -> uiText(R.string.auth_error_password_format)
+                    else -> uiText(R.string.security_error_change_failed, response.code())
                 },
             )
         }
@@ -64,7 +67,7 @@ class SecurityRepository @Inject constructor(
 
     suspend fun revokeOtherSessions(): Result<Unit> = runCatching {
         val response = api.revokeOwnSessions(currentUid(), RevokeSessionsRequest(confirm = true))
-        if (!response.isSuccessful) throw IllegalStateException("操作失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.security_error_operation_failed, response.code()))
         Unit
     }
 
@@ -108,13 +111,13 @@ class SecurityRepository @Inject constructor(
             PasswordRecoveryRequest(username.trim(), newPassword),
         )
         if (!response.isSuccessful) {
-            throw IllegalStateException(
+            throw UiTextException(
                 when (response.code()) {
-                    401 -> "恢复令牌不正确"
-                    403 -> "站点未开启自助找回（未配置 BOOTSTRAP_SETUP_TOKEN）"
-                    404 -> "用户不存在"
-                    422 -> "新密码不符合要求（至少 8 位，且同时包含字母和数字）"
-                    else -> "找回失败 (${response.code()})"
+                    401 -> uiText(R.string.recovery_error_token)
+                    403 -> uiText(R.string.recovery_error_disabled)
+                    404 -> uiText(R.string.recovery_error_user_not_found)
+                    422 -> uiText(R.string.auth_error_password_format)
+                    else -> uiText(R.string.recovery_error_failed, response.code())
                 },
             )
         }

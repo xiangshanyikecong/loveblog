@@ -59,17 +59,21 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.entity.MoodEntity
 import com.lovejournal.app.media.MediaCapture
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 
+/** 心情选项：提交到后端的值（与网页端一致，保持中文不变）、emoji、本地化标签资源。 */
 private val MOODS = listOf(
-    "开心" to "😄",
-    "幸福" to "🥰",
-    "平静" to "😌",
-    "想你" to "🥺",
-    "难过" to "😢",
-    "生气" to "😠",
+    Triple("开心", "😄", R.string.mood_happy),
+    Triple("幸福", "🥰", R.string.mood_blessed),
+    Triple("平静", "😌", R.string.mood_calm),
+    Triple("想你", "🥺", R.string.mood_miss_you),
+    Triple("难过", "😢", R.string.mood_sad),
+    Triple("生气", "😠", R.string.mood_angry),
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -95,7 +99,7 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
 
     LaunchedEffect(status) {
         status?.let {
-            snackbar.showSnackbar(it)
+            snackbar.showSnackbar(it.asString(context))
             viewModel.clearStatus()
         }
     }
@@ -105,14 +109,14 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-            item { Text("今天心情怎么样？", style = MaterialTheme.typography.titleMedium) }
+            item { Text(stringResource(R.string.mood_how_today), style = MaterialTheme.typography.titleMedium) }
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MOODS.forEach { entry ->
                         FilterChip(
                             selected = selected == entry,
                             onClick = { selected = entry },
-                            label = { Text("${entry.second} ${entry.first}") },
+                            label = { Text("${entry.second} ${stringResource(entry.third)}") },
                         )
                     }
                 }
@@ -121,7 +125,7 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("想说的话（可选）") },
+                    label = { Text(stringResource(R.string.mood_note_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -131,25 +135,25 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
                         val uri = MediaCapture.newImageUri(context)
                         cameraUri = uri
                         cameraLauncher.launch(uri)
-                    }) { Text("拍照") }
+                    }) { Text(stringResource(R.string.btn_take_photo)) }
                     OutlinedButton(onClick = {
                         galleryLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
                         )
-                    }) { Text("从相册选择") }
+                    }) { Text(stringResource(R.string.btn_from_gallery)) }
                 }
             }
             if (attachment != null) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            "已附带图片",
+                            stringResource(R.string.mood_photo_attached),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
                         AsyncImage(
                             model = viewModel.mediaUrl(attachment),
-                            contentDescription = "已附带图片",
+                            contentDescription = stringResource(R.string.mood_photo_attached),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(96.dp)
@@ -168,11 +172,11 @@ fun MoodScreen(viewModel: MoodViewModel = hiltViewModel()) {
                         viewModel.checkIn(selected.first, selected.second, noteWithPhoto)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("打卡") }
+                ) { Text(stringResource(R.string.btn_check_in)) }
             }
             item {
                 Spacer(Modifier.height(8.dp))
-                Text("最近心情", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.mood_recent), style = MaterialTheme.typography.titleMedium)
             }
             items(moods, key = { it.mid }) { MoodRow(it, viewModel::mediaUrl) }
         }
@@ -211,7 +215,7 @@ private fun MoodRow(mood: MoodEntity, mediaUrl: (String?) -> String?) {
                 imagePath?.let {
                     AsyncImage(
                         model = mediaUrl(it),
-                        contentDescription = "心情图片",
+                        contentDescription = stringResource(R.string.mood_image),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(140.dp)

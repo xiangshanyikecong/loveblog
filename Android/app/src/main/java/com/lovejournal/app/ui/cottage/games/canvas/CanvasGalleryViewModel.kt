@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.cottage.games.canvas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
 import com.lovejournal.app.data.repository.CanvasRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +42,7 @@ data class CanvasGalleryUiState(
     val page: Int = 1,
     val hasNext: Boolean = false,
     val deletingCaid: String = "",
-    val errorMessage: String? = null,
+    val errorMessage: UiText? = null,
 )
 
 @HiltViewModel
@@ -49,8 +53,8 @@ class CanvasGalleryViewModel @Inject constructor(
     private val _state = MutableStateFlow(CanvasGalleryUiState())
     val state: StateFlow<CanvasGalleryUiState> = _state.asStateFlow()
 
-    private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toast: SharedFlow<String> = _toast
+    private val _toast = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val toast: SharedFlow<UiText> = _toast
 
     init {
         refresh()
@@ -71,7 +75,7 @@ class CanvasGalleryViewModel @Inject constructor(
                     }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(loading = false, errorMessage = err.message ?: "加载失败") }
+                    _state.update { it.copy(loading = false, errorMessage = err.toUiText()) }
                 }
         }
     }
@@ -92,7 +96,7 @@ class CanvasGalleryViewModel @Inject constructor(
                     }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(loading = false, errorMessage = err.message ?: "加载失败") }
+                    _state.update { it.copy(loading = false, errorMessage = err.toUiText()) }
                 }
         }
     }
@@ -109,11 +113,11 @@ class CanvasGalleryViewModel @Inject constructor(
                             deletingCaid = "",
                         )
                     }
-                    _toast.tryEmit("已删除")
+                    _toast.tryEmit(uiText(R.string.msg_deleted))
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(deletingCaid = "", errorMessage = err.message ?: "删除失败") }
-                    _toast.tryEmit(err.message ?: "删除失败")
+                    _state.update { it.copy(deletingCaid = "", errorMessage = err.toUiText()) }
+                    _toast.tryEmit(err.toUiText())
                 }
         }
     }

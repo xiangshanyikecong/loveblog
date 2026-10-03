@@ -53,6 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.entity.EventEntity
 import com.lovejournal.app.data.remote.dto.LoveClock
 import com.lovejournal.app.ui.components.LoveEmptyState
@@ -95,9 +97,9 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                 }
             }
             if (offline) item { OfflineBanner() }
-            item { LoveSectionTitle("近期纪念日", "把值得期待的日子放在心上") }
+            item { LoveSectionTitle(stringResource(R.string.dashboard_upcoming_events), stringResource(R.string.dashboard_upcoming_events_sub)) }
             if (events.isEmpty()) {
-                item { LoveEmptyState("📅", "还没有纪念日", "添加一个重要日期，开始倒数期待") }
+                item { LoveEmptyState("📅", stringResource(R.string.dashboard_no_events), stringResource(R.string.dashboard_no_events_sub)) }
             } else {
                 items(events, key = { it.eid }) { EventRow(it) }
             }
@@ -109,12 +111,12 @@ fun DashboardScreen(viewModel: DashboardViewModel = hiltViewModel()) {
 private fun WelcomeHeader() {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            "今天也要好好相爱",
+            stringResource(R.string.dashboard_today_love),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            "每一个普通日子，都是我们的故事。",
+            stringResource(R.string.dashboard_every_day_story),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -152,7 +154,7 @@ private fun LoveClockCard(initial: LoveClock) {
             ) {
                 Icon(Icons.Default.Favorite, null, tint = Color.White)
                 Text(
-                    "我们已经一起走过",
+                    stringResource(R.string.dashboard_love_clock_together),
                     color = Color.White.copy(alpha = 0.9f),
                     style = MaterialTheme.typography.labelLarge,
                 )
@@ -164,7 +166,7 @@ private fun LoveClockCard(initial: LoveClock) {
                     style = MaterialTheme.typography.displaySmall,
                 )
                 Text(
-                    "天",
+                    stringResource(R.string.dashboard_day),
                     color = Color.White,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 4.dp),
@@ -208,7 +210,7 @@ private fun OfflineBanner() {
                 tint = MaterialTheme.colorScheme.error,
             )
             Text(
-                "当前为离线模式，展示最近一次同步的数据",
+                stringResource(R.string.dashboard_offline_mode),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -245,7 +247,7 @@ private fun EventRow(event: EventEntity) {
                     shape = MaterialTheme.shapes.small,
                 ) {
                     Text(
-                        if (days == 0) "今天" else "$days 天",
+                        if (days == 0) stringResource(R.string.dashboard_today) else stringResource(R.string.dashboard_days_left, days),
                         Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
@@ -267,26 +269,26 @@ private fun OnThisDayCard(data: com.lovejournal.app.data.remote.dto.OnThisDayRes
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("🕰️", style = MaterialTheme.typography.titleMedium)
-                Text("那年今日", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.dashboard_on_this_day), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             data.years.forEach { year ->
                 Text(
-                    "${year.year} 年的今天",
+                    stringResource(R.string.dashboard_on_this_day_year, year.year),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 year.articles.take(2).forEach { article ->
-                    Text("· 文章：${article.title}", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.dashboard_otd_article, article.title), style = MaterialTheme.typography.bodySmall)
                 }
                 year.albums.take(2).forEach { album ->
-                    Text("· 相册：${album.title}", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.dashboard_otd_album, album.title), style = MaterialTheme.typography.bodySmall)
                 }
                 year.songs.take(2).forEach { song ->
-                    Text("· 一起听过：${song.name}", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.dashboard_otd_song, song.name), style = MaterialTheme.typography.bodySmall)
                 }
             }
             Text(
-                "${data.totals.articles} 篇文章 · ${data.totals.albums} 张相册 · ${data.totals.songs} 首歌",
+                stringResource(R.string.dashboard_otd_totals, data.totals.articles, data.totals.albums, data.totals.songs),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

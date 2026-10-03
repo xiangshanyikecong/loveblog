@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.security
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.repository.SecurityRepository
 import com.lovejournal.app.data.remote.dto.LoginDeviceResponse
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,8 +58,8 @@ class SecurityViewModel @Inject constructor(
     private val _state = MutableStateFlow(SecurityUiState())
     val state: StateFlow<SecurityUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     private fun validNewPassword(pwd: String): Boolean =
         pwd.length in 8..128 && pwd.any { it.isLetter() } && pwd.any { it.isDigit() }
@@ -63,15 +67,15 @@ class SecurityViewModel @Inject constructor(
     fun changePassword(oldPassword: String, newPassword: String, confirmPassword: String) {
         when {
             oldPassword.isBlank() -> {
-                _message.value = "请输入当前密码"
+                _message.value = uiText(R.string.security_error_current_password_required)
                 return
             }
             !validNewPassword(newPassword) -> {
-                _message.value = "新密码至少 8 位，且需同时包含字母和数字"
+                _message.value = uiText(R.string.auth_error_password_format)
                 return
             }
             newPassword != confirmPassword -> {
-                _message.value = "两次输入的新密码不一致"
+                _message.value = uiText(R.string.security_error_password_mismatch)
                 return
             }
         }
@@ -80,11 +84,11 @@ class SecurityViewModel @Inject constructor(
             repository.changePassword(oldPassword, newPassword).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(submitting = false, done = true)
-                    _message.value = "密码已修改，请重新登录"
+                    _message.value = uiText(R.string.security_msg_password_changed)
                 },
                 onFailure = {
                     _state.value = _state.value.copy(submitting = false)
-                    _message.value = it.message ?: "修改失败"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -96,11 +100,11 @@ class SecurityViewModel @Inject constructor(
             repository.revokeOtherSessions().fold(
                 onSuccess = {
                     _state.value = _state.value.copy(submitting = false, done = true)
-                    _message.value = "已登出所有设备，请重新登录"
+                    _message.value = uiText(R.string.security_msg_logged_out_all)
                 },
                 onFailure = {
                     _state.value = _state.value.copy(submitting = false)
-                    _message.value = it.message ?: "操作失败"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -121,7 +125,7 @@ class SecurityViewModel @Inject constructor(
                 },
                 onFailure = {
                     _state.value = _state.value.copy(totpLoading = false)
-                    _message.value = it.message ?: "无法获取两步验证状态"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -133,7 +137,7 @@ class SecurityViewModel @Inject constructor(
                 onSuccess = { resp ->
                     _state.value = _state.value.copy(totpSecret = resp.secret, totpUri = resp.uri)
                 },
-                onFailure = { _message.value = it.message ?: "无法开始绑定" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -149,9 +153,9 @@ class SecurityViewModel @Inject constructor(
                         totpUri = null,
                         totpRecoveryCodes = resp.recovery_codes,
                     )
-                    _message.value = "两步验证已开启，请妥善保存恢复码"
+                    _message.value = uiText(R.string.security_msg_totp_enabled)
                 },
-                onFailure = { _message.value = it.message ?: "开启失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -161,9 +165,9 @@ class SecurityViewModel @Inject constructor(
             repository.totpDisable(code, password).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(totpEnabled = false, totpRecoveryRemaining = 0)
-                    _message.value = "两步验证已关闭"
+                    _message.value = uiText(R.string.security_msg_totp_disabled)
                 },
-                onFailure = { _message.value = it.message ?: "关闭失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -183,7 +187,7 @@ class SecurityViewModel @Inject constructor(
                 },
                 onFailure = {
                     _state.value = _state.value.copy(devicesLoading = false)
-                    _message.value = it.message ?: "无法获取登录设备"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -194,9 +198,9 @@ class SecurityViewModel @Inject constructor(
             repository.revokeDevice(did).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(devices = _state.value.devices.filterNot { it.did == did })
-                    _message.value = "该设备已登出"
+                    _message.value = uiText(R.string.security_msg_device_revoked)
                 },
-                onFailure = { _message.value = it.message ?: "撤销失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

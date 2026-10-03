@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -53,12 +54,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.entity.MessageEntity
 import com.lovejournal.app.data.remote.dto.ContentVersion
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
@@ -67,6 +71,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
     val selfUid by viewModel.selfUid.collectAsStateWithLifecycle()
     val versions by viewModel.versions.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     var draft by remember { mutableStateOf("") }
     var isPublic by remember { mutableStateOf(true) }
     var editingMessage by remember { mutableStateOf<MessageEntity?>(null) }
@@ -76,7 +81,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
 
     LaunchedEffect(status) {
         status?.let {
-            snackbar.showSnackbar(it)
+            snackbar.showSnackbar(it.asString(context))
             viewModel.clearStatus()
         }
     }
@@ -94,22 +99,22 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
     deletingMessage?.let { target ->
         AlertDialog(
             onDismissRequest = { deletingMessage = null },
-            title = { Text("删除留言？") },
-            text = { Text("删除后会进入回收站，可在后台恢复。") },
+            title = { Text(stringResource(R.string.messages_delete_title)) },
+            text = { Text(stringResource(R.string.messages_delete_desc)) },
             confirmButton = {
-                TextButton(onClick = { deletingMessage = null; viewModel.deleteMessage(target.msgId) }) { Text("删除") }
+                TextButton(onClick = { deletingMessage = null; viewModel.deleteMessage(target.msgId) }) { Text(stringResource(R.string.btn_delete)) }
             },
-            dismissButton = { TextButton(onClick = { deletingMessage = null }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { deletingMessage = null }) { Text(stringResource(R.string.btn_cancel)) } },
         )
     }
     historyMessage?.let { target ->
         LaunchedEffect(target.msgId) { viewModel.loadVersions(target.msgId) }
         AlertDialog(
             onDismissRequest = { historyMessage = null; viewModel.clearVersions() },
-            title = { Text("历史版本") },
+            title = { Text(stringResource(R.string.messages_history_title)) },
             text = {
                 if (versions.isEmpty()) {
-                    Text("暂无历史版本")
+                    Text(stringResource(R.string.messages_no_versions))
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(versions, key = { it.vid }) { version ->
@@ -118,7 +123,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                                     .fillMaxWidth()
                                     .clickable { rollingBackVersion = version.version },
                             ) {
-                                Text("版本 ${version.version}", style = MaterialTheme.typography.titleSmall)
+                                Text(stringResource(R.string.messages_version_label, version.version), style = MaterialTheme.typography.titleSmall)
                                 Text(
                                     text = listOfNotNull(version.actor_nickname, version.created_at?.take(16))
                                         .joinToString(" · "),
@@ -138,15 +143,15 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { historyMessage = null; viewModel.clearVersions() }) { Text("关闭") }
+                TextButton(onClick = { historyMessage = null; viewModel.clearVersions() }) { Text(stringResource(R.string.btn_close)) }
             },
         )
     }
     rollingBackVersion?.let { version ->
         AlertDialog(
             onDismissRequest = { rollingBackVersion = null },
-            title = { Text("回滚到版本 $version？") },
-            text = { Text("回滚后当前内容仍会保留在历史版本中。") },
+            title = { Text(stringResource(R.string.messages_rollback_title, version)) },
+            text = { Text(stringResource(R.string.messages_rollback_desc)) },
             confirmButton = {
                 TextButton(onClick = {
                     val target = historyMessage
@@ -154,9 +159,9 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                     target?.let { viewModel.rollbackMessage(it.msgId, version) }
                     historyMessage = null
                     viewModel.clearVersions()
-                }) { Text("回滚") }
+                }) { Text(stringResource(R.string.btn_rollback)) }
             },
-            dismissButton = { TextButton(onClick = { rollingBackVersion = null }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { rollingBackVersion = null }) { Text(stringResource(R.string.btn_cancel)) } },
         )
     }
 
@@ -183,12 +188,12 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                         FilterChip(
                             selected = isPublic,
                             onClick = { isPublic = true },
-                            label = { Text("公开") },
+                            label = { Text(stringResource(R.string.messages_public)) },
                         )
                         FilterChip(
                             selected = !isPublic,
                             onClick = { isPublic = false },
-                            label = { Text("私密") },
+                            label = { Text(stringResource(R.string.messages_private)) },
                         )
                     }
                     Row(
@@ -198,7 +203,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                         OutlinedTextField(
                             value = draft,
                             onValueChange = { draft = it },
-                            placeholder = { Text(if (isPublic) "写一条留言…" else "写一条私密留言…") },
+                            placeholder = { Text(if (isPublic) stringResource(R.string.messages_placeholder_public) else stringResource(R.string.messages_placeholder_private)) },
                             modifier = Modifier.weight(1f),
                         )
                         IconButton(
@@ -207,7 +212,7 @@ fun MessagesScreen(viewModel: MessagesViewModel = hiltViewModel()) {
                                 viewModel.send(draft, isPublic)
                                 draft = ""
                             }) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "发送")
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(R.string.btn_send))
                         }
                     }
                 }
@@ -233,13 +238,13 @@ private fun MessageRow(
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = message.authorNickname ?: "匿名",
+                        text = message.authorNickname ?: stringResource(R.string.messages_anonymous),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
                     if (!message.isPublic) {
                         Text(
-                            "私密留言",
+                            stringResource(R.string.messages_private_msg),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.tertiary,
                         )
@@ -250,18 +255,18 @@ private fun MessageRow(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
                     if (message.pendingSync) {
-                        Text("待同步", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.messages_pending_sync), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                     }
                     // 仅作者本人可编辑 / 删除 / 查看历史版本（服务端同样校验）。
                     if (isOwn) {
                         var menuOpen by remember { mutableStateOf(false) }
                         IconButton(onClick = { menuOpen = true }) {
-                            Icon(Icons.Default.MoreHoriz, contentDescription = "更多操作")
+                            Icon(Icons.Default.MoreHoriz, contentDescription = stringResource(R.string.common_more_actions))
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
-                            DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
-                            DropdownMenuItem(text = { Text("历史版本") }, onClick = { menuOpen = false; onHistory() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.btn_edit)) }, onClick = { menuOpen = false; onEdit() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.btn_delete)) }, onClick = { menuOpen = false; onDelete() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.messages_history_title)) }, onClick = { menuOpen = false; onHistory() })
                         }
                     }
                 }
@@ -286,25 +291,25 @@ private fun MessageEditor(
     var isPublic by remember(message.msgId) { mutableStateOf(message.isPublic) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("编辑留言") },
+        title = { Text(stringResource(R.string.messages_edit_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("留言内容") },
+                    label = { Text(stringResource(R.string.messages_content_label)) },
                     minLines = 3,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Checkbox(checked = isPublic, onCheckedChange = { isPublic = it })
-                    Text("公开")
+                    Text(stringResource(R.string.messages_public))
                 }
             }
         },
         confirmButton = {
-            Button(enabled = content.isNotBlank(), onClick = { onSave(content, isPublic) }) { Text("保存") }
+            Button(enabled = content.isNotBlank(), onClick = { onSave(content, isPublic) }) { Text(stringResource(R.string.btn_save)) }
         },
-        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }

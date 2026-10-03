@@ -21,6 +21,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import com.lovejournal.app.R
 
 object NotificationChannels {
     const val MESSAGES = "love_messages"
@@ -31,13 +32,13 @@ object NotificationChannels {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         manager.createNotificationChannel(
-            NotificationChannel(MESSAGES, "留言", NotificationManager.IMPORTANCE_HIGH),
+            NotificationChannel(MESSAGES, context.getString(R.string.notification_channel_messages), NotificationManager.IMPORTANCE_HIGH),
         )
         manager.createNotificationChannel(
-            NotificationChannel(MOODS, "心情打卡", NotificationManager.IMPORTANCE_DEFAULT),
+            NotificationChannel(MOODS, context.getString(R.string.notification_channel_moods), NotificationManager.IMPORTANCE_DEFAULT),
         )
         manager.createNotificationChannel(
-            NotificationChannel(EVENTS, "纪念日提醒", NotificationManager.IMPORTANCE_DEFAULT),
+            NotificationChannel(EVENTS, context.getString(R.string.notification_channel_events), NotificationManager.IMPORTANCE_DEFAULT),
         )
     }
 

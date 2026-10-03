@@ -49,16 +49,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.SearchResultItem
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDate
 
+@Composable
 private fun typeLabel(type: String): String = when (type) {
-    "article" -> "文章"
-    "album" -> "相册"
-    "event" -> "纪念日"
-    "moment" -> "动态"
-    "message" -> "留言"
+    "article" -> stringResource(R.string.search_type_article)
+    "album" -> stringResource(R.string.search_type_album)
+    "event" -> stringResource(R.string.search_type_event)
+    "moment" -> stringResource(R.string.search_type_moment)
+    "message" -> stringResource(R.string.search_type_message)
     else -> type
 }
 
@@ -71,11 +75,11 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
         OutlinedTextField(
             value = state.query,
             onValueChange = { viewModel.updateQuery(it) },
-            label = { Text("搜索文章 / 相册 / 纪念日 / 动态 / 留言") },
+            label = { Text(stringResource(R.string.search_placeholder)) },
             singleLine = true,
             trailingIcon = {
                 IconButton(onClick = { viewModel.search() }) {
-                    Icon(Icons.Filled.Search, contentDescription = "搜索")
+                    Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
                 }
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -90,18 +94,18 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("搜索失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.search_failed, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 !state.searched ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("输入关键词，找回你们的点点滴滴", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("没有找到相关内容") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.search_no_results)) }
                 else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         Text(
-                            "共 ${state.total} 条结果",
+                            stringResource(R.string.search_total_results, state.total),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

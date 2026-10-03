@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
 import com.lovejournal.app.data.repository.CanvasRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +35,7 @@ data class CanvasArtworkPlayerUiState(
     val loading: Boolean = true,
     val artwork: CanvasArtworkResponse? = null,
     val strokes: List<Pair<Float, List<FloatArray>>> = emptyList(),
-    val errorMessage: String? = null,
+    val errorMessage: UiText? = null,
 )
 
 @HiltViewModel
@@ -55,7 +57,7 @@ class CanvasArtworkPlayerViewModel @Inject constructor(
                     }
                 }
                 .onFailure { err ->
-                    _state.update { it.copy(loading = false, errorMessage = err.message ?: "加载失败") }
+                    _state.update { it.copy(loading = false, errorMessage = err.toUiText()) }
                 }
         }
     }

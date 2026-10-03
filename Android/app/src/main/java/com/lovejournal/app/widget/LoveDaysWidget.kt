@@ -38,7 +38,9 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.lovejournal.app.MainActivity
+import com.lovejournal.app.R
 
 class LoveDaysWidget : GlanceAppWidget() {
 
@@ -51,6 +53,7 @@ class LoveDaysWidget : GlanceAppWidget() {
 
     @Composable
     private fun WidgetContent(days: Long) {
+        val context = LocalContext.current
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
@@ -61,7 +64,7 @@ class LoveDaysWidget : GlanceAppWidget() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "在一起",
+                text = context.getString(R.string.widget_together),
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 14.sp),
             )
             Text(
@@ -73,7 +76,7 @@ class LoveDaysWidget : GlanceAppWidget() {
                 ),
             )
             Text(
-                text = "天",
+                text = context.getString(R.string.widget_days),
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 14.sp),
             )
         }

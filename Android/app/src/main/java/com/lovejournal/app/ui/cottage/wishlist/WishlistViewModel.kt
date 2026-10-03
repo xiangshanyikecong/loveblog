@@ -20,10 +20,14 @@ package com.lovejournal.app.ui.cottage.wishlist
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.remote.dto.WishResponse
 import com.lovejournal.app.data.repository.WishlistRepository
 import com.lovejournal.app.sync.SyncScheduler
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +40,7 @@ data class WishlistUiState(
     val items: List<WishResponse> = emptyList(),
     val pending: Int = 0,
     val completed: Int = 0,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -49,8 +53,8 @@ class WishlistViewModel @Inject constructor(
     private val _state = MutableStateFlow(WishlistUiState())
     val state: StateFlow<WishlistUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -68,7 +72,7 @@ class WishlistViewModel @Inject constructor(
                     )
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -76,7 +80,7 @@ class WishlistViewModel @Inject constructor(
 
     fun add(title: String, description: String?, category: String?, onDone: () -> Unit) {
         if (title.isBlank()) {
-            _message.value = "请填写心愿标题"
+            _message.value = uiText(R.string.wishlist_error_title_required)
             return
         }
         viewModelScope.launch {
@@ -87,16 +91,16 @@ class WishlistViewModel @Inject constructor(
                 targetDate = null,
                 priority = 0,
             ).fold(
-                onSuccess = { _message.value = "已添加心愿"; onDone(); refresh() },
+                onSuccess = { _message.value = uiText(R.string.msg_added); onDone(); refresh() },
                 onFailure = { e ->
                     if (!connectivity.isOnline()) {
                         // 离线：请求已由仓库暂存进同步队列，联网后由
                         // SyncWorker 自动补发，这里按成功收尾避免重复提交。
-                        _message.value = "已离线暂存，联网后自动同步"
+                        _message.value = uiText(R.string.messages_msg_offline_saved)
                         onDone()
                         SyncScheduler.requestSyncNow(getApplication())
                     } else {
-                        _message.value = e.message ?: "添加失败"
+                        _message.value = e.toUiText()
                     }
                 },
             )
@@ -111,7 +115,7 @@ class WishlistViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写心愿标题"
+            _message.value = uiText(R.string.wishlist_error_title_required)
             return
         }
         viewModelScope.launch {
@@ -121,8 +125,8 @@ class WishlistViewModel @Inject constructor(
                 description = description?.trim()?.ifBlank { null },
                 category = category?.trim()?.ifBlank { null },
             ).fold(
-                onSuccess = { _message.value = "已更新心愿"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "更新失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_saved); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -136,7 +140,7 @@ class WishlistViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = { refresh() },
-                onFailure = { _message.value = it.message ?: "操作失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -144,8 +148,8 @@ class WishlistViewModel @Inject constructor(
     fun delete(wish: WishResponse) {
         viewModelScope.launch {
             repository.delete(wish.wid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

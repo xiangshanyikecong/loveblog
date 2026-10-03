@@ -48,19 +48,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.RecycleBinItemDto
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 
-private val TYPE_LABELS = mapOf(
-    "article" to "文章",
-    "album" to "相册",
-    "event" to "纪念日",
-    "moment" to "动态",
-    "message" to "留言",
-)
-
-private fun typeLabel(value: String): String = TYPE_LABELS[value] ?: value
+@Composable
+private fun typeLabel(value: String): String = when (value) {
+    "article" -> stringResource(R.string.search_type_article)
+    "album" -> stringResource(R.string.search_type_album)
+    "event" -> stringResource(R.string.search_type_event)
+    "moment" -> stringResource(R.string.search_type_moment)
+    "message" -> stringResource(R.string.search_type_message)
+    else -> value
+}
 
 @Composable
 fun RecycleBinScreen(viewModel: RecycleBinViewModel = hiltViewModel()) {
@@ -73,7 +76,7 @@ fun RecycleBinScreen(viewModel: RecycleBinViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -87,13 +90,13 @@ fun RecycleBinScreen(viewModel: RecycleBinViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "回收站 · 共 ${state.total} 项",
+                    stringResource(R.string.recycle_bin_total, state.total),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (state.items.isNotEmpty()) {
                     TextButton(onClick = { confirmClear = true }) {
-                        Text("清空", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.btn_clear), color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -102,11 +105,11 @@ fun RecycleBinScreen(viewModel: RecycleBinViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("回收站是空的")
+                        Text(stringResource(R.string.recycle_bin_empty))
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -128,30 +131,30 @@ fun RecycleBinScreen(viewModel: RecycleBinViewModel = hiltViewModel()) {
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            title = { Text("清空回收站") },
-            text = { Text("将永久删除回收站内的全部项目，此操作不可恢复。确定继续吗？") },
+            title = { Text(stringResource(R.string.recycle_bin_clear_title)) },
+            text = { Text(stringResource(R.string.recycle_bin_clear_msg)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmClear = false
                     viewModel.clearAll()
-                }) { Text("清空", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.btn_clear), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(stringResource(R.string.btn_cancel)) } },
         )
     }
 
     pendingDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("永久删除") },
-            text = { Text("将永久删除「${item.title}」，此操作不可恢复。确定继续吗？") },
+            title = { Text(stringResource(R.string.recycle_bin_delete_forever_title)) },
+            text = { Text(stringResource(R.string.recycle_bin_delete_forever_msg, item.title)) },
             confirmButton = {
                 TextButton(onClick = {
                     pendingDelete = null
                     viewModel.deleteForever(item)
-                }) { Text("永久删除", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.btn_delete_forever), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.btn_cancel)) } },
         )
     }
 }
@@ -167,7 +170,7 @@ private fun RecycleBinCard(item: RecycleBinItemDto, onRestore: () -> Unit, onDel
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    item.title.ifBlank { "(无标题)" },
+                    item.title.ifBlank { stringResource(R.string.recycle_bin_no_title) },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -180,7 +183,7 @@ private fun RecycleBinCard(item: RecycleBinItemDto, onRestore: () -> Unit, onDel
                     )
                     item.deleted_at?.takeIf { it.isNotBlank() }?.let {
                         Text(
-                            "删除于 ${formatDateTime(it)}",
+                            stringResource(R.string.recycle_bin_deleted_at, formatDateTime(it)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -188,10 +191,10 @@ private fun RecycleBinCard(item: RecycleBinItemDto, onRestore: () -> Unit, onDel
                 }
             }
             IconButton(onClick = onRestore) {
-                Icon(Icons.Filled.Restore, contentDescription = "恢复", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Filled.Restore, contentDescription = stringResource(R.string.btn_restore), tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.DeleteForever, contentDescription = "永久删除", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Filled.DeleteForever, contentDescription = stringResource(R.string.btn_delete_forever), tint = MaterialTheme.colorScheme.error)
             }
         }
     }

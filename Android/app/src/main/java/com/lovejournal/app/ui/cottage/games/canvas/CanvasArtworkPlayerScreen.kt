@@ -56,10 +56,13 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
+import com.lovejournal.app.ui.components.asString
 import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,14 +83,14 @@ fun CanvasArtworkPlayerScreen(
                         Icon(Icons.Filled.Brush, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.size(8.dp))
                         Text(
-                            text = ui.artwork?.title?.takeIf { it.isNotBlank() } ?: "作品回放",
+                            text = ui.artwork?.title?.takeIf { it.isNotBlank() } ?: stringResource(R.string.artwork_player_title),
                             maxLines = 1,
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "返回作品集")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.artwork_back_to_gallery))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -112,7 +115,7 @@ fun CanvasArtworkPlayerScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = ui.errorMessage ?: "加载失败",
+                        text = ui.errorMessage?.asString() ?: stringResource(R.string.msg_load_failed),
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
@@ -130,14 +133,14 @@ fun CanvasArtworkPlayerScreen(
                     val author = ui.artwork?.author_nickname.orEmpty()
                     val createdAt = ui.artwork?.created_at.orEmpty()
                     Text(
-                        text = "由 $author 保存 · ${createdAt}",
+                        text = stringResource(R.string.artwork_saved_by, author, createdAt),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (!ui.artwork?.collaborators.isNullOrEmpty()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "合作者：",
+                                text = stringResource(R.string.artwork_collaborators_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -158,7 +161,7 @@ fun CanvasArtworkPlayerScreen(
                                 }
                                 Spacer(Modifier.size(4.dp))
                                 Text(
-                                    text = "${c.nickname}（${c.stroke_count} 笔）",
+                                    text = stringResource(R.string.artwork_strokes_label, c.nickname, c.stroke_count),
                                     style = MaterialTheme.typography.labelSmall,
                                 )
                                 Spacer(Modifier.size(8.dp))

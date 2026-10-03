@@ -19,7 +19,11 @@ package com.lovejournal.app.ui.admin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.repository.AdminRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,15 +34,15 @@ import javax.inject.Inject
 
 data class AdminToolsUiState(
     val loading: Boolean = true,
-    val health: String = "",
-    val audit: String = "",
-    val users: String = "",
-    val storage: String = "",
-    val backup: String = "",
-    val storageUsage: String = "",
-    val healthHistory: String = "",
+    val health: UiText? = null,
+    val audit: UiText? = null,
+    val users: UiText? = null,
+    val storage: UiText? = null,
+    val backup: UiText? = null,
+    val storageUsage: List<UiText> = emptyList(),
+    val healthHistory: UiText? = null,
     val remediating: Boolean = false,
-    val message: String? = null,
+    val message: UiText? = null,
 )
 
 @HiltViewModel
@@ -55,14 +59,17 @@ class AdminToolsViewModel @Inject constructor(private val repository: AdminRepos
         val backup = async { repository.backupInfo() }
         _state.value = AdminToolsUiState(
             loading = false,
-            health = health.await().fold({ it.toString() }, { it.message ?: "无权限或加载失败" }),
-            audit = audit.await().fold({ it.toString() }, { it.message ?: "无权限或加载失败" }),
-            users = users.await().fold({ it.toString() }, { it.message ?: "无权限或加载失败" }),
-            storage = storage.await().fold({ it.toString() }, { it.message ?: "无权限或加载失败" }),
-            backup = backup.await().fold({ "计划：${it.first}\n历史：${it.second}" }, { it.message ?: "无权限或加载失败" }),
+            health = health.await().fold({ UiText.Raw(it.toString()) }, { adminError(it) }),
+            audit = audit.await().fold({ UiText.Raw(it.toString()) }, { adminError(it) }),
+            users = users.await().fold({ UiText.Raw(it.toString()) }, { adminError(it) }),
+            storage = storage.await().fold({ UiText.Raw(it.toString()) }, { adminError(it) }),
+            backup = backup.await().fold(
+                { uiText(R.string.admin_backup_summary, it.first.toString(), it.second.toString()) },
+                { adminError(it) },
+            ),
         )
     }
-    fun runBackup() = viewModelScope.launch { repository.runBackup().fold(onSuccess = { _state.value = _state.value.copy(message = "备份任务已执行：$it"); refresh() }, onFailure = { _state.value = _state.value.copy(message = it.message ?: "备份失败") }) }
+    fun runBackup() = viewModelScope.launch { repository.runBackup().fold(onSuccess = { _state.value = _state.value.copy(message = uiText(R.string.admin_msg_backup_done, it.toString())); refresh() }, onFailure = { _state.value = _state.value.copy(message = it.toUiText()) }) }
 
     fun loadMore() = viewModelScope.launch {
         val usage = async { repository.storageUsage() }
@@ -71,19 +78,19 @@ class AdminToolsViewModel @Inject constructor(private val repository: AdminRepos
             storageUsage = usage.await().fold(
                 { resp ->
                     val mb = { b: Long -> "%.1f MB".format(b / 1024.0 / 1024.0) }
-                    buildString {
-                        appendLine("磁盘：${mb(resp.disk.used_bytes)} / ${mb(resp.disk.total_bytes)}（${"%.1f".format(resp.disk.percent)}%）")
-                        appendLine("上传目录：${mb(resp.uploads.total_bytes)}（${resp.uploads.file_count} 个文件）")
-                        resp.database.size_bytes?.let { appendLine("数据库：${mb(it)}") }
-                        appendLine("分类明细：")
-                        resp.breakdown.forEach { appendLine("  · ${it.category}: ${mb(it.bytes)}（${it.file_count} 个）") }
+                    buildList {
+                        add(uiText(R.string.admin_storage_disk, mb(resp.disk.used_bytes), mb(resp.disk.total_bytes), "%.1f".format(resp.disk.percent)))
+                        add(uiText(R.string.admin_storage_uploads, mb(resp.uploads.total_bytes), resp.uploads.file_count))
+                        resp.database.size_bytes?.let { add(uiText(R.string.admin_storage_database, mb(it))) }
+                        add(uiText(R.string.admin_storage_breakdown_title))
+                        resp.breakdown.forEach { add(uiText(R.string.admin_storage_breakdown_item, it.category, mb(it.bytes), it.file_count)) }
                     }
                 },
-                { it.message ?: "无权限或加载失败" },
+                { listOf(adminError(it)) },
             ),
             healthHistory = history.await().fold(
-                { it.toString().take(1500) },
-                { it.message ?: "无权限或加载失败" },
+                { UiText.Raw(it.toString().take(1500)) },
+                { adminError(it) },
             ),
         )
     }
@@ -92,14 +99,20 @@ class AdminToolsViewModel @Inject constructor(private val repository: AdminRepos
         _state.value = _state.value.copy(remediating = true)
         repository.remediate().fold(
             onSuccess = { el ->
-                _state.value = _state.value.copy(remediating = false, message = "已尝试自动修复：$el".take(400))
+                _state.value = _state.value.copy(remediating = false, message = uiText(R.string.admin_msg_remediated, el.toString().take(300)))
                 refresh()
             },
             onFailure = {
-                _state.value = _state.value.copy(remediating = false, message = it.message ?: "修复失败")
+                _state.value = _state.value.copy(remediating = false, message = it.toUiText())
             },
         )
     }
 
     fun clearMessage() { _state.value = _state.value.copy(message = null) }
+
+    private companion object {
+        /** 管理员接口对普通伴侣账号返回 403，缺省提示需保留「无权限」语义。 */
+        fun adminError(t: Throwable): UiText =
+            t.message?.let { UiText.Raw(it) } ?: uiText(R.string.admin_msg_no_permission_or_failed)
+    }
 }

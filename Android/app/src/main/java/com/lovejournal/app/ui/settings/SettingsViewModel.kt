@@ -20,10 +20,14 @@ package com.lovejournal.app.ui.settings
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.data.repository.AuthRepository
 import com.lovejournal.app.data.repository.SettingsRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +39,7 @@ data class SettingsUiState(
     val loading: Boolean = false,
     val saving: Boolean = false,
     val setting: SiteSettingResponse? = null,
-    val error: String? = null,
+    val error: UiText? = null,
     /** 当前登录者的角色（"PartnerA" / "PartnerB" / "Visitor"），来自会话。 */
     val role: String? = null,
     /** 会话中记录的头像；设置页优先展示站点设置里按角色读取的头像。 */
@@ -56,12 +60,12 @@ class SettingsViewModel @Inject constructor(
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     /** 邀请另一半的专属反馈，显示在邀请卡片内部（避免与顶部全局消息混淆）。 */
-    private val _inviteMessage = MutableStateFlow<String?>(null)
-    val inviteMessage: StateFlow<String?> = _inviteMessage.asStateFlow()
+    private val _inviteMessage = MutableStateFlow<UiText?>(null)
+    val inviteMessage: StateFlow<UiText?> = _inviteMessage.asStateFlow()
 
     init {
         refresh()
@@ -77,7 +81,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.get().fold(
                 onSuccess = { _state.value = SettingsUiState(setting = it, role = _state.value.role, sessionAvatar = _state.value.sessionAvatar) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
@@ -88,11 +92,11 @@ class SettingsViewModel @Inject constructor(
             repository.update(siteName, loveStartDateIso, allowRegistration).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(saving = false, setting = it)
-                    _message.value = "已保存"
+                    _message.value = uiText(R.string.msg_saved)
                 },
                 onFailure = {
                     _state.value = _state.value.copy(saving = false)
-                    _message.value = it.message ?: "保存失败"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -108,7 +112,7 @@ class SettingsViewModel @Inject constructor(
             "PartnerA" -> true
             "PartnerB" -> false
             else -> {
-                _message.value = "仅伴侣账号可以设置头像"
+                _message.value = uiText(R.string.settings_msg_avatar_partner_only)
                 return
             }
         }
@@ -124,17 +128,17 @@ class SettingsViewModel @Inject constructor(
                     result.fold(
                         onSuccess = {
                             _state.value = _state.value.copy(uploadingAvatar = false, setting = it)
-                            _message.value = "头像已更新"
+                            _message.value = uiText(R.string.settings_msg_avatar_updated)
                         },
                         onFailure = {
                             _state.value = _state.value.copy(uploadingAvatar = false)
-                            _message.value = it.message ?: "头像更新失败"
+                            _message.value = it.toUiText()
                         },
                     )
                 },
                 onFailure = {
                     _state.value = _state.value.copy(uploadingAvatar = false)
-                    _message.value = it.message ?: "头像上传失败"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -150,20 +154,20 @@ class SettingsViewModel @Inject constructor(
             "PartnerA" -> "PartnerB"
             "PartnerB" -> "PartnerA"
             else -> {
-                _inviteMessage.value = "仅伴侣账号可以为另一半开通账号"
+                _inviteMessage.value = uiText(R.string.register_error_not_partner)
                 return
             }
         }
         if (!USERNAME_PATTERN.matches(username.trim())) {
-            _inviteMessage.value = "用户名需为 3-32 位小写字母、数字或下划线"
+            _inviteMessage.value = uiText(R.string.auth_error_username_format)
             return
         }
         if (password.length < 8 || !password.any { it.isLetter() } || !password.any { it.isDigit() }) {
-            _inviteMessage.value = "密码至少 8 位，且需同时包含字母和数字"
+            _inviteMessage.value = uiText(R.string.auth_error_password_format)
             return
         }
         if (nickname.isBlank()) {
-            _inviteMessage.value = "请输入昵称"
+            _inviteMessage.value = uiText(R.string.auth_error_nickname_required)
             return
         }
         _state.value = _state.value.copy(inviting = true)
@@ -172,11 +176,11 @@ class SettingsViewModel @Inject constructor(
             authRepository.registerPartner(username.trim(), password, nickname.trim(), targetRole).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(inviting = false, inviteSucceeded = true)
-                    _inviteMessage.value = "已开通，请对方用该账号登录"
+                    _inviteMessage.value = uiText(R.string.settings_msg_invite_success)
                 },
                 onFailure = {
                     _state.value = _state.value.copy(inviting = false)
-                    _inviteMessage.value = it.message ?: "开通失败"
+                    _inviteMessage.value = it.toUiText()
                 },
             )
         }

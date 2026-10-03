@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.remote.dto.NotificationResponse
 import com.lovejournal.app.data.repository.NotificationRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +34,7 @@ data class NotificationUiState(
     val loading: Boolean = false,
     val items: List<NotificationResponse> = emptyList(),
     val unreadCount: Int = 0,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -52,7 +54,7 @@ class NotificationViewModel @Inject constructor(
         viewModelScope.launch {
             repository.list().fold(
                 onSuccess = { _state.value = NotificationUiState(items = it.items, unreadCount = it.unread_count) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }

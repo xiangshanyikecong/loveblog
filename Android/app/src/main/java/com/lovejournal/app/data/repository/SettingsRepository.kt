@@ -22,9 +22,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.data.remote.dto.SiteSettingUpdateRequest
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -83,7 +86,7 @@ class SettingsRepository @Inject constructor(
         // Pass 1: 只读尺寸，避免整图解码。
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-            ?: throw IllegalStateException("无法读取所选图片")
+            ?: throw UiTextException(uiText(R.string.upload_error_read_image))
 
         // Pass 2: 下采样解码，最长边限制在约 MAX_EDGE。
         val decodeOptions = BitmapFactory.Options().apply {
@@ -91,7 +94,7 @@ class SettingsRepository @Inject constructor(
         }
         val bitmap = resolver.openInputStream(uri)?.use {
             BitmapFactory.decodeStream(it, null, decodeOptions)
-        } ?: throw IllegalStateException("无法解码所选图片")
+        } ?: throw UiTextException(uiText(R.string.upload_error_decode_image))
 
         return try {
             ByteArrayOutputStream().use { out ->

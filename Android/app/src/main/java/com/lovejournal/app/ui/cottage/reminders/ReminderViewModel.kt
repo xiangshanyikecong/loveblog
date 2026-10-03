@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.cottage.reminders
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.ReminderResponse
 import com.lovejournal.app.data.repository.ReminderRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +39,7 @@ data class ReminderUiState(
     val done: Int = 0,
     val due: Int = 0,
     val includeDone: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -46,8 +50,8 @@ class ReminderViewModel @Inject constructor(
     private val _state = MutableStateFlow(ReminderUiState())
     val state: StateFlow<ReminderUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -68,7 +72,7 @@ class ReminderViewModel @Inject constructor(
                     )
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -87,7 +91,7 @@ class ReminderViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写提醒内容"
+            _message.value = uiText(R.string.reminder_error_content_required)
             return
         }
         viewModelScope.launch {
@@ -97,8 +101,8 @@ class ReminderViewModel @Inject constructor(
                 remindAtIso = remindAtIso,
                 audience = audience,
             ).fold(
-                onSuccess = { _message.value = "已添加提醒"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "添加失败" },
+                onSuccess = { _message.value = uiText(R.string.reminder_msg_added); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -112,7 +116,7 @@ class ReminderViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = { refresh() },
-                onFailure = { _message.value = it.message ?: "操作失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -127,7 +131,7 @@ class ReminderViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写提醒内容"
+            _message.value = uiText(R.string.reminder_error_content_required)
             return
         }
         viewModelScope.launch {
@@ -138,8 +142,8 @@ class ReminderViewModel @Inject constructor(
                 remindAtIso = remindAtIso,
                 audience = audience,
             ).fold(
-                onSuccess = { _message.value = "已保存"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "保存失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_saved); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -147,8 +151,8 @@ class ReminderViewModel @Inject constructor(
     fun delete(reminder: ReminderResponse) {
         viewModelScope.launch {
             repository.delete(reminder.rid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

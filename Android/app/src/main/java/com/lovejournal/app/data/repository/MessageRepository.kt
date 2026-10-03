@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.repository
 
 import androidx.room.withTransaction
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.local.dao.MessageDao
@@ -31,6 +32,8 @@ import com.lovejournal.app.data.remote.dto.ContentVersion
 import com.lovejournal.app.data.remote.dto.MessageCreateRequest
 import com.lovejournal.app.data.remote.dto.MessageResponse
 import com.lovejournal.app.sync.SyncActions
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
@@ -132,7 +135,7 @@ class MessageRepository @Inject constructor(
         val localRef = UUID.randomUUID().toString()
         val payload = json.encodeToString(MessageCreateRequest(content, isPublic))
         val uid = session.sessionFlow.first().uid
-            ?: throw IllegalStateException("登录状态已失效，请重新登录")
+            ?: throw UiTextException(uiText(R.string.msg_session_expired))
         val scope = serverConfig.dataScope(uid)
 
         db.withTransaction {
@@ -172,7 +175,7 @@ class MessageRepository @Inject constructor(
         isPublic: Boolean? = null,
     ): Result<MessageResponse> {
         if (newContent == null && isPublic == null) {
-            return Result.failure(IllegalArgumentException("没有需要保存的修改"))
+            return Result.failure(UiTextException(uiText(R.string.messages_error_no_changes)))
         }
         val body = buildJsonObject {
             if (newContent != null) put("content", newContent)

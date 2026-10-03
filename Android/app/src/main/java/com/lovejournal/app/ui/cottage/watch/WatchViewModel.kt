@@ -32,6 +32,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.WatchBookmark
@@ -39,6 +40,9 @@ import com.lovejournal.app.data.remote.dto.WatchCurrent
 import com.lovejournal.app.data.remote.dto.WatchSourceResponse
 import com.lovejournal.app.data.repository.WatchRepository
 import com.lovejournal.app.data.repository.WatchWsEvent
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.FileNotFoundException
 import okhttp3.OkHttpClient
@@ -96,8 +100,8 @@ class WatchViewModel @Inject constructor(
     private val _state = MutableStateFlow(WatchUiState())
     val state: StateFlow<WatchUiState> = _state.asStateFlow()
 
-    private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toast: SharedFlow<String> = _toast.asSharedFlow()
+    private val _toast = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val toast: SharedFlow<UiText> = _toast.asSharedFlow()
 
     private val resolver = application.contentResolver
     private var lastUrl: String? = null
@@ -291,13 +295,13 @@ class WatchViewModel @Inject constructor(
         if (wsid.isBlank()) return
         val pos = player.currentPosition
         if (pos <= 0) {
-            _toast.tryEmit("播放几秒后再添加书签")
+            _toast.tryEmit(uiText(R.string.watch_bookmark_too_early))
             return
         }
         val now = System.currentTimeMillis()
         val next = _state.value.currentBookmarks.toMutableList()
         if (next.size >= 200) {
-            _toast.tryEmit("书签已达上限（200）")
+            _toast.tryEmit(uiText(R.string.watch_bookmark_limit))
             return
         }
         val bm = WatchBookmark(
@@ -317,12 +321,12 @@ class WatchViewModel @Inject constructor(
             repository.patchSource(wsid, bookmarks = sorted)
                 .onSuccess { res ->
                     _state.update { it.copy(currentBookmarks = res.bookmarks.sortedBy { b -> b.position_ms }) }
-                    _toast.tryEmit("已添加书签")
+                    _toast.tryEmit(uiText(R.string.watch_msg_bookmark_added))
                 }
                 .onFailure { err ->
                     // Roll back to the pre-add list to keep the UI in sync.
                     _state.update { it.copy(currentBookmarks = it.currentBookmarks.filterNot { b -> b.bid == bm.bid }) }
-                    _toast.tryEmit(err.message ?: "添加书签失败")
+                    _toast.tryEmit(err.toUiText())
                 }
         }
     }
@@ -341,7 +345,7 @@ class WatchViewModel @Inject constructor(
                 }
                 .onFailure { err ->
                     _state.update { it.copy(currentBookmarks = previous) }
-                    _toast.tryEmit(err.message ?: "删除书签失败")
+                    _toast.tryEmit(err.toUiText())
                 }
         }
     }
@@ -357,19 +361,19 @@ class WatchViewModel @Inject constructor(
 
     fun invite() {
         viewModelScope.launch {
-            repository.invite().onSuccess { _toast.tryEmit("已邀请对方一起看") }
+            repository.invite().onSuccess { _toast.tryEmit(uiText(R.string.watch_msg_invite_sent)) }
         }
     }
 
     fun addSource(title: String, url: String) {
         if (title.isBlank() || url.isBlank()) {
-            _toast.tryEmit("请填写标题和直链")
+            _toast.tryEmit(uiText(R.string.watch_fill_title_url))
             return
         }
         viewModelScope.launch {
             repository.addSource(title.trim(), url.trim(), null)
-                .onSuccess { _toast.tryEmit("已添加片源"); loadSources() }
-                .onFailure { _toast.tryEmit(it.message ?: "添加失败") }
+                .onSuccess { _toast.tryEmit(uiText(R.string.watch_msg_source_added)); loadSources() }
+                .onFailure { _toast.tryEmit(it.toUiText()) }
         }
     }
 
@@ -380,10 +384,10 @@ class WatchViewModel @Inject constructor(
             val part = MultipartBody.Part.createFormData("file", name, UriRequestBody(resolver, uri))
             repository.uploadSource(part)
                 .onSuccess {
-                    _toast.tryEmit("视频已上传")
+                    _toast.tryEmit(uiText(R.string.watch_msg_video_uploaded))
                     loadSources()
                 }
-                .onFailure { _toast.tryEmit(it.message ?: "上传失败") }
+                .onFailure { _toast.tryEmit(it.toUiText()) }
             _state.update { it.copy(uploading = false) }
         }
     }
@@ -393,13 +397,13 @@ class WatchViewModel @Inject constructor(
             _state.update { it.copy(deletingWsid = src.wsid) }
             repository.deleteSource(src.wsid)
                 .onSuccess {
-                    _toast.tryEmit("已删除片源")
+                    _toast.tryEmit(uiText(R.string.watch_msg_source_deleted))
                     _state.update { state ->
                         state.copy(sources = state.sources.filterNot { it.wsid == src.wsid })
                     }
                     refreshState()
                 }
-                .onFailure { _toast.tryEmit(it.message ?: "删除失败") }
+                .onFailure { _toast.tryEmit(it.toUiText()) }
             _state.update { it.copy(deletingWsid = null) }
         }
     }

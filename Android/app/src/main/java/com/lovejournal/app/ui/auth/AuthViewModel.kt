@@ -20,10 +20,14 @@ package com.lovejournal.app.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.BuildConfig
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionState
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.repository.AuthRepository
 import com.lovejournal.app.data.repository.SecurityRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import com.lovejournal.app.util.isEmulator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,8 +43,8 @@ import javax.inject.Inject
 data class LoginUiState(
     val loading: Boolean = false,
     val testingConnection: Boolean = false,
-    val connectionOk: String? = null,
-    val error: String? = null,
+    val connectionOk: UiText? = null,
+    val error: UiText? = null,
     /** 站点尚未初始化时为 true，登录表单下方展示「首次使用？初始化站点」入口。 */
     val showBootstrapEntry: Boolean = false,
 )
@@ -48,14 +52,14 @@ data class LoginUiState(
 /** 首次初始化引导弹窗的状态。成功后 [bootstrappedUsername] 用于预填登录用户名。 */
 data class BootstrapUiState(
     val submitting: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
     val bootstrappedUsername: String? = null,
 )
 
 data class RecoveryUiState(
     val submitting: Boolean = false,
     val success: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -80,20 +84,20 @@ class AuthViewModel @Inject constructor(
     fun currentServerAddress(): String = serverConfig.displayAddress()
 
     /** Hint text under the server field — differs for emulator vs real device. */
-    fun serverAddressHint(): String =
+    fun serverAddressHint(): UiText =
         if (BuildConfig.ALLOW_CLEARTEXT_LOCAL && isEmulator()) {
-            "模拟器调试可填 http://10.0.2.2:8000，若走域名反代则填 https://你的域名 或 https://你的域名/api"
+            uiText(R.string.login_hint_emulator)
         } else if (BuildConfig.ALLOW_CLEARTEXT_LOCAL) {
-            "调试版可连接局域网私有地址；正式部署请填写 https://你的域名 或 https://你的域名/api"
+            uiText(R.string.login_hint_debug)
         } else {
-            "请填写启用 TLS 的地址，例如 https://你的域名 或 https://你的域名/api"
+            uiText(R.string.login_hint_tls)
         }
 
-    fun serverAddressPlaceholder(): String =
+    fun serverAddressPlaceholder(): UiText =
         if (BuildConfig.ALLOW_CLEARTEXT_LOCAL && isEmulator()) {
-            "http://10.0.2.2:8000 或 https://example.com/api"
+            uiText(R.string.login_placeholder_emulator)
         } else {
-            "https://example.com/api"
+            uiText(R.string.login_placeholder_default)
         }
 
     /**
@@ -130,30 +134,30 @@ class AuthViewModel @Inject constructor(
         siteName: String,
         loveStartDate: String?,
     ) {
-        serverConfig.validateAddressInput(serverAddress)?.let { msg ->
-            _bootstrapState.value = BootstrapUiState(error = msg)
+        serverConfig.validateAddressInput(serverAddress)?.let { res ->
+            _bootstrapState.value = BootstrapUiState(error = uiText(res))
             return
         }
         if (bootstrapToken.isBlank()) {
-            _bootstrapState.value = BootstrapUiState(error = "请输入初始化令牌")
+            _bootstrapState.value = BootstrapUiState(error = uiText(R.string.bootstrap_error_token_required))
             return
         }
         if (!USERNAME_PATTERN.matches(username.trim())) {
-            _bootstrapState.value = BootstrapUiState(error = "用户名需为 3-32 位小写字母、数字或下划线")
+            _bootstrapState.value = BootstrapUiState(error = uiText(R.string.auth_error_username_format))
             return
         }
         if (password.length < 8 || !password.any { it.isLetter() } || !password.any { it.isDigit() }) {
-            _bootstrapState.value = BootstrapUiState(error = "密码至少 8 位，且需同时包含字母和数字")
+            _bootstrapState.value = BootstrapUiState(error = uiText(R.string.auth_error_password_format))
             return
         }
         if (nickname.isBlank()) {
-            _bootstrapState.value = BootstrapUiState(error = "请输入昵称")
+            _bootstrapState.value = BootstrapUiState(error = uiText(R.string.auth_error_nickname_required))
             return
         }
         val startDateIso = loveStartDate?.trim()?.takeIf { it.isNotEmpty() }?.let { raw ->
             runCatching { LocalDate.parse(raw).atStartOfDay(ZoneOffset.UTC).toInstant().toString() }
                 .getOrElse {
-                    _bootstrapState.value = BootstrapUiState(error = "恋爱开始日格式应为 yyyy-MM-dd")
+                    _bootstrapState.value = BootstrapUiState(error = uiText(R.string.auth_error_love_date_format))
                     return
                 }
         }
@@ -174,11 +178,11 @@ class AuthViewModel @Inject constructor(
                     bootstrapCheckedFor = null
                     _loginState.value = _loginState.value.copy(
                         showBootstrapEntry = false,
-                        connectionOk = "初始化成功，请使用新账号登录",
+                        connectionOk = uiText(R.string.bootstrap_success),
                         error = null,
                     )
                 },
-                onFailure = { _bootstrapState.value = BootstrapUiState(error = it.message ?: "初始化失败") },
+                onFailure = { _bootstrapState.value = BootstrapUiState(error = it.toUiText()) },
             )
         }
     }
@@ -197,8 +201,8 @@ class AuthViewModel @Inject constructor(
     }
 
     fun testConnection(serverAddress: String) {
-        serverConfig.validateAddressInput(serverAddress)?.let { msg ->
-            _loginState.value = LoginUiState(error = msg)
+        serverConfig.validateAddressInput(serverAddress)?.let { res ->
+            _loginState.value = LoginUiState(error = uiText(res))
             return
         }
         _loginState.value = LoginUiState(testingConnection = true)
@@ -212,18 +216,18 @@ class AuthViewModel @Inject constructor(
                     checkBootstrapStatus(serverConfig.displayAddress())
                     LoginUiState(connectionOk = it)
                 },
-                onFailure = { LoginUiState(error = it.message ?: "连接失败") },
+                onFailure = { LoginUiState(error = it.toUiText()) },
             )
         }
     }
 
     fun login(serverAddress: String, username: String, password: String) {
-        serverConfig.validateAddressInput(serverAddress)?.let { msg ->
-            _loginState.value = LoginUiState(error = msg)
+        serverConfig.validateAddressInput(serverAddress)?.let { res ->
+            _loginState.value = LoginUiState(error = uiText(res))
             return
         }
         if (username.isBlank() || password.isBlank()) {
-            _loginState.value = LoginUiState(error = "请输入用户名和密码")
+            _loginState.value = LoginUiState(error = uiText(R.string.auth_error_credentials_required))
             return
         }
         serverConfig.setAddress(serverAddress)
@@ -232,7 +236,7 @@ class AuthViewModel @Inject constructor(
             val result = authRepository.login(username, password)
             _loginState.value = result.fold(
                 onSuccess = { LoginUiState() },
-                onFailure = { LoginUiState(error = it.message ?: "登录失败") },
+                onFailure = { LoginUiState(error = it.toUiText()) },
             )
         }
     }
@@ -247,16 +251,16 @@ class AuthViewModel @Inject constructor(
     val recoveryState: StateFlow<RecoveryUiState> = _recoveryState.asStateFlow()
 
     fun recoverPassword(serverAddress: String, username: String, newPassword: String, bootstrapToken: String) {
-        serverConfig.validateAddressInput(serverAddress)?.let { msg ->
-            _recoveryState.value = RecoveryUiState(error = msg)
+        serverConfig.validateAddressInput(serverAddress)?.let { res ->
+            _recoveryState.value = RecoveryUiState(error = uiText(res))
             return
         }
         if (username.isBlank() || bootstrapToken.isBlank()) {
-            _recoveryState.value = RecoveryUiState(error = "请填写用户名与恢复令牌")
+            _recoveryState.value = RecoveryUiState(error = uiText(R.string.recovery_error_required))
             return
         }
         if (newPassword.length < 8 || newPassword.none { it.isLetter() } || newPassword.none { it.isDigit() }) {
-            _recoveryState.value = RecoveryUiState(error = "新密码至少 8 位，且需同时包含字母和数字")
+            _recoveryState.value = RecoveryUiState(error = uiText(R.string.auth_error_password_format))
             return
         }
         serverConfig.setAddress(serverAddress)
@@ -264,7 +268,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             securityRepository.passwordRecovery(username, newPassword, bootstrapToken).fold(
                 onSuccess = { _recoveryState.value = RecoveryUiState(success = true) },
-                onFailure = { _recoveryState.value = RecoveryUiState(error = it.message ?: "找回失败") },
+                onFailure = { _recoveryState.value = RecoveryUiState(error = it.toUiText()) },
             )
         }
     }

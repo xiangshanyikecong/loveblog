@@ -82,4 +82,8 @@ data class SyncQueueEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val retryCount: Int = 0,
     val lastError: String? = null,
+    // 下次允许重放的时间（epoch ms）；指数退避期内不会被 flush 取出。
+    @ColumnInfo(defaultValue = "0") val nextAttemptAt: Long = 0,
+    // 死信标记：永久失败或重试耗尽。保留行供诊断，但不再重放。
+    @ColumnInfo(defaultValue = "0") val dead: Boolean = false,
 )

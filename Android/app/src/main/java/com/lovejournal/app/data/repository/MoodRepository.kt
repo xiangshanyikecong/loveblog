@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.repository
 
 import androidx.room.withTransaction
+import com.lovejournal.app.R
 import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.local.dao.MoodDao
@@ -29,6 +30,8 @@ import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.MoodCheckinRequest
 import com.lovejournal.app.sync.SyncActions
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
@@ -72,7 +75,7 @@ class MoodRepository @Inject constructor(
         // can delete the local placeholder once the server copy lands (dedup).
         val localRef = UUID.randomUUID().toString()
         val uid = session.sessionFlow.first().uid
-            ?: throw IllegalStateException("登录状态已失效，请重新登录")
+            ?: throw UiTextException(uiText(R.string.msg_session_expired))
         val scope = serverConfig.dataScope(uid)
 
         db.withTransaction {

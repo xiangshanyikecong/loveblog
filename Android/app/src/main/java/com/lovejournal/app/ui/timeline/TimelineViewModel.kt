@@ -3,8 +3,9 @@
  * Copyright (C) 2026 Love Journal Contributors
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, version 3 of the License.
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,10 +21,20 @@ package com.lovejournal.app.ui.timeline
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.PagingSource
+import androidx.paging.cachedIn
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.repository.TimelineRepository
 import com.lovejournal.app.data.repository.UploadRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,15 +44,15 @@ import javax.inject.Inject
 /** 时间线顶部分栏。动态 = 常规动态流（可发帖 / 评论 / 删除）；回忆 = 往年今日（只读）。 */
 enum class TimelineTab { MOMENTS, MEMORIES }
 
-/** 时间线页面的 UI 状态。动态与回忆两个分栏各自持有列表 / 加载 / 错误字段。 */
+/**
+ * 时间线页面的 UI 状态。动态流本身走 Paging（[TimelineViewModel.moments]），
+ * 这里只保留回忆分栏与发布流程的字段。
+ */
 data class TimelineUiState(
-    val loading: Boolean = false,
-    val items: List<MomentResponse> = emptyList(),
-    val error: String? = null,
     val selectedTab: TimelineTab = TimelineTab.MOMENTS,
     val memories: List<MomentResponse> = emptyList(),
     val memoriesLoading: Boolean = false,
-    val memoriesError: String? = null,
+    val memoriesError: UiText? = null,
     /** 回忆是否已成功加载过（首次切到回忆分栏时懒加载）。 */
     val memoriesLoaded: Boolean = false,
     /** 发动态中（图片上传 + 提交期间为 true，用于禁用发布按钮）。 */
@@ -57,12 +68,24 @@ class TimelineViewModel @Inject constructor(
     private val _state = MutableStateFlow(TimelineUiState())
     val state: StateFlow<TimelineUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
-    init {
-        refresh()
-    }
+    /** 最近一次由 Pager 工厂创建的分页源；invalidate 即触发整列表刷新。 */
+    private var currentSource: PagingSource<Int, MomentResponse>? = null
+
+    /** 动态流：按页惰性加载（服务端 page/page_size），随 cachedIn 存活于 VM 生命周期。 */
+    val moments: Flow<PagingData<MomentResponse>> = Pager(
+        config = PagingConfig(
+            pageSize = TimelineRepository.PAGE_SIZE,
+            initialLoadSize = TimelineRepository.PAGE_SIZE,
+            prefetchDistance = 3,
+            enablePlaceholders = false,
+        ),
+        pagingSourceFactory = {
+            repository.pagingSource().also { currentSource = it }
+        },
+    ).flow.cachedIn(viewModelScope)
 
     /** 刷新当前分栏的数据。 */
     fun refresh() {
@@ -72,24 +95,17 @@ class TimelineViewModel @Inject constructor(
         }
     }
 
-    /** 切换「动态 / 回忆」分栏；回忆首次进入时懒加载。 */
+    /** 切换「动态 / 回忆」分栏；回忆首次进入时懒加载，动态流常驻无需处理。 */
     fun selectTab(tab: TimelineTab) {
         if (_state.value.selectedTab == tab) return
         _state.value = _state.value.copy(selectedTab = tab)
-        when (tab) {
-            TimelineTab.MEMORIES -> loadMemories(force = false)
-            TimelineTab.MOMENTS -> if (_state.value.items.isEmpty() && !_state.value.loading) refreshMoments()
+        if (tab == TimelineTab.MEMORIES) {
+            loadMemories(force = false)
         }
     }
 
     private fun refreshMoments() {
-        _state.value = _state.value.copy(loading = true, error = null)
-        viewModelScope.launch {
-            repository.list().fold(
-                onSuccess = { _state.value = _state.value.copy(loading = false, items = it.items, error = null) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
-            )
-        }
+        currentSource?.invalidate()
     }
 
     private fun loadMemories(force: Boolean) {
@@ -105,7 +121,12 @@ class TimelineViewModel @Inject constructor(
                         memoriesLoaded = true,
                     )
                 },
-                onFailure = { _state.value = _state.value.copy(memoriesLoading = false, memoriesError = it.message ?: "加载失败") },
+                onFailure = {
+                    _state.value = _state.value.copy(
+                        memoriesLoading = false,
+                        memoriesError = it.toUiText(),
+                    )
+                },
             )
         }
     }
@@ -117,7 +138,7 @@ class TimelineViewModel @Inject constructor(
      */
     fun post(content: String, visibility: String, mediaUris: List<Uri> = emptyList(), onDone: () -> Unit = {}) {
         if (content.isBlank() && mediaUris.isEmpty()) {
-            _message.value = "说点什么吧"
+            _message.value = uiText(R.string.timeline_msg_say_something)
             return
         }
         if (_state.value.posting) return
@@ -129,7 +150,7 @@ class TimelineViewModel @Inject constructor(
                     onSuccess = { mediaUrls += it.url },
                     onFailure = {
                         _state.value = _state.value.copy(posting = false)
-                        _message.value = "图片上传失败：${it.message ?: "未知错误"}"
+                        _message.value = uiText(R.string.timeline_msg_photo_upload_failed, it.message ?: "unknown")
                         return@launch
                     },
                 )
@@ -137,13 +158,13 @@ class TimelineViewModel @Inject constructor(
             repository.post(content.trim(), visibility, mediaUrls).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(posting = false)
-                    _message.value = "已发布"
+                    _message.value = uiText(R.string.msg_published)
                     onDone()
                     refreshMoments()
                 },
                 onFailure = {
                     _state.value = _state.value.copy(posting = false)
-                    _message.value = it.message ?: "发布失败"
+                    _message.value = uiText(R.string.msg_publish_failed)
                 },
             )
         }
@@ -152,13 +173,16 @@ class TimelineViewModel @Inject constructor(
     /** 发表评论；[parentCid] 非空表示回复某条评论。成功后刷新动态流以拉取最新评论树。 */
     fun comment(mid: String, content: String, parentCid: String? = null) {
         if (content.isBlank()) {
-            _message.value = "说点什么吧"
+            _message.value = uiText(R.string.timeline_msg_say_something)
             return
         }
         viewModelScope.launch {
             repository.comment(mid, content.trim(), parentCid).fold(
-                onSuccess = { _message.value = "已评论"; refreshMoments() },
-                onFailure = { _message.value = it.message ?: "评论失败" },
+                onSuccess = {
+                    _message.value = uiText(R.string.timeline_msg_commented)
+                    refreshMoments()
+                },
+                onFailure = { _message.value = uiText(R.string.timeline_comment_failed) },
             )
         }
     }
@@ -166,8 +190,11 @@ class TimelineViewModel @Inject constructor(
     fun delete(moment: MomentResponse) {
         viewModelScope.launch {
             repository.delete(moment.mid).fold(
-                onSuccess = { _message.value = "已删除"; refreshMoments() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = {
+                    _message.value = uiText(R.string.msg_deleted)
+                    refreshMoments()
+                },
+                onFailure = { _message.value = uiText(R.string.msg_delete_failed) },
             )
         }
     }

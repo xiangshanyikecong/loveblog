@@ -61,7 +61,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.ui.components.LoveHeroBrush
+import com.lovejournal.app.ui.components.asString
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
@@ -94,32 +97,32 @@ fun LoginScreen(viewModel: AuthViewModel = hiltViewModel()) {
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.background)))) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.Center) {
             Box(Modifier.align(Alignment.CenterHorizontally).clip(MaterialTheme.shapes.extraLarge).background(LoveHeroBrush).padding(20.dp)) { Icon(Icons.Default.Favorite, null, tint = Color.White) }
-            Text("恋爱记", Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-            Text("认真记录我们相爱的每一天", Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp, bottom = 24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.app_name), Modifier.align(Alignment.CenterHorizontally).padding(top = 14.dp), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.login_tagline), Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp, bottom = 24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)), elevation = CardDefaults.cardElevation(6.dp)) {
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Text("欢迎回来", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    OutlinedTextField(server, { server = it }, label = { Text("服务器地址") }, leadingIcon = { Icon(Icons.Default.Public, null) }, supportingText = { Text(viewModel.serverAddressHint()) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { OutlinedButton(onClick = { viewModel.testConnection(server) }, enabled = !state.loading && !state.testingConnection) { if (state.testingConnection) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("测试连接") } }
-                    OutlinedTextField(username, { username = it }, label = { Text("用户名") }, leadingIcon = { Icon(Icons.Default.Person, null) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(password, { password = it }, label = { Text("密码") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-                    state.connectionOk?.let { Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
-                    state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    Button(onClick = { viewModel.login(server, username, password) }, enabled = !state.loading && !state.testingConnection && username.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) { if (state.loading) CircularProgressIndicator(strokeWidth = 2.dp) else Text("登录") }
+                    Text(stringResource(R.string.login_welcome_back), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(server, { server = it }, label = { Text(stringResource(R.string.login_server_address)) }, leadingIcon = { Icon(Icons.Default.Public, null) }, supportingText = { Text(viewModel.serverAddressHint().asString()) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { OutlinedButton(onClick = { viewModel.testConnection(server) }, enabled = !state.loading && !state.testingConnection) { if (state.testingConnection) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.login_test_connection)) } }
+                    OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.login_username)) }, leadingIcon = { Icon(Icons.Default.Person, null) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(password, { password = it }, label = { Text(stringResource(R.string.login_password)) }, leadingIcon = { Icon(Icons.Default.Lock, null) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                    state.connectionOk?.let { Text(it.asString(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall) }
+                    state.error?.let { Text(it.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                    Button(onClick = { viewModel.login(server, username, password) }, enabled = !state.loading && !state.testingConnection && username.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) { if (state.loading) CircularProgressIndicator(strokeWidth = 2.dp) else Text(stringResource(R.string.btn_login)) }
                     TextButton(
                         onClick = { showRecoveryDialog = true },
                         enabled = !state.loading,
                         modifier = Modifier.align(Alignment.End),
-                    ) { Text("忘记密码？") }
+                    ) { Text(stringResource(R.string.login_forgot_password)) }
                     if (state.showBootstrapEntry) {
                         Text(
-                            "这是全新的站点？初始化后即可创建第一个账号",
+                            stringResource(R.string.login_bootstrap_entry_hint),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 2.dp),
                         )
                         OutlinedButton(onClick = { showBootstrapDialog = true }, enabled = !state.loading && !state.testingConnection, modifier = Modifier.fillMaxWidth()) {
-                            Text("首次使用？初始化站点")
+                            Text(stringResource(R.string.login_bootstrap_entry_btn))
                         }
                     }
                 }
@@ -162,30 +165,31 @@ private fun BootstrapDialog(
     onDismiss: () -> Unit,
 ) {
     val state by viewModel.bootstrapState.collectAsStateWithLifecycle()
+    val defaultSiteName = stringResource(R.string.app_name)
     var token by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
-    var siteName by remember { mutableStateOf("恋爱记") }
+    var siteName by remember { mutableStateOf(defaultSiteName) }
     var loveStartDate by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("初始化站点") },
+        title = { Text(stringResource(R.string.bootstrap_dialog_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "每个站点有且仅有两个伴侣名额。首次部署后，请输入服务器部署时生成的初始化令牌，为第一个人开通账号。",
+                    stringResource(R.string.bootstrap_dialog_desc),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
-                OutlinedTextField(token, { token = it }, label = { Text("初始化令牌") }, leadingIcon = { Icon(Icons.Default.Key, null) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(username, { username = it }, label = { Text("用户名") }, leadingIcon = { Icon(Icons.Default.Person, null) }, supportingText = { Text("3-32 位小写字母、数字或下划线") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(password, { password = it }, label = { Text("密码") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, visualTransformation = PasswordVisualTransformation(), supportingText = { Text("至少 8 位，且同时包含字母和数字") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(nickname, { nickname = it }, label = { Text("昵称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(siteName, { siteName = it }, label = { Text("站点名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(loveStartDate, { loveStartDate = it }, label = { Text("恋爱开始日（选填）") }, leadingIcon = { Icon(Icons.Default.Event, null) }, placeholder = { Text("yyyy-MM-dd") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                OutlinedTextField(token, { token = it }, label = { Text(stringResource(R.string.bootstrap_label_token)) }, leadingIcon = { Icon(Icons.Default.Key, null) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.login_username)) }, leadingIcon = { Icon(Icons.Default.Person, null) }, supportingText = { Text(stringResource(R.string.auth_username_hint)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(password, { password = it }, label = { Text(stringResource(R.string.login_password)) }, leadingIcon = { Icon(Icons.Default.Lock, null) }, visualTransformation = PasswordVisualTransformation(), supportingText = { Text(stringResource(R.string.auth_password_hint)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(nickname, { nickname = it }, label = { Text(stringResource(R.string.bootstrap_label_nickname)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(siteName, { siteName = it }, label = { Text(stringResource(R.string.settings_site_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(loveStartDate, { loveStartDate = it }, label = { Text(stringResource(R.string.bootstrap_label_love_start_date)) }, leadingIcon = { Icon(Icons.Default.Event, null) }, placeholder = { Text("yyyy-MM-dd") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                state.error?.let { Text(it.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             }
         },
         confirmButton = {
@@ -193,11 +197,11 @@ private fun BootstrapDialog(
                 onClick = { viewModel.bootstrap(serverAddress, token, username, password, nickname, siteName, loveStartDate.ifBlank { null }) },
                 enabled = !state.submitting && token.isNotBlank() && username.isNotBlank() && password.isNotBlank() && nickname.isNotBlank(),
             ) {
-                if (state.submitting) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("初始化站点")
+                if (state.submitting) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.bootstrap_dialog_title))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !state.submitting) { Text("取消") }
+            TextButton(onClick = onDismiss, enabled = !state.submitting) { Text(stringResource(R.string.btn_cancel)) }
         },
     )
 }
@@ -221,23 +225,23 @@ private fun PasswordRecoveryDialog(
 
     AlertDialog(
         onDismissRequest = { if (!state.submitting) onDismiss() },
-        title = { Text("找回密码") },
+        title = { Text(stringResource(R.string.recovery_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "需要服务器部署时设定的恢复令牌（BOOTSTRAP_SETUP_TOKEN）。重置后该账号在所有设备上的登录都会失效。",
+                    stringResource(R.string.recovery_dialog_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                OutlinedTextField(username, { username = it }, label = { Text("用户名") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(newPassword, { newPassword = it }, label = { Text("新密码") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(confirmPassword, { confirmPassword = it }, label = { Text("确认新密码") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(token, { token = it }, label = { Text("恢复令牌") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(username, { username = it }, label = { Text(stringResource(R.string.login_username)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(newPassword, { newPassword = it }, label = { Text(stringResource(R.string.security_new_password)) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(confirmPassword, { confirmPassword = it }, label = { Text(stringResource(R.string.security_confirm_password)) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(token, { token = it }, label = { Text(stringResource(R.string.recovery_label_token)) }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (state.error != null) {
-                    Text(state.error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(state.error!!.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
                 if (serverAddress.isBlank()) {
-                    Text("请先填写服务器地址", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.auth_error_no_server), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
@@ -246,9 +250,9 @@ private fun PasswordRecoveryDialog(
                 onClick = { onSubmit(username, newPassword, token) },
                 enabled = !state.submitting && username.isNotBlank() && newPassword.isNotBlank() && token.isNotBlank(),
             ) {
-                if (state.submitting) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("重置密码")
+                if (state.submitting) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.recovery_btn_reset))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !state.submitting) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !state.submitting) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }

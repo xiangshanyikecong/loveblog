@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.lovejournal.app.R
@@ -49,8 +50,8 @@ fun LicensesScreen() {
     val context = LocalContext.current
     val documents = remember {
         listOf(
-            "版权声明" to context.resources.openRawResource(R.raw.notice).bufferedReader().use { it.readText() },
-            "完整许可证" to context.resources.openRawResource(R.raw.third_party_licenses).bufferedReader().use { it.readText() },
+            R.string.licenses_copyright to context.resources.openRawResource(R.raw.notice).bufferedReader().use { it.readText() },
+            R.string.licenses_full_license to context.resources.openRawResource(R.raw.third_party_licenses).bufferedReader().use { it.readText() },
         )
     }
     var selectedDocument by remember { mutableIntStateOf(0) }
@@ -62,7 +63,7 @@ fun LicensesScreen() {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            LoveSectionTitle("开源许可证", "第三方软件、版本、来源与许可证正文")
+            LoveSectionTitle(stringResource(R.string.licenses_title), stringResource(R.string.licenses_subtitle))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -72,12 +73,12 @@ fun LicensesScreen() {
                         Button(
                             onClick = { selectedDocument = index },
                             modifier = Modifier.weight(1f),
-                        ) { Text(document.first) }
+                        ) { Text(stringResource(document.first)) }
                     } else {
                         OutlinedButton(
                             onClick = { selectedDocument = index },
                             modifier = Modifier.weight(1f),
-                        ) { Text(document.first) }
+                        ) { Text(stringResource(document.first)) }
                     }
                 }
             }

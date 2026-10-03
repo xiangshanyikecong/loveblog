@@ -57,23 +57,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.PlanResponse
+import com.lovejournal.app.ui.components.asString
 import java.time.Instant
 import java.time.ZoneOffset
 
-private val STATUS_LABELS = mapOf(
-    "planned" to "计划中",
-    "in_progress" to "进行中",
-    "done" to "已完成",
-    "cancelled" to "已取消",
-)
-
-private fun statusLabel(value: String): String = STATUS_LABELS[value] ?: value
+@Composable
+private fun statusLabel(value: String): String = when (value) {
+    "planned" -> stringResource(R.string.plan_status_planned)
+    "in_progress" -> stringResource(R.string.plan_status_in_progress)
+    "done" -> stringResource(R.string.plan_status_done)
+    "cancelled" -> stringResource(R.string.plan_status_cancelled)
+    else -> value
+}
 
 @Composable
 fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
@@ -98,7 +101,7 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -112,15 +115,13 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    buildString {
-                        append("进行中 ${state.active} · 已完成 ${state.completed}")
-                        if (state.cancelled > 0) append(" · 已取消 ${state.cancelled}")
-                    },
+                    stringResource(R.string.plan_active_completed, state.active, state.completed) +
+                        if (state.cancelled > 0) stringResource(R.string.plan_cancelled_count, state.cancelled) else "",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 TextButton(onClick = { viewModel.toggleShowDone() }) {
-                    Text(if (state.showDone) "隐藏已完成" else "显示已完成")
+                    Text(if (state.showDone) stringResource(R.string.plan_hide_done) else stringResource(R.string.plan_show_done))
                 }
             }
             when {
@@ -128,11 +129,11 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 displayItems.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有约会计划，点右下角加一个吧")
+                        Text(stringResource(R.string.plan_no_plans))
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -157,7 +158,7 @@ fun PlanScreen(viewModel: PlanViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "添加计划")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.plan_add))
         }
     }
 
@@ -220,14 +221,14 @@ private fun PlanCard(plan: PlanResponse, onToggle: () -> Unit, onDelete: () -> U
                 if (plan.checklist.isNotEmpty()) {
                     val doneCount = plan.checklist.count { it.done }
                     Text(
-                        "清单 $doneCount/${plan.checklist.size}",
+                        stringResource(R.string.plan_checklist, doneCount, plan.checklist.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.btn_delete), tint = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -248,13 +249,13 @@ private fun PlanEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新建约会计划") },
+        title = { Text(stringResource(R.string.plan_add_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("计划标题") },
+                    label = { Text(stringResource(R.string.plan_title_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -262,33 +263,33 @@ private fun PlanEditorDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("详情（可选）") },
+                    label = { Text(stringResource(R.string.plan_desc_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = location,
                     onValueChange = { location = it },
-                    label = { Text("地点（可选）") },
+                    label = { Text(stringResource(R.string.plan_location_optional)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text("计划日期", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.plan_date_label), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { showDatePicker = true }) {
-                        Text(planDate ?: "未定（点选日期）")
+                        Text(planDate ?: stringResource(R.string.plan_date_undecided))
                     }
                     if (planDate != null) {
-                        TextButton(onClick = { planDate = null }) { Text("清除") }
+                        TextButton(onClick = { planDate = null }) { Text(stringResource(R.string.common_clear)) }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
                 FilterChip(
                     selected = important,
                     onClick = { important = !important },
-                    label = { Text("标为重要") },
+                    label = { Text(stringResource(R.string.plan_mark_important)) },
                 )
             }
         },
@@ -301,9 +302,9 @@ private fun PlanEditorDialog(
                     planDate,
                     if (important) 100 else 0,
                 )
-            }) { Text("保存") }
+            }) { Text(stringResource(R.string.btn_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 
     if (showDatePicker) {
@@ -316,9 +317,9 @@ private fun PlanEditorDialog(
                         planDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate().toString()
                     }
                     showDatePicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }

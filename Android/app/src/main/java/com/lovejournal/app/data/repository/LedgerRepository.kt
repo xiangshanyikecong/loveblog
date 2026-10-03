@@ -17,11 +17,14 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.LedgerCreateRequest
 import com.lovejournal.app.data.remote.dto.LedgerListResponse
 import com.lovejournal.app.data.remote.dto.LedgerResponse
 import com.lovejournal.app.data.remote.dto.LedgerSummaryResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import javax.inject.Inject
@@ -67,7 +70,7 @@ class LedgerRepository @Inject constructor(
 
     suspend fun delete(leid: String): Result<Unit> = runCatching {
         val response = api.deleteLedger(leid)
-        if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 

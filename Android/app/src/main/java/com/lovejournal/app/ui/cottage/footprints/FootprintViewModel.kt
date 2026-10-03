@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.remote.dto.FootprintResponse
 import com.lovejournal.app.data.repository.FootprintRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +33,7 @@ import javax.inject.Inject
 data class FootprintUiState(
     val loading: Boolean = false,
     val data: FootprintResponse? = null,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -51,7 +53,7 @@ class FootprintViewModel @Inject constructor(
         viewModelScope.launch {
             repository.load().fold(
                 onSuccess = { _state.value = FootprintUiState(data = it) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }

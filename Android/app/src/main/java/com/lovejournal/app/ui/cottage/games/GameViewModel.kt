@@ -19,11 +19,14 @@ package com.lovejournal.app.ui.cottage.games
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.dto.GamePlayerStat
 import com.lovejournal.app.data.remote.dto.GameStateResponse
 import com.lovejournal.app.data.repository.GameRepository
 import com.lovejournal.app.data.repository.GameWsEvent
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,8 +56,8 @@ class GameViewModel @Inject constructor(
     private val _state = MutableStateFlow(GameUiState())
     val state: StateFlow<GameUiState> = _state.asStateFlow()
 
-    private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toast: SharedFlow<String> = _toast.asSharedFlow()
+    private val _toast = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val toast: SharedFlow<UiText> = _toast.asSharedFlow()
 
     private var started = false
 
@@ -68,9 +71,9 @@ class GameViewModel @Inject constructor(
                 when (ev) {
                     is GameWsEvent.State -> _state.update { it.copy(state = ev.state) }
                     is GameWsEvent.Connection -> _state.update { it.copy(connected = ev.connected) }
-                    is GameWsEvent.Error -> _toast.tryEmit(ev.message)
-                    is GameWsEvent.Emote -> _toast.tryEmit("${ev.fromNickname} ${ev.emote}")
-                    is GameWsEvent.UndoResult -> _toast.tryEmit(if (ev.accepted) "对方同意了悔棋" else "对方拒绝了悔棋")
+                    is GameWsEvent.Error -> _toast.tryEmit(UiText.Raw(ev.message))
+                    is GameWsEvent.Emote -> _toast.tryEmit(UiText.Raw("${ev.fromNickname} ${ev.emote}"))
+                    is GameWsEvent.UndoResult -> _toast.tryEmit(if (ev.accepted) uiText(R.string.game_undo_accepted) else uiText(R.string.game_undo_rejected))
                 }
             }
         }
@@ -90,7 +93,7 @@ class GameViewModel @Inject constructor(
         val s = _state.value.state ?: return
         if (s.phase != "playing") return
         if (s.turn_uid != _state.value.selfUid) {
-            _toast.tryEmit("还没轮到你")
+            _toast.tryEmit(uiText(R.string.game_not_your_turn))
             return
         }
         val idx = y * s.size + x
@@ -106,7 +109,7 @@ class GameViewModel @Inject constructor(
     fun invite() {
         viewModelScope.launch {
             repository.invite(_state.value.gameKey)
-                .onSuccess { _toast.tryEmit("已邀请对方来玩") }
+                .onSuccess { _toast.tryEmit(uiText(R.string.game_invite_sent)) }
         }
     }
 

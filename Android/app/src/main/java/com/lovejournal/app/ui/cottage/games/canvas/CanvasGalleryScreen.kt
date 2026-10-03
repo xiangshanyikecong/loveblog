@@ -59,11 +59,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
+import com.lovejournal.app.ui.components.asString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,8 +78,9 @@ fun CanvasGalleryScreen(
 ) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
-        viewModel.toast.collect { snackbar.showSnackbar(it) }
+        viewModel.toast.collect { snackbar.showSnackbar(it.asString(context)) }
     }
 
     Scaffold(
@@ -86,12 +91,12 @@ fun CanvasGalleryScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Brush, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.size(8.dp))
-                        Text("协作画板 · 作品集")
+                        Text(stringResource(R.string.canvas_gallery_title))
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -109,8 +114,8 @@ fun CanvasGalleryScreen(
             Spacer(Modifier.size(8.dp))
             when {
                 ui.loading && ui.items.isEmpty() -> CenteredLoading()
-                ui.errorMessage != null && ui.items.isEmpty() -> EmptyMessage(text = ui.errorMessage ?: "")
-                ui.items.isEmpty() -> EmptyMessage(text = "还没有作品。在协作画板上画完后，点「存入作品集」就出现在这里。")
+                ui.errorMessage != null && ui.items.isEmpty() -> EmptyMessage(text = ui.errorMessage?.asString() ?: "")
+                ui.items.isEmpty() -> EmptyMessage(text = stringResource(R.string.canvas_no_artworks))
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -181,7 +186,7 @@ private fun ArtworkCard(
             Spacer(Modifier.size(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = art.title?.takeIf { it.isNotBlank() } ?: "未命名作品",
+                    text = art.title?.takeIf { it.isNotBlank() } ?: stringResource(R.string.canvas_untitled_artwork),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     modifier = Modifier.weight(1f),
                 )
@@ -191,7 +196,7 @@ private fun ArtworkCard(
                     IconButton(onClick = onDelete) {
                         Icon(
                             Icons.Filled.ArrowBack,
-                            contentDescription = "删除",
+                            contentDescription = stringResource(R.string.btn_delete),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -200,7 +205,7 @@ private fun ArtworkCard(
             Spacer(Modifier.size(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${art.stroke_count} 笔",
+                    text = stringResource(R.string.canvas_strokes_count, art.stroke_count),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -212,7 +217,7 @@ private fun ArtworkCard(
                 )
                 Spacer(Modifier.size(6.dp))
                 Text(
-                    text = "${art.collaborators.size} 位合作者",
+                    text = stringResource(R.string.canvas_collaborators_count, art.collaborators.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -258,7 +263,7 @@ private fun ThumbnailView(thumbDataUrl: String) {
         )
     } else {
         Text(
-            text = "缩略图不可用",
+            text = stringResource(R.string.canvas_thumbnail_unavailable),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

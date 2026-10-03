@@ -60,28 +60,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.PeriodResponse
 import com.lovejournal.app.data.remote.dto.PeriodSummaryResponse
+import com.lovejournal.app.ui.components.asString
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
+@Composable
 private fun phaseLabel(phase: String): String = when (phase) {
-    "in_period" -> "经期中"
-    "due_soon" -> "即将到来"
-    "overdue" -> "已推迟"
-    "normal" -> "平稳期"
-    else -> "暂无预测"
+    "in_period" -> stringResource(R.string.period_phase_in_period)
+    "due_soon" -> stringResource(R.string.period_phase_due_soon)
+    "overdue" -> stringResource(R.string.period_phase_overdue)
+    "normal" -> stringResource(R.string.period_phase_normal)
+    else -> stringResource(R.string.period_phase_none)
 }
 
+@Composable
 private fun daysHint(days: Int): String = when {
-    days > 0 -> "还有 $days 天"
-    days == 0 -> "就是今天"
-    else -> "已推迟 ${-days} 天"
+    days > 0 -> stringResource(R.string.period_days_left, days)
+    days == 0 -> stringResource(R.string.period_today)
+    else -> stringResource(R.string.period_overdue_days, -days)
 }
 
 @Composable
@@ -102,7 +107,7 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -113,7 +118,7 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -125,7 +130,7 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
                         item { PeriodSummaryCard(summary) }
                     }
                     if (state.items.isEmpty()) {
-                        item { Text("还没有记录，点右下角记一次吧") }
+                        item { Text(stringResource(R.string.period_no_records)) }
                     }
                     items(state.items, key = { it.pcid }) { cycle ->
                         PeriodCard(
@@ -144,7 +149,7 @@ fun PeriodScreen(viewModel: PeriodViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "记录")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.period_add))
         }
     }
 
@@ -173,20 +178,20 @@ private fun PeriodSummaryCard(summary: PeriodSummaryResponse) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("当前状态", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.period_current_status), style = MaterialTheme.typography.labelMedium)
             Text(phaseLabel(summary.phase), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             summary.predicted_next_start?.let { next ->
                 Spacer(Modifier.height(4.dp))
                 val hint = summary.predicted_days_until?.let { " · ${daysHint(it)}" } ?: ""
-                Text("预计下次 $next$hint", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.period_predicted_next, next) + hint, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 summary.avg_cycle_days?.let {
-                    Text("平均周期 $it 天", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.period_avg_cycle, it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 summary.avg_period_days?.let {
-                    Text("平均经期 $it 天", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.period_avg_period, it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -205,26 +210,26 @@ private fun PeriodCard(cycle: PeriodResponse, onEdit: () -> Unit, onDelete: () -
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    cycle.start_date + (cycle.end_date?.let { " ~ $it" } ?: " 起（进行中）"),
+                    cycle.end_date?.let { "${cycle.start_date} ~ $it" } ?: stringResource(R.string.period_ongoing, cycle.start_date),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 cycle.length_days?.let {
-                    Text("持续 $it 天", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.period_duration, it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 cycle.note?.takeIf { it.isNotBlank() }?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (cycle.author_nickname.isNotBlank()) {
-                    Text("记录人 ${cycle.author_nickname}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    Text(stringResource(R.string.period_recorded_by, cycle.author_nickname), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                 }
             }
             IconButton(onClick = { menuOpen = true }) {
-                Icon(Icons.Filled.MoreHoriz, contentDescription = "更多操作")
+                Icon(Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.common_more_actions))
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
-                DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.btn_edit)) }, onClick = { menuOpen = false; onEdit() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.btn_delete)) }, onClick = { menuOpen = false; onDelete() })
             }
         }
     }
@@ -250,36 +255,36 @@ private fun PeriodEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "记录生理期" else "编辑生理期") },
+        title = { Text(if (initial == null) stringResource(R.string.period_add_title) else stringResource(R.string.period_edit_title)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Text("开始日期", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.period_start_date), style = MaterialTheme.typography.labelMedium)
                 OutlinedButton(onClick = { showStartPicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(startDate.toString())
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("结束日期（可选，留空表示进行中）", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.period_end_date_optional), style = MaterialTheme.typography.labelMedium)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { showEndPicker = true }, modifier = Modifier.weight(1f)) {
-                        Text(endDate?.toString() ?: "未设置")
+                        Text(endDate?.toString() ?: stringResource(R.string.period_end_date_not_set))
                     }
                     if (endDate != null) {
-                        TextButton(onClick = { endDate = null }) { Text("清除") }
+                        TextButton(onClick = { endDate = null }) { Text(stringResource(R.string.common_clear)) }
                     }
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("备注（可选）") },
+                    label = { Text(stringResource(R.string.common_note_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(startDate.toString(), endDate?.toString(), note) }) { Text("保存") }
+            TextButton(onClick = { onSave(startDate.toString(), endDate?.toString(), note) }) { Text(stringResource(R.string.btn_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 
     if (showStartPicker) {
@@ -294,9 +299,9 @@ private fun PeriodEditorDialog(
                         startDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                     }
                     showStartPicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showStartPicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showStartPicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }
@@ -314,9 +319,9 @@ private fun PeriodEditorDialog(
                         endDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                     }
                     showEndPicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showEndPicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showEndPicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }

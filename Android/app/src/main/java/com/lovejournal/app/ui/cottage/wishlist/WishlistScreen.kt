@@ -52,12 +52,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.WishResponse
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
@@ -77,7 +80,7 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -88,11 +91,11 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有心愿，点右下角加一个吧")
+                        Text(stringResource(R.string.wishlist_no_wishes))
                     }
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -100,7 +103,7 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                 ) {
                     item {
                         Text(
-                            "待实现 ${state.pending} · 已达成 ${state.completed}",
+                            stringResource(R.string.wishlist_pending_completed, state.pending, state.completed),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -121,7 +124,7 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
             onClick = { editing = null; editorOpen = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "添加心愿")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.wishlist_add_wish))
         }
     }
 
@@ -166,12 +169,12 @@ private fun WishCard(wish: WishResponse, onToggle: () -> Unit, onEdit: () -> Uni
                         Text("#$it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     }
                     if (done && wish.completed_by_nickname != null) {
-                        Text("由 ${wish.completed_by_nickname} 达成", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                        Text(stringResource(R.string.wishlist_completed_by, wish.completed_by_nickname ?: ""), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                     }
                 }
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.btn_delete), tint = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -189,13 +192,13 @@ private fun WishEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "许个心愿" else "编辑心愿") },
+        title = { Text(if (initial == null) stringResource(R.string.wishlist_make_wish) else stringResource(R.string.wishlist_edit_wish)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("想一起做什么？") },
+                    label = { Text(stringResource(R.string.wishlist_title_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -203,20 +206,20 @@ private fun WishEditorDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("备注（可选）") },
+                    label = { Text(stringResource(R.string.wishlist_desc_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text("分类，如 旅行 / 美食（可选）") },
+                    label = { Text(stringResource(R.string.wishlist_category_optional)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(title, description, category) }) { Text("保存") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        confirmButton = { TextButton(onClick = { onSave(title, description, category) }) { Text(stringResource(R.string.btn_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }

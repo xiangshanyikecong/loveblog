@@ -62,23 +62,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.LedgerResponse
 import com.lovejournal.app.data.remote.dto.LedgerSummaryResponse
+import com.lovejournal.app.ui.components.asString
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
 private fun yuan(cents: Int): String = "¥" + "%.2f".format(cents / 100.0)
 
+@Composable
 private fun splitLabel(value: String): String = when (value) {
-    "treat" -> "请客"
-    "owed_full" -> "全欠"
-    else -> "AA"
+    "treat" -> stringResource(R.string.ledger_split_treat)
+    "owed_full" -> stringResource(R.string.ledger_split_owed_full)
+    else -> stringResource(R.string.ledger_split_aa)
 }
 
 @Composable
@@ -99,7 +103,7 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -110,7 +114,7 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -122,7 +126,7 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
                         item { LedgerSummaryCard(summary) }
                     }
                     if (state.items.isEmpty()) {
-                        item { Text("还没有账目，点右下角记一笔吧") }
+                        item { Text(stringResource(R.string.ledger_no_entries)) }
                     }
                     items(state.items, key = { it.leid }) { entry ->
                         LedgerCard(
@@ -141,7 +145,7 @@ fun LedgerScreen(viewModel: LedgerViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "记一笔")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.ledger_add))
         }
     }
 
@@ -176,7 +180,7 @@ private fun LedgerSummaryCard(summary: LedgerSummaryResponse) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("累计支出", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.ledger_total_spent), style = MaterialTheme.typography.labelMedium)
             Text(
                 yuan(summary.total_spent_cents),
                 style = MaterialTheme.typography.headlineSmall,
@@ -186,9 +190,14 @@ private fun LedgerSummaryCard(summary: LedgerSummaryResponse) {
             val balance = summary.balance
             Text(
                 if (balance.settled) {
-                    "账目已结清 🎉"
+                    stringResource(R.string.ledger_settled)
                 } else {
-                    "${balance.debtor_nickname ?: "TA"} 还欠 ${balance.creditor_nickname ?: "你"} ${yuan(balance.amount_cents)}"
+                    stringResource(
+                        R.string.ledger_owes,
+                        balance.debtor_nickname ?: stringResource(R.string.common_partner),
+                        balance.creditor_nickname ?: stringResource(R.string.common_you),
+                        yuan(balance.amount_cents),
+                    )
                 },
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -226,17 +235,17 @@ private fun LedgerCard(entry: LedgerResponse, onEdit: () -> Unit, onDelete: () -
                         Text("#$it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                     }
                     Text(splitLabel(entry.split_type), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${entry.payer_nickname} 付", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.ledger_paid_by, entry.payer_nickname), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text(entry.spent_on, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
             }
             Text(yuan(entry.amount_cents), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             IconButton(onClick = { menuOpen = true }) {
-                Icon(Icons.Filled.MoreHoriz, contentDescription = "更多操作")
+                Icon(Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.common_more_actions))
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
-                DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.btn_edit)) }, onClick = { menuOpen = false; onEdit() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.btn_delete)) }, onClick = { menuOpen = false; onDelete() })
             }
         }
     }
@@ -266,13 +275,13 @@ private fun LedgerEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "记一笔" else "编辑账目") },
+        title = { Text(if (initial == null) stringResource(R.string.ledger_add_title) else stringResource(R.string.ledger_edit_title)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("买了什么") },
+                    label = { Text(stringResource(R.string.ledger_what_bought)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -280,7 +289,7 @@ private fun LedgerEditorDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text("金额（元）") },
+                    label = { Text(stringResource(R.string.ledger_amount)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
@@ -289,7 +298,7 @@ private fun LedgerEditorDialog(
                 OutlinedTextField(
                     value = category,
                     onValueChange = { category = it },
-                    label = { Text("分类，如 餐饮 / 出行（可选）") },
+                    label = { Text(stringResource(R.string.ledger_category_optional)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -297,24 +306,24 @@ private fun LedgerEditorDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("备注（可选）") },
+                    label = { Text(stringResource(R.string.common_note_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(10.dp))
-                Text("谁付的", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.ledger_who_paid), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = payer == "me", onClick = { payer = "me" }, label = { Text("我付") })
-                    FilterChip(selected = payer == "partner", onClick = { payer = "partner" }, label = { Text("TA 付") })
+                    FilterChip(selected = payer == "me", onClick = { payer = "me" }, label = { Text(stringResource(R.string.ledger_i_paid)) })
+                    FilterChip(selected = payer == "partner", onClick = { payer = "partner" }, label = { Text(stringResource(R.string.ledger_partner_paid)) })
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("怎么算", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.ledger_how_split), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = splitType == "aa", onClick = { splitType = "aa" }, label = { Text("AA") })
-                    FilterChip(selected = splitType == "treat", onClick = { splitType = "treat" }, label = { Text("请客") })
-                    FilterChip(selected = splitType == "owed_full", onClick = { splitType = "owed_full" }, label = { Text("全欠") })
+                    FilterChip(selected = splitType == "aa", onClick = { splitType = "aa" }, label = { Text(stringResource(R.string.ledger_split_aa)) })
+                    FilterChip(selected = splitType == "treat", onClick = { splitType = "treat" }, label = { Text(stringResource(R.string.ledger_split_treat)) })
+                    FilterChip(selected = splitType == "owed_full", onClick = { splitType = "owed_full" }, label = { Text(stringResource(R.string.ledger_split_owed_full)) })
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("日期", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.common_date), style = MaterialTheme.typography.labelMedium)
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(spentOn.toString())
                 }
@@ -322,10 +331,10 @@ private fun LedgerEditorDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(title, amount, note, category, payer, splitType, spentOn.toString()) }) {
-                Text("保存")
+                Text(stringResource(R.string.btn_save))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 
     if (showDatePicker) {
@@ -340,9 +349,9 @@ private fun LedgerEditorDialog(
                         spentOn = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                     }
                     showDatePicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }

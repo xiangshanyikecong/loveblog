@@ -108,7 +108,7 @@ class GameRepository @Inject constructor(
                 ?.let { runCatching { json.decodeFromJsonElement<GameStateResponse>(it) }.getOrNull() }
                 ?.let { GameWsEvent.State(it) }
             "ERROR" -> GameWsEvent.Error(
-                obj["payload"]?.jsonObject?.get("message")?.jsonPrimitive?.contentOrNull ?: "操作失败",
+                obj["payload"]?.jsonObject?.get("message")?.jsonPrimitive?.contentOrNull ?: "Operation failed",
             )
             "EMOTE" -> {
                 val p = obj["payload"]?.jsonObject

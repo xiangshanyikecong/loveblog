@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.cottage.coupons
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CouponResponse
 import com.lovejournal.app.data.repository.CouponRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +37,7 @@ data class CouponUiState(
     val items: List<CouponResponse> = emptyList(),
     val active: Int = 0,
     val redeemed: Int = 0,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -44,8 +48,8 @@ class CouponViewModel @Inject constructor(
     private val _state = MutableStateFlow(CouponUiState())
     val state: StateFlow<CouponUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -63,7 +67,7 @@ class CouponViewModel @Inject constructor(
                     )
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -71,7 +75,7 @@ class CouponViewModel @Inject constructor(
 
     fun add(title: String, description: String?, icon: String?, onDone: () -> Unit) {
         if (title.isBlank()) {
-            _message.value = "请填写兑换券名称"
+            _message.value = uiText(R.string.coupon_error_name_required)
             return
         }
         viewModelScope.launch {
@@ -80,8 +84,8 @@ class CouponViewModel @Inject constructor(
                 description = description?.trim()?.ifBlank { null },
                 icon = icon?.trim()?.ifBlank { null },
             ).fold(
-                onSuccess = { _message.value = "已送出兑换券"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "添加失败" },
+                onSuccess = { _message.value = uiText(R.string.coupon_msg_sent); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -94,7 +98,7 @@ class CouponViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写兑换券名称"
+            _message.value = uiText(R.string.coupon_error_name_required)
             return
         }
         viewModelScope.launch {
@@ -104,8 +108,8 @@ class CouponViewModel @Inject constructor(
                 description = description?.trim()?.ifBlank { null },
                 icon = icon?.trim()?.ifBlank { null },
             ).fold(
-                onSuccess = { _message.value = "已更新兑换券"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "更新失败" },
+                onSuccess = { _message.value = uiText(R.string.coupon_msg_updated); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -113,8 +117,8 @@ class CouponViewModel @Inject constructor(
     fun redeem(coupon: CouponResponse) {
         viewModelScope.launch {
             repository.redeem(coupon.cpid).fold(
-                onSuccess = { _message.value = "已兑换 🎉"; refresh() },
-                onFailure = { _message.value = it.message ?: "兑换失败" },
+                onSuccess = { _message.value = uiText(R.string.coupon_msg_redeemed); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -122,8 +126,8 @@ class CouponViewModel @Inject constructor(
     fun delete(coupon: CouponResponse) {
         viewModelScope.launch {
             repository.delete(coupon.cpid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

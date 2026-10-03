@@ -52,19 +52,24 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.GameStateResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun GameScreen(gameKey: String, viewModel: GameViewModel = hiltViewModel()) {
     LaunchedEffect(gameKey) { viewModel.start(gameKey) }
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    LaunchedEffect(Unit) { viewModel.toast.collect { snackbar.showSnackbar(it) } }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.toast.collect { snackbar.showSnackbar(it.asString(context)) } }
 
     val s = ui.state
 
@@ -85,23 +90,28 @@ fun GameScreen(gameKey: String, viewModel: GameViewModel = hiltViewModel()) {
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { viewModel.newGame() }) { Text(if (s?.phase == "playing") "重开" else "新对局") }
-                OutlinedButton(onClick = { viewModel.surrender() }, enabled = s?.phase == "playing") { Text("认输") }
-                OutlinedButton(onClick = { viewModel.requestUndo() }, enabled = s?.phase == "playing") { Text("悔棋") }
-                OutlinedButton(onClick = { viewModel.invite() }) { Text("邀请") }
+                Button(onClick = { viewModel.newGame() }) { Text(if (s?.phase == "playing") stringResource(R.string.btn_restart) else stringResource(R.string.btn_new_game)) }
+                OutlinedButton(onClick = { viewModel.surrender() }, enabled = s?.phase == "playing") { Text(stringResource(R.string.btn_surrender)) }
+                OutlinedButton(onClick = { viewModel.requestUndo() }, enabled = s?.phase == "playing") { Text(stringResource(R.string.btn_undo)) }
+                OutlinedButton(onClick = { viewModel.invite() }) { Text(stringResource(R.string.btn_invite)) }
             }
 
             if (s?.undo_request_by != null && s.undo_request_by != ui.selfUid && s.phase == "playing") {
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("对方请求悔棋")
-                    TextButton(onClick = { viewModel.respondUndo(true) }) { Text("同意") }
-                    TextButton(onClick = { viewModel.respondUndo(false) }) { Text("拒绝") }
+                    Text(stringResource(R.string.game_undo_request))
+                    TextButton(onClick = { viewModel.respondUndo(true) }) { Text(stringResource(R.string.btn_agree)) }
+                    TextButton(onClick = { viewModel.respondUndo(false) }) { Text(stringResource(R.string.btn_reject)) }
                 }
             }
 
             if (ui.stats.isNotEmpty()) {
                 Text(
-                    ui.stats.joinToString("   ") { "${it.nickname} ${it.wins}胜" },
+                    buildString {
+                        ui.stats.forEachIndexed { index, stat ->
+                            if (index > 0) append("   ")
+                            append(stringResource(R.string.game_win_count, stat.nickname, stat.wins))
+                        }
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -146,17 +156,18 @@ private fun TileBoard(s: GameStateResponse, gameKey: String, onTap: (Int, Int) -
     }
 }
 
+@Composable
 private fun statusText(connected: Boolean, s: GameStateResponse?, selfUid: String?): String {
-    if (!connected) return "连接中…"
-    if (s == null) return "加载中…"
+    if (!connected) return stringResource(R.string.game_connecting)
+    if (s == null) return stringResource(R.string.game_loading)
     return when (s.phase) {
-        "waiting" -> "等待开始，点「新对局」"
-        "playing" -> if (s.turn_uid == selfUid) "轮到你落子" else "对方思考中…"
+        "waiting" -> stringResource(R.string.game_waiting)
+        "playing" -> if (s.turn_uid == selfUid) stringResource(R.string.game_your_turn) else stringResource(R.string.game_opponent_thinking)
         "finished" -> when {
-            s.winner == "draw" -> "平局 🤝"
+            s.winner == "draw" -> stringResource(R.string.game_draw_result)
             (s.winner == "black" && s.black_uid == selfUid) ||
-                (s.winner == "white" && s.white_uid == selfUid) -> "你赢了 🎉"
-            else -> "这局对方赢了，再来一局？"
+                (s.winner == "white" && s.white_uid == selfUid) -> stringResource(R.string.game_you_win)
+            else -> stringResource(R.string.game_opponent_wins)
         }
         else -> ""
     }

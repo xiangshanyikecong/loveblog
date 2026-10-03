@@ -36,10 +36,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.asString
 
 /**
  * 隐私中心（对齐网页端 /privacy）：本站存了你们哪些数据、各自的可见范围、
@@ -59,47 +62,49 @@ fun PrivacyScreen(viewModel: PrivacyViewModel = hiltViewModel()) {
                 ) { CircularProgressIndicator() }
 
                 state.error != null -> Card(Modifier.fillMaxWidth()) {
-                    Text(
-                        "加载失败：${state.error}",
-                        Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    state.error?.let { err ->
+                        Text(
+                            stringResource(R.string.msg_load_failed_with_error, err.asString()),
+                            Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
 
                 else -> {
-                    PrivacyBlock("账号快照") {
-                        InfoRow("昵称", state.accountNickname)
-                        InfoRow("最近登录", state.lastLogin)
-                        InfoRow("最近登录 IP", state.lastLoginIp)
-                        InfoRow("密码最近修改", state.passwordChangedAt)
-                        InfoRow("会话版本", state.sessionVersion)
+                    PrivacyBlock(stringResource(R.string.privacy_account_snapshot)) {
+                        InfoRow(stringResource(R.string.bootstrap_label_nickname), state.accountNickname)
+                        InfoRow(stringResource(R.string.privacy_label_last_login), state.lastLogin)
+                        InfoRow(stringResource(R.string.privacy_label_last_login_ip), state.lastLoginIp)
+                        InfoRow(stringResource(R.string.privacy_label_password_changed), state.passwordChangedAt)
+                        InfoRow(stringResource(R.string.privacy_label_session_version), state.sessionVersion)
                     }
-                    PrivacyBlock("内容可见范围（全部模块）") {
-                        InfoRow("公开可见", state.totalsPublic)
-                        InfoRow("需登录", state.totalsSignedIn)
-                        InfoRow("仅伴侣", state.totalsPartners)
-                        InfoRow("仅作者", state.totalsAuthorOnly)
-                        InfoRow("密码保护", state.totalsPassword)
+                    PrivacyBlock(stringResource(R.string.privacy_visibility_title)) {
+                        InfoRow(stringResource(R.string.privacy_visibility_public), state.totalsPublic)
+                        InfoRow(stringResource(R.string.privacy_visibility_signed_in), state.totalsSignedIn)
+                        InfoRow(stringResource(R.string.privacy_visibility_partners), state.totalsPartners)
+                        InfoRow(stringResource(R.string.privacy_visibility_author_only), state.totalsAuthorOnly)
+                        InfoRow(stringResource(R.string.privacy_visibility_password), state.totalsPassword)
                     }
-                    PrivacyBlock("端到端加密状态") {
+                    PrivacyBlock(stringResource(R.string.privacy_encryption_title)) {
                         if (state.encryptionRows.isEmpty()) {
                             Text(
-                                "尚未启用任何端到端加密模块",
+                                stringResource(R.string.privacy_encryption_none),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        state.encryptionRows.forEach { row -> InfoRow(row.first, row.second) }
+                        state.encryptionRows.forEach { row -> InfoRow(row.first, row.second.asString()) }
                     }
-                    PrivacyBlock("备份导出策略") {
-                        InfoRow("备份包加密", state.exportEncrypted)
-                        InfoRow("包含上传文件", state.exportUploads)
-                        InfoRow("服务器可读内容为明文", state.exportServerReadable)
-                        InfoRow("端到端内容为密文", state.exportE2eeCipher)
+                    PrivacyBlock(stringResource(R.string.privacy_export_title)) {
+                        InfoRow(stringResource(R.string.privacy_export_encrypted), state.exportEncrypted.asString())
+                        InfoRow(stringResource(R.string.privacy_export_uploads), state.exportUploads.asString())
+                        InfoRow(stringResource(R.string.privacy_export_server_readable), state.exportServerReadable.asString())
+                        InfoRow(stringResource(R.string.privacy_export_e2ee_cipher), state.exportE2eeCipher.asString())
                     }
                     if (state.recentActivity.isNotEmpty()) {
-                        PrivacyBlock("最近的隐私相关事件") {
+                        PrivacyBlock(stringResource(R.string.privacy_recent_activity)) {
                             state.recentActivity.forEachIndexed { index, line ->
                                 if (index > 0) HorizontalDivider(
                                     thickness = 0.5.dp,
@@ -111,7 +116,7 @@ fun PrivacyScreen(viewModel: PrivacyViewModel = hiltViewModel()) {
                     }
                     state.generatedAt?.let {
                         Text(
-                            "报告生成于 $it",
+                            stringResource(R.string.privacy_generated_at, it),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp),

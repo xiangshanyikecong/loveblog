@@ -42,8 +42,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.NotificationResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 
 @Composable
@@ -61,11 +64,11 @@ fun NotificationScreen(viewModel: NotificationViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "未读 ${state.unreadCount}",
+                    stringResource(R.string.notifications_unread, state.unreadCount),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TextButton(onClick = { viewModel.markAllRead() }) { Text("全部已读") }
+                TextButton(onClick = { viewModel.markAllRead() }) { Text(stringResource(R.string.notifications_mark_all_read)) }
             }
         }
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -74,10 +77,10 @@ fun NotificationScreen(viewModel: NotificationViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("暂时没有通知") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.notifications_empty)) }
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),

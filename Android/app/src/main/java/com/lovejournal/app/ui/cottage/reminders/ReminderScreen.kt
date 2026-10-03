@@ -63,12 +63,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.ReminderResponse
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 import java.time.Instant
 import java.time.LocalDateTime
@@ -78,10 +81,16 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-private val AUDIENCE_OPTIONS = listOf("both" to "两人", "me" to "仅我", "partner" to "仅 TA")
+private val AUDIENCE_OPTIONS = listOf(
+    "both" to R.string.reminder_audience_both,
+    "me" to R.string.reminder_audience_me,
+    "partner" to R.string.reminder_audience_partner,
+)
 
+@Composable
 private fun audienceLabel(value: String): String =
-    AUDIENCE_OPTIONS.firstOrNull { it.first == value }?.second ?: "两人"
+    AUDIENCE_OPTIONS.firstOrNull { it.first == value }?.let { stringResource(it.second) }
+        ?: stringResource(R.string.reminder_audience_both)
 
 private val EDITOR_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
@@ -108,7 +117,7 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -122,15 +131,13 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    buildString {
-                        append("未完成 ${state.active} · 已完成 ${state.done}")
-                        if (state.due > 0) append(" · 到期 ${state.due}")
-                    },
+                    stringResource(R.string.reminder_active_done, state.active, state.done) +
+                        if (state.due > 0) stringResource(R.string.reminder_due_count, state.due) else "",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 TextButton(onClick = { viewModel.toggleIncludeDone() }) {
-                    Text(if (state.includeDone) "隐藏已完成" else "显示已完成")
+                    Text(if (state.includeDone) stringResource(R.string.reminder_hide_done) else stringResource(R.string.reminder_show_done))
                 }
             }
             when {
@@ -138,11 +145,11 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有提醒，点右下角加一个吧")
+                        Text(stringResource(R.string.reminder_no_reminders))
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -168,7 +175,7 @@ fun ReminderScreen(viewModel: ReminderViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "添加提醒")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.reminder_add))
         }
     }
 
@@ -238,7 +245,7 @@ private fun ReminderCard(
                     )
                     if (due) {
                         Text(
-                            "已到期",
+                            stringResource(R.string.reminder_overdue),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -246,11 +253,11 @@ private fun ReminderCard(
                 }
             }
             IconButton(onClick = { menuOpen = true }) {
-                Icon(Icons.Filled.MoreHoriz, contentDescription = "更多操作")
+                Icon(Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.common_more_actions))
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(text = { Text("编辑") }, onClick = { menuOpen = false; onEdit() })
-                DropdownMenuItem(text = { Text("删除") }, onClick = { menuOpen = false; onDelete() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.btn_edit)) }, onClick = { menuOpen = false; onEdit() })
+                DropdownMenuItem(text = { Text(stringResource(R.string.btn_delete)) }, onClick = { menuOpen = false; onDelete() })
             }
         }
     }
@@ -278,13 +285,13 @@ private fun ReminderEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "加一个提醒" else "编辑提醒") },
+        title = { Text(if (initial == null) stringResource(R.string.reminder_add_title) else stringResource(R.string.reminder_edit_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("提醒内容") },
+                    label = { Text(stringResource(R.string.reminder_content_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -292,17 +299,17 @@ private fun ReminderEditorDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("备注（可选）") },
+                    label = { Text(stringResource(R.string.common_note_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text("提醒时间", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.reminder_time_label), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(remindAt.format(EDITOR_FMT))
                 }
                 Spacer(Modifier.height(12.dp))
-                Text("提醒谁", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.reminder_audience_label), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -310,11 +317,11 @@ private fun ReminderEditorDialog(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    AUDIENCE_OPTIONS.forEach { (value, label) ->
+                    AUDIENCE_OPTIONS.forEach { (value, labelRes) ->
                         FilterChip(
                             selected = audience == value,
                             onClick = { audience = value },
-                            label = { Text(label) },
+                            label = { Text(stringResource(labelRes)) },
                         )
                     }
                 }
@@ -324,9 +331,9 @@ private fun ReminderEditorDialog(
             TextButton(onClick = {
                 val iso = remindAt.atZone(ZoneId.systemDefault()).toInstant().toString()
                 onSave(title, note, iso, audience)
-            }) { Text("保存") }
+            }) { Text(stringResource(R.string.btn_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 
     if (showDatePicker) {
@@ -346,9 +353,9 @@ private fun ReminderEditorDialog(
                     }
                     showDatePicker = false
                     showTimePicker = true
-                }) { Text("下一步") }
+                }) { Text(stringResource(R.string.action_next_step)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }
@@ -362,7 +369,7 @@ private fun ReminderEditorDialog(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("选择时间") },
+            title = { Text(stringResource(R.string.reminder_select_time)) },
             text = { TimePicker(state = timeState) },
             confirmButton = {
                 TextButton(onClick = {
@@ -371,9 +378,9 @@ private fun ReminderEditorDialog(
                         LocalTime.of(timeState.hour, timeState.minute),
                     )
                     showTimePicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         )
     }
 }

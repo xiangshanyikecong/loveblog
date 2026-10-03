@@ -3,8 +3,9 @@
  * Copyright (C) 2026 Love Journal Contributors
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, version 3 of the License.
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,6 +23,7 @@ import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.local.dao.MessageDao
 import com.lovejournal.app.data.local.dao.MoodDao
 import com.lovejournal.app.data.local.dao.SyncQueueDao
+import com.lovejournal.app.data.local.entity.SyncQueueEntity
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
@@ -44,11 +46,15 @@ import javax.inject.Singleton
  * Drains the offline mutation queue, replaying each operation against the
  * backend and reconciling the optimistic local rows with the server response.
  *
- * Every failure remains queued with diagnostics. Other entries continue so a
- * malformed operation cannot wedge the queue. A process crash after a request
- * is safe because each operation carries a stable backend Idempotency-Key.
+ * Failures are classified by [SyncRetryPolicy]: temporary failures (network /
+ * 5xx) are re-queued with exponential backoff; permanent failures (4xx,
+ * payload drift) and exhausted retries become dead letters that are kept for
+ * diagnostics but never replayed. Other entries continue so a malformed
+ * operation cannot wedge the queue. A process crash after a request is safe
+ * because each operation carries a stable backend Idempotency-Key.
  *
- * Returns true only if the queue is fully flushed.
+ * Returns true when no retryable work is left waiting (dead letters do not
+ * block the result — they are terminal by definition).
  */
 @Singleton
 class SyncEngine @Inject constructor(
@@ -66,7 +72,8 @@ class SyncEngine @Inject constructor(
         val uid = sessionState.uid
         if (!sessionState.loggedIn || uid == null) return@withLock true
 
-        val pending = syncQueueDao.pending(serverConfig.dataScope(uid))
+        val now = System.currentTimeMillis()
+        val pending = syncQueueDao.due(serverConfig.dataScope(uid), now)
         var allOk = true
         for (item in pending) {
             try {
@@ -131,17 +138,40 @@ class SyncEngine @Inject constructor(
                         )
                         syncQueueDao.remove(item.id)
                     }
-                    else -> throw IllegalStateException("未知同步操作: ${item.action}")
+                    else -> throw IllegalStateException("Unknown sync action: ${item.action}")
                 }
             } catch (e: Exception) {
                 rethrowIfSyncCancelled(e)
                 allOk = false
-                // Never silently discard a user mutation. Keep processing the
-                // remaining queue so one malformed item cannot wedge all work.
-                syncQueueDao.markFailure(item.id, e.message ?: e.javaClass.simpleName)
+                // Never silently discard a user mutation, but also never let
+                // one poisoned entry replay forever: temporary failures back
+                // off, permanent ones (and exhausted retries) go dead-letter.
+                handleFailure(item, e)
             }
         }
         allOk
+    }
+
+    private suspend fun handleFailure(item: SyncQueueEntity, error: Exception) {
+        when (val decision = SyncRetryPolicy.classify(error)) {
+            is SyncFailure.Retryable -> {
+                val attempts = item.retryCount + 1
+                if (attempts >= SyncRetryPolicy.MAX_ATTEMPTS) {
+                    syncQueueDao.markDead(
+                        item.id,
+                        "exhausted after $attempts attempts: ${decision.reason}",
+                    )
+                } else {
+                    syncQueueDao.markFailure(
+                        item.id,
+                        decision.reason,
+                        System.currentTimeMillis() + SyncRetryPolicy.backoffMillis(attempts),
+                    )
+                }
+            }
+            is SyncFailure.Permanent ->
+                syncQueueDao.markDead(item.id, decision.reason)
+        }
     }
 
     private companion object {

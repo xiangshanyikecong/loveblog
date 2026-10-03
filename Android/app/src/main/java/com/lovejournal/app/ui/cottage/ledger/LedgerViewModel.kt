@@ -19,10 +19,14 @@ package com.lovejournal.app.ui.cottage.ledger
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.dto.LedgerResponse
 import com.lovejournal.app.data.remote.dto.LedgerSummaryResponse
 import com.lovejournal.app.data.repository.LedgerRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +42,7 @@ data class LedgerUiState(
     val summary: LedgerSummaryResponse? = null,
     // 当前登录用户的 uid，用于把 payer_uid 换算成「我付 / TA 付」。
     val selfUid: String? = null,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -50,8 +54,8 @@ class LedgerViewModel @Inject constructor(
     private val _state = MutableStateFlow(LedgerUiState())
     val state: StateFlow<LedgerUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -73,7 +77,7 @@ class LedgerViewModel @Inject constructor(
                     _state.value = LedgerUiState(items = list.items, summary = summary, selfUid = selfUid)
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -90,12 +94,12 @@ class LedgerViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写账目标题"
+            _message.value = uiText(R.string.ledger_error_title_required)
             return
         }
         val cents = parseYuanToCents(amountYuan)
         if (cents == null || cents <= 0) {
-            _message.value = "请填写正确的金额"
+            _message.value = uiText(R.string.ledger_error_invalid_amount)
             return
         }
         viewModelScope.launch {
@@ -108,8 +112,8 @@ class LedgerViewModel @Inject constructor(
                 splitType = splitType,
                 spentOn = spentOn,
             ).fold(
-                onSuccess = { _message.value = "已记一笔"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "记账失败" },
+                onSuccess = { _message.value = uiText(R.string.ledger_msg_added); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -117,8 +121,8 @@ class LedgerViewModel @Inject constructor(
     fun delete(entry: LedgerResponse) {
         viewModelScope.launch {
             repository.delete(entry.leid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -139,12 +143,12 @@ class LedgerViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写账目标题"
+            _message.value = uiText(R.string.ledger_error_title_required)
             return
         }
         val cents = parseYuanToCents(amountYuan)
         if (cents == null || cents <= 0) {
-            _message.value = "请填写正确的金额"
+            _message.value = uiText(R.string.ledger_error_invalid_amount)
             return
         }
         val originalPayer = if (entry.payer_uid == _state.value.selfUid) "me" else "partner"
@@ -160,8 +164,8 @@ class LedgerViewModel @Inject constructor(
                 splitType = splitType,
                 spentOn = spentOn,
             ).fold(
-                onSuccess = { _message.value = "已保存"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "保存失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_saved); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

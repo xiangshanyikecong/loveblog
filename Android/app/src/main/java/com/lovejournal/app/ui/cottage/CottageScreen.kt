@@ -38,8 +38,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lovejournal.app.R
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSoftCard
 import com.lovejournal.app.ui.theme.LoveLavender
@@ -51,16 +53,16 @@ object CottageRoute {
     const val HUB = "cottage"; const val CHAT = "cottage/chat"; const val MOOD = "cottage/mood"; const val WISHLIST = "cottage/wishlist"; const val QUESTIONS = "cottage/questions"; const val GAMES = "cottage/games"; const val WATCH = "cottage/watch"; const val LISTEN = "cottage/listen"; const val COUPONS = "cottage/coupons"; const val REMINDERS = "cottage/reminders"; const val LEDGER = "cottage/ledger"; const val PERIOD = "cottage/period"; const val REPORTS = "cottage/reports"; const val FOOTPRINTS = "cottage/footprints"; const val PLANS = "cottage/plans"; const val CHECKINS = "checkins"; const val VAULT = "cottage/vault"; const val CANVAS = "cottage/games/canvas"; const val CANVAS_GALLERY = "cottage/games/canvas/gallery"; const val CANVAS_ARTWORK = "cottage/games/canvas/gallery/artwork"
 }
 
-private data class CottageFeature(val emoji: String, val title: String, val subtitle: String, val route: String, val accent: Color)
+private data class CottageFeature(val emoji: String, val titleRes: Int, val subtitleRes: Int, val route: String, val accent: Color)
 private val features = listOf(
-    CottageFeature("💬", "悄悄话", "实时陪伴", CottageRoute.CHAT, LoveRose), CottageFeature("🌤️", "心情", "分享此刻", CottageRoute.MOOD, LovePeach),
-    CottageFeature("📍", "报备", "让 TA 安心", CottageRoute.CHECKINS, LoveMint), CottageFeature("💝", "心愿单", "一起实现", CottageRoute.WISHLIST, LoveLavender),
-    CottageFeature("💌", "每日一问", "更懂彼此", CottageRoute.QUESTIONS, LoveRose), CottageFeature("📺", "一起看", "同步追剧", CottageRoute.WATCH, LoveLavender),
-    CottageFeature("🎮", "一起玩", "双人游戏", CottageRoute.GAMES, LoveMint), CottageFeature("🎧", "一起听", "同步听歌", CottageRoute.LISTEN, LovePeach),
-    CottageFeature("🎟️", "兑换券", "兑现甜蜜", CottageRoute.COUPONS, LoveRose), CottageFeature("🔔", "提醒", "重要小事", CottageRoute.REMINDERS, LovePeach),
-    CottageFeature("🗓️", "约会计划", "期待见面", CottageRoute.PLANS, LoveLavender), CottageFeature("💰", "情侣账本", "共同生活", CottageRoute.LEDGER, LoveMint),
-    CottageFeature("📊", "恋爱月报", "回顾甜蜜", CottageRoute.REPORTS, LoveRose), CottageFeature("🗺️", "足迹地图", "点亮城市", CottageRoute.FOOTPRINTS, LoveMint),
-    CottageFeature("🌸", "生理期", "贴心关怀", CottageRoute.PERIOD, LovePeach), CottageFeature("🔐", "私密空间", "端到端加密", CottageRoute.VAULT, LoveLavender),
+    CottageFeature("💬", R.string.cottage_feature_chat, R.string.cottage_feature_chat_sub, CottageRoute.CHAT, LoveRose), CottageFeature("🌤️", R.string.cottage_feature_mood, R.string.cottage_feature_mood_sub, CottageRoute.MOOD, LovePeach),
+    CottageFeature("📍", R.string.cottage_feature_checkin, R.string.cottage_feature_checkin_sub, CottageRoute.CHECKINS, LoveMint), CottageFeature("💝", R.string.cottage_feature_wishlist, R.string.cottage_feature_wishlist_sub, CottageRoute.WISHLIST, LoveLavender),
+    CottageFeature("💌", R.string.cottage_feature_questions, R.string.cottage_feature_questions_sub, CottageRoute.QUESTIONS, LoveRose), CottageFeature("📺", R.string.cottage_feature_watch, R.string.cottage_feature_watch_sub, CottageRoute.WATCH, LoveLavender),
+    CottageFeature("🎮", R.string.cottage_feature_games, R.string.cottage_feature_games_sub, CottageRoute.GAMES, LoveMint), CottageFeature("🎧", R.string.cottage_feature_listen, R.string.cottage_feature_listen_sub, CottageRoute.LISTEN, LovePeach),
+    CottageFeature("🎟️", R.string.cottage_feature_coupons, R.string.cottage_feature_coupons_sub, CottageRoute.COUPONS, LoveRose), CottageFeature("🔔", R.string.cottage_feature_reminders, R.string.cottage_feature_reminders_sub, CottageRoute.REMINDERS, LovePeach),
+    CottageFeature("🗓️", R.string.cottage_feature_plans, R.string.cottage_feature_plans_sub, CottageRoute.PLANS, LoveLavender), CottageFeature("💰", R.string.cottage_feature_ledger, R.string.cottage_feature_ledger_sub, CottageRoute.LEDGER, LoveMint),
+    CottageFeature("📊", R.string.cottage_feature_reports, R.string.cottage_feature_reports_sub, CottageRoute.REPORTS, LoveRose), CottageFeature("🗺️", R.string.cottage_feature_footprints, R.string.cottage_feature_footprints_sub, CottageRoute.FOOTPRINTS, LoveMint),
+    CottageFeature("🌸", R.string.cottage_feature_period, R.string.cottage_feature_period_sub, CottageRoute.PERIOD, LovePeach), CottageFeature("🔐", R.string.cottage_feature_vault, R.string.cottage_feature_vault_sub, CottageRoute.VAULT, LoveLavender),
 )
 
 @Composable
@@ -72,13 +74,13 @@ fun CottageScreen(onOpen: (String) -> Unit) {
             contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) { Column(Modifier.padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { Text("只属于你们俩的小天地", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("聊天、陪伴、记录和共同生活，都放在这里。", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) { Column(Modifier.padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) { Text(stringResource(R.string.cottage_hub_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(stringResource(R.string.cottage_hub_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant) } }
             items(features, key = { it.route }) { feature ->
                 LoveSoftCard(Modifier.fillMaxWidth().clickable { onOpen(feature.route) }) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(feature.emoji, style = MaterialTheme.typography.headlineMedium); Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = feature.accent) }
-                        Text(feature.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(feature.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(feature.titleRes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(feature.subtitleRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small).background(feature.accent.copy(alpha = 0.13f)).padding(vertical = 3.dp))
                     }
                 }

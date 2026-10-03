@@ -19,14 +19,18 @@ package com.lovejournal.app.ui.albums
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.net.Uri
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.AlbumDetail
-import android.net.Uri
 import com.lovejournal.app.data.remote.dto.AlbumCreateRequest
 import com.lovejournal.app.data.remote.dto.AlbumMediaRequest
 import com.lovejournal.app.data.remote.dto.AlbumSummary
 import com.lovejournal.app.data.repository.AlbumsRepository
 import com.lovejournal.app.data.repository.UploadRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,14 +41,14 @@ import javax.inject.Inject
 data class AlbumsUiState(
     val loading: Boolean = false,
     val albums: List<AlbumSummary> = emptyList(),
-    val error: String? = null,
+    val error: UiText? = null,
     val detail: AlbumDetail? = null,
     val detailLoading: Boolean = false,
-    val detailError: String? = null,
+    val detailError: UiText? = null,
     val saving: Boolean = false,
     val uploading: Boolean = false,
     val pendingImageUrl: String? = null,
-    val message: String? = null,
+    val message: UiText? = null,
 )
 
 @HiltViewModel
@@ -66,7 +70,7 @@ class AlbumsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.list().fold(
                 onSuccess = { _state.value = _state.value.copy(loading = false, albums = it, error = null) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
@@ -76,7 +80,7 @@ class AlbumsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.detail(albId).fold(
                 onSuccess = { _state.value = _state.value.copy(detailLoading = false, detail = it) },
-                onFailure = { _state.value = _state.value.copy(detailLoading = false, detailError = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(detailLoading = false, detailError = it.toUiText()) },
             )
         }
     }
@@ -90,13 +94,13 @@ class AlbumsViewModel @Inject constructor(
         viewModelScope.launch {
             uploadRepository.uploadAlbumImage(uri).fold(
                 onSuccess = { _state.value = _state.value.copy(uploading = false, pendingImageUrl = it.url) },
-                onFailure = { _state.value = _state.value.copy(uploading = false, message = it.message ?: "上传失败") },
+                onFailure = { _state.value = _state.value.copy(uploading = false, message = it.toUiText()) },
             )
         }
     }
 
     fun save(title: String, description: String, tags: String) {
-        if (title.isBlank()) { _state.value = _state.value.copy(message = "标题不能为空"); return }
+        if (title.isBlank()) { _state.value = _state.value.copy(message = uiText(R.string.albums_error_title_required)); return }
         val current = _state.value.detail
         val imageUrl = _state.value.pendingImageUrl
         _state.value = _state.value.copy(saving = true, message = null)
@@ -134,8 +138,8 @@ class AlbumsViewModel @Inject constructor(
                 ),
             )
             result.fold(
-                onSuccess = { _state.value = _state.value.copy(saving = false, detail = it, pendingImageUrl = null, message = "保存成功"); refresh() },
-                onFailure = { _state.value = _state.value.copy(saving = false, message = it.message ?: "保存失败") },
+                onSuccess = { _state.value = _state.value.copy(saving = false, detail = it, pendingImageUrl = null, message = uiText(R.string.msg_saved)); refresh() },
+                onFailure = { _state.value = _state.value.copy(saving = false, message = it.toUiText()) },
             )
         }
     }
@@ -144,8 +148,8 @@ class AlbumsViewModel @Inject constructor(
         val current = _state.value.detail ?: return
         viewModelScope.launch {
             repository.delete(current.alb_id).fold(
-                onSuccess = { _state.value = _state.value.copy(detail = null, message = "已删除"); refresh() },
-                onFailure = { _state.value = _state.value.copy(message = it.message ?: "删除失败") },
+                onSuccess = { _state.value = _state.value.copy(detail = null, message = uiText(R.string.msg_deleted)); refresh() },
+                onFailure = { _state.value = _state.value.copy(message = it.toUiText()) },
             )
         }
     }
@@ -156,7 +160,7 @@ class AlbumsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.comment(current.alb_id, content.trim()).fold(
                 onSuccess = { open(current.alb_id) },
-                onFailure = { _state.value = _state.value.copy(message = it.message ?: "评论失败") },
+                onFailure = { _state.value = _state.value.copy(message = it.toUiText()) },
             )
         }
     }

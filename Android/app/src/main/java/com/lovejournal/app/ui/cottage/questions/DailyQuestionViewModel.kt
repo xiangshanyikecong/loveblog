@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.cottage.questions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.DailyQuestionResponse
 import com.lovejournal.app.data.repository.DailyQuestionRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +35,7 @@ import javax.inject.Inject
 data class DailyQuestionUiState(
     val loading: Boolean = false,
     val question: DailyQuestionResponse? = null,
-    val error: String? = null,
+    val error: UiText? = null,
     val submitting: Boolean = false,
 )
 
@@ -43,8 +47,8 @@ class DailyQuestionViewModel @Inject constructor(
     private val _state = MutableStateFlow(DailyQuestionUiState())
     val state: StateFlow<DailyQuestionUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -55,7 +59,7 @@ class DailyQuestionViewModel @Inject constructor(
         viewModelScope.launch {
             repository.today().fold(
                 onSuccess = { _state.value = DailyQuestionUiState(question = it) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
@@ -63,14 +67,14 @@ class DailyQuestionViewModel @Inject constructor(
     /** Set today's question (only allowed when none exists yet). */
     fun createToday(prompt: String) {
         if (prompt.isBlank()) {
-            _message.value = "请输入今天的问题"
+            _message.value = uiText(R.string.question_error_prompt_required)
             return
         }
         _state.value = _state.value.copy(submitting = true)
         viewModelScope.launch {
             repository.create(prompt.trim()).fold(
-                onSuccess = { _state.value = DailyQuestionUiState(question = it); _message.value = "已发布今天的问题" },
-                onFailure = { _state.value = _state.value.copy(submitting = false); _message.value = it.message ?: "发布失败" },
+                onSuccess = { _state.value = DailyQuestionUiState(question = it); _message.value = uiText(R.string.msg_published) },
+                onFailure = { _state.value = _state.value.copy(submitting = false); _message.value = it.toUiText() },
             )
         }
     }
@@ -78,7 +82,7 @@ class DailyQuestionViewModel @Inject constructor(
     fun answer(content: String) {
         val qid = _state.value.question?.qid ?: return
         if (content.isBlank()) {
-            _message.value = "请先写下你的回答"
+            _message.value = uiText(R.string.question_error_answer_required)
             return
         }
         _state.value = _state.value.copy(submitting = true)
@@ -86,9 +90,9 @@ class DailyQuestionViewModel @Inject constructor(
             repository.answer(qid, content.trim()).fold(
                 onSuccess = {
                     _state.value = DailyQuestionUiState(question = it)
-                    _message.value = if (it.revealed) "答案揭晓啦" else "已保存，等 TA 回答后一起揭晓"
+                    _message.value = if (it.revealed) uiText(R.string.question_msg_revealed) else uiText(R.string.question_msg_answered)
                 },
-                onFailure = { _state.value = _state.value.copy(submitting = false); _message.value = it.message ?: "提交失败" },
+                onFailure = { _state.value = _state.value.copy(submitting = false); _message.value = it.toUiText() },
             )
         }
     }

@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.CottageWebSocket
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
@@ -26,6 +27,8 @@ import com.lovejournal.app.data.remote.dto.WatchSourceListResponse
 import com.lovejournal.app.data.remote.dto.WatchSourcePatchRequest
 import com.lovejournal.app.data.remote.dto.WatchSourceResponse
 import com.lovejournal.app.data.remote.dto.WatchStateResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -137,7 +140,7 @@ class WatchRepository @Inject constructor(
     }
     suspend fun deleteSource(wsid: String): Result<Unit> = runCatching {
         val resp = api.deleteWatchSource(wsid)
-        if (!resp.isSuccessful) throw IllegalStateException("删除失败 (${resp.code()})")
+        if (!resp.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
     suspend fun invite(): Result<Unit> = runCatching {

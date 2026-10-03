@@ -19,8 +19,12 @@ package com.lovejournal.app.ui.cottage.plans
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.PlanResponse
 import com.lovejournal.app.data.repository.PlanRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +40,7 @@ data class PlanUiState(
     val completed: Int = 0,
     val cancelled: Int = 0,
     val showDone: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -47,8 +51,8 @@ class PlanViewModel @Inject constructor(
     private val _state = MutableStateFlow(PlanUiState())
     val state: StateFlow<PlanUiState> = _state.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -70,7 +74,7 @@ class PlanViewModel @Inject constructor(
                     )
                 },
                 onFailure = {
-                    _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败")
+                    _state.value = _state.value.copy(loading = false, error = it.toUiText())
                 },
             )
         }
@@ -89,7 +93,7 @@ class PlanViewModel @Inject constructor(
         onDone: () -> Unit,
     ) {
         if (title.isBlank()) {
-            _message.value = "请填写计划标题"
+            _message.value = uiText(R.string.plan_error_title_required)
             return
         }
         viewModelScope.launch {
@@ -100,8 +104,8 @@ class PlanViewModel @Inject constructor(
                 planDate = planDate,
                 priority = priority,
             ).fold(
-                onSuccess = { _message.value = "已添加计划"; onDone(); refresh() },
-                onFailure = { _message.value = it.message ?: "添加失败" },
+                onSuccess = { _message.value = uiText(R.string.plan_msg_added); onDone(); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -115,7 +119,7 @@ class PlanViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = { refresh() },
-                onFailure = { _message.value = it.message ?: "操作失败" },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }
@@ -123,8 +127,8 @@ class PlanViewModel @Inject constructor(
     fun delete(plan: PlanResponse) {
         viewModelScope.launch {
             repository.delete(plan.pid).fold(
-                onSuccess = { _message.value = "已删除"; refresh() },
-                onFailure = { _message.value = it.message ?: "删除失败" },
+                onSuccess = { _message.value = uiText(R.string.msg_deleted); refresh() },
+                onFailure = { _message.value = it.toUiText() },
             )
         }
     }

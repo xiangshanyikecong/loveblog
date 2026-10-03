@@ -17,9 +17,12 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.EventCreateRequest
 import com.lovejournal.app.data.remote.dto.EventResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,7 +47,7 @@ class EventsRepository @Inject constructor(
     suspend fun delete(eid: String): Result<Unit> = runCatching {
         val response = api.deleteEvent(eid)
         if (!response.isSuccessful) {
-            throw IllegalStateException("删除失败 (${response.code()})")
+            throw UiTextException(uiText(R.string.msg_delete_failed))
         }
         Unit
     }

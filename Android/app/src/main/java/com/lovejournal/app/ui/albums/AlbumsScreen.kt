@@ -60,11 +60,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.stringResource
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.AlbumDetail
 import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSectionTitle
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun AlbumsScreen(viewModel: AlbumsViewModel = hiltViewModel()) {
@@ -73,20 +76,20 @@ fun AlbumsScreen(viewModel: AlbumsViewModel = hiltViewModel()) {
     var deleting by remember { mutableStateOf(false) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { it?.let(viewModel::upload) }
     BackHandler(state.detail != null) { viewModel.closeDetail() }
-    state.message?.let { message -> AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text("确定") } }, text = { Text(message) }) }
-    if (deleting) AlertDialog(onDismissRequest = { deleting = false }, title = { Text("删除相册？") }, text = { Text("删除后可在回收站恢复。") }, confirmButton = { TextButton(onClick = { deleting = false; viewModel.deleteCurrent() }) { Text("删除") } }, dismissButton = { TextButton(onClick = { deleting = false }) { Text("取消") } })
+    state.message?.let { message -> AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text(stringResource(R.string.btn_confirm)) } }, text = { Text(message.asString()) }) }
+    if (deleting) AlertDialog(onDismissRequest = { deleting = false }, title = { Text(stringResource(R.string.albums_delete_title)) }, text = { Text(stringResource(R.string.albums_delete_msg)) }, confirmButton = { TextButton(onClick = { deleting = false; viewModel.deleteCurrent() }) { Text(stringResource(R.string.btn_delete)) } }, dismissButton = { TextButton(onClick = { deleting = false }) { Text(stringResource(R.string.btn_cancel)) } })
     if (editing) AlbumEditor(state.detail, state.pendingImageUrl, state.uploading, { picker.launch("image/*") }, { editing = false }) { title, description, tags -> viewModel.save(title, description, tags); editing = false }
 
-    Scaffold(floatingActionButton = { if (state.detail == null) ExtendedFloatingActionButton(onClick = { editing = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text("新建相册") }) }) { padding ->
+    Scaffold(floatingActionButton = { if (state.detail == null) ExtendedFloatingActionButton(onClick = { editing = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text(stringResource(R.string.albums_new_album)) }) }) { padding ->
         if (state.detail != null) AlbumDetailContent(state.detail!!, viewModel::mediaUrl, viewModel::closeDetail, { editing = true }, { deleting = true }, viewModel::comment, Modifier.padding(padding))
         else LovePage(modifier = Modifier.padding(padding)) {
             LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                item { LoveSectionTitle("我们的相册", "收藏每一次见面和共同经历") }
+                item { LoveSectionTitle(stringResource(R.string.albums_title), stringResource(R.string.albums_subtitle)) }
                 if (state.loading) item { CircularProgressIndicator() }
-                state.error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-                if (!state.loading && state.albums.isEmpty()) item { LoveEmptyState("📷", "还没有相册", "选几张照片，创建你们的第一本相册") }
+                state.error?.let { item { Text(it.asString(), color = MaterialTheme.colorScheme.error) } }
+                if (!state.loading && state.albums.isEmpty()) item { LoveEmptyState("📷", stringResource(R.string.albums_no_albums), stringResource(R.string.albums_no_albums_sub)) }
                 items(state.albums, key = { it.alb_id }) { album -> LoveSoftCard(Modifier.fillMaxWidth().clickable { viewModel.open(album.alb_id) }) {
-                    Column { album.cover_url?.let { AsyncImage(viewModel.mediaUrl(it), null, Modifier.fillMaxWidth().height(190.dp), contentScale = ContentScale.Crop) }; Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) { Text(album.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); album.description?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Text("${album.media_count} 张照片${album.tags.takeIf { it.isNotEmpty() }?.let { tags -> " · ${tags.joinToString(" · ")}" }.orEmpty()}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) } }
+                    Column { album.cover_url?.let { AsyncImage(viewModel.mediaUrl(it), null, Modifier.fillMaxWidth().height(190.dp), contentScale = ContentScale.Crop) }; Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) { Text(album.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); album.description?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }; Text(stringResource(R.string.albums_photos_count, album.media_count) + album.tags.takeIf { it.isNotEmpty() }?.let { tags -> " · ${tags.joinToString(" · ")}" }.orEmpty(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) } }
                 } }
             }
         }
@@ -97,11 +100,11 @@ fun AlbumsScreen(viewModel: AlbumsViewModel = hiltViewModel()) {
 private fun AlbumDetailContent(detail: AlbumDetail, mediaUrl: (String?) -> String?, onBack: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit, onComment: (String) -> Unit, modifier: Modifier) {
     var comment by remember(detail.alb_id) { mutableStateOf("") }
     LazyColumn(modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") }; Row { IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, "编辑") }; IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "删除") } } }; Text(detail.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); detail.description?.let { Text(it) } }
+        item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back)) }; Row { IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, stringResource(R.string.btn_edit)) }; IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, stringResource(R.string.btn_delete)) } } }; Text(detail.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); detail.description?.let { Text(it) } }
         items(detail.media_items, key = { it.media_id }) { media -> AsyncImage(mediaUrl(media.thumbnail_url ?: media.file_url), null, Modifier.fillMaxWidth().height(240.dp), contentScale = ContentScale.Crop) }
-        item { Text("评论", fontWeight = FontWeight.Bold) }
-        items(detail.comments, key = { it.cid }) { Text("${it.author_nickname ?: "用户"}：${it.content}") }
-        item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(comment, { comment = it }, label = { Text("写评论") }, modifier = Modifier.weight(1f)); Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text("发送") } } }
+        item { Text(stringResource(R.string.albums_comment), fontWeight = FontWeight.Bold) }
+        items(detail.comments, key = { it.cid }) { Text("${it.author_nickname ?: stringResource(R.string.albums_user)}：${it.content}") }
+        item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(comment, { comment = it }, label = { Text(stringResource(R.string.albums_write_comment)) }, modifier = Modifier.weight(1f)); Button(onClick = { onComment(comment); comment = "" }, enabled = comment.isNotBlank()) { Text(stringResource(R.string.btn_send)) } } }
     }
 }
 
@@ -110,5 +113,5 @@ private fun AlbumEditor(detail: AlbumDetail?, pendingImageUrl: String?, uploadin
     var title by remember(detail?.alb_id) { mutableStateOf(detail?.title.orEmpty()) }
     var description by remember(detail?.alb_id) { mutableStateOf(detail?.description.orEmpty()) }
     var tags by remember(detail?.alb_id) { mutableStateOf(detail?.tags?.joinToString(",").orEmpty()) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(if (detail == null) "新建相册" else "编辑相册") }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(title, { title = it }, label = { Text("标题") }); OutlinedTextField(description, { description = it }, label = { Text("描述") }); OutlinedTextField(tags, { tags = it }, label = { Text("标签，逗号分隔") }); OutlinedButton(onClick = onPick, enabled = !uploading) { Text(if (uploading) "上传中…" else if (pendingImageUrl != null) "已选图片，重新选择" else "从相册选择图片") } } }, confirmButton = { Button(onClick = { onSave(title, description, tags) }, enabled = !uploading) { Text("保存") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } })
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(if (detail == null) stringResource(R.string.albums_new_title) else stringResource(R.string.albums_edit_title)) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedTextField(title, { title = it }, label = { Text(stringResource(R.string.albums_title_label)) }); OutlinedTextField(description, { description = it }, label = { Text(stringResource(R.string.albums_desc_label)) }); OutlinedTextField(tags, { tags = it }, label = { Text(stringResource(R.string.albums_tags_label)) }); OutlinedButton(onClick = onPick, enabled = !uploading) { Text(if (uploading) stringResource(R.string.status_uploading) else if (pendingImageUrl != null) stringResource(R.string.albums_image_picked) else stringResource(R.string.albums_pick_image)) } } }, confirmButton = { Button(onClick = { onSave(title, description, tags) }, enabled = !uploading) { Text(stringResource(R.string.btn_save)) } }, dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } })
 }

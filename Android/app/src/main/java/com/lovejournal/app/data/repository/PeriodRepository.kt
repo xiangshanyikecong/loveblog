@@ -17,11 +17,14 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.PeriodCreateRequest
 import com.lovejournal.app.data.remote.dto.PeriodListResponse
 import com.lovejournal.app.data.remote.dto.PeriodResponse
 import com.lovejournal.app.data.remote.dto.PeriodSummaryResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -48,7 +51,7 @@ class PeriodRepository @Inject constructor(
 
     suspend fun delete(pcid: String): Result<Unit> = runCatching {
         val response = api.deletePeriod(pcid)
-        if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 

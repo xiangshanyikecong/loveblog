@@ -5,11 +5,12 @@
 
 ## 技术栈
 
-- Kotlin 1.9 · Jetpack Compose（Material3）
+- Kotlin 2.0 · Jetpack Compose（Material3）
 - Hilt（依赖注入）
 - Retrofit + OkHttp + Kotlinx Serialization
 - Room（离线缓存）+ DataStore（会话）
-- WorkManager（离线编辑自动同步）
+- Paging 3（时间线动态流按页惰性加载）
+- WorkManager（离线编辑自动同步，指数退避 + 死信）
 - 系统相机/相册（拍照/选图上传）
 - Glance（桌面小组件：在一起天数）
 - Firebase Cloud Messaging（推送，需正式构建提供 Firebase 配置）
@@ -34,7 +35,9 @@ di/           Hilt 模块（网络 / 数据库）
 
 发消息 / 心情打卡会先乐观写入 Room（标记 `pendingSync`），同时把变更入队到
 `sync_queue` 表。`SyncWorker`（周期 15 分钟 + 写入后立即触发一次）在联网时重放队列、
-用服务端返回的记录覆盖本地乐观行，失败自动重试。
+用服务端返回的记录覆盖本地乐观行。失败按 `SyncRetryPolicy` 分类处理：暂时性失败
+（断网 / 5xx）按指数退避（1 分钟起步、上限 6 小时、最多 8 次）重试；永久失败
+（4xx / 载荷漂移）或重试耗尽的条目转死信（保留诊断信息，不再重放）。
 
 ### 鉴权
 

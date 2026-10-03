@@ -33,6 +33,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.ListenHistoryItem
 import com.lovejournal.app.data.remote.dto.MyPlaylistDetail
@@ -46,6 +47,9 @@ import com.lovejournal.app.data.remote.dto.SongMeta
 import com.lovejournal.app.data.remote.dto.ToplistItem
 import com.lovejournal.app.data.repository.ListenRepository
 import com.lovejournal.app.data.repository.ListenWsEvent
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.FileNotFoundException
 import javax.inject.Inject
@@ -66,15 +70,15 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import okio.source
 
-enum class ListenLibraryTab(val title: String) {
-    Search("搜索"),
-    Discover("推荐"),
-    Playlists("歌单"),
-    Charts("榜单"),
-    History("历史"),
-    Local("本地"),
-    Mine("我的"),
-    Queue("队列"),
+enum class ListenLibraryTab(val titleRes: Int) {
+    Search(R.string.listen_tab_search),
+    Discover(R.string.listen_tab_discover),
+    Playlists(R.string.listen_tab_playlists),
+    Charts(R.string.listen_tab_charts),
+    History(R.string.listen_tab_history),
+    Local(R.string.listen_tab_local),
+    Mine(R.string.listen_tab_mine),
+    Queue(R.string.listen_tab_queue),
 }
 
 data class ListenUiState(
@@ -116,8 +120,8 @@ data class ListenUiState(
     val myPlaylists: List<MyPlaylistDetail> = emptyList(),
     val myPlaylistsLoading: Boolean = false,
     val selectedMyPlaylist: MyPlaylistDetail? = null,
-    val message: String? = null,
-    val error: String? = null,
+    val message: UiText? = null,
+    val error: UiText? = null,
 ) {
     val current: RoomCurrent?
         get() = roomState?.current
@@ -173,7 +177,7 @@ class ListenViewModel @Inject constructor(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                _state.update { it.copy(message = error.message ?: "播放失败") }
+                _state.update { it.copy(message = error.toUiText()) }
             }
         })
     }
@@ -306,7 +310,7 @@ class ListenViewModel @Inject constructor(
                         it.copy(
                             localUploading = false,
                             localTracks = listOf(song) + it.localTracks,
-                            message = "本地歌曲已上传",
+                            message = uiText(R.string.listen_upload_success),
                         )
                     }
                 }
@@ -323,7 +327,7 @@ class ListenViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             localTracks = it.localTracks.filterNot { item -> item.songId == song.songId },
-                            message = "已删除本地歌曲",
+                            message = uiText(R.string.listen_delete_success),
                         )
                     }
                 }
@@ -380,7 +384,7 @@ class ListenViewModel @Inject constructor(
                             likedSongIds = ids,
                             likedTracks = if (liked) it.likedTracks.filterNot { s -> s.songId == song.songId }
                             else listOf(song) + it.likedTracks.filterNot { s -> s.songId == song.songId },
-                            message = if (liked) "已取消收藏" else "已收藏到「我喜欢」",
+                            message = if (liked) uiText(R.string.listen_msg_unliked) else uiText(R.string.listen_msg_liked),
                         )
                     }
                 }
@@ -417,7 +421,7 @@ class ListenViewModel @Inject constructor(
         viewModelScope.launch {
             repo.createMyPlaylist(clean)
                 .onSuccess {
-                    _state.update { it.copy(message = "歌单已创建") }
+                    _state.update { it.copy(message = uiText(R.string.listen_msg_playlist_created)) }
                     loadMyPlaylists()
                 }
                 .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
@@ -432,7 +436,7 @@ class ListenViewModel @Inject constructor(
                         it.copy(
                             myPlaylists = it.myPlaylists.filterNot { p -> p.pid == pid },
                             selectedMyPlaylist = it.selectedMyPlaylist?.takeIf { p -> p.pid != pid },
-                            message = "歌单已删除",
+                            message = uiText(R.string.listen_msg_playlist_deleted),
                         )
                     }
                 }
@@ -443,7 +447,7 @@ class ListenViewModel @Inject constructor(
     fun addCurrentToMyPlaylist(pid: String, song: SongMeta) {
         viewModelScope.launch {
             repo.addTrackToMyPlaylist(pid, song)
-                .onSuccess { _state.update { it.copy(message = "已加入歌单") } }
+                .onSuccess { _state.update { it.copy(message = uiText(R.string.listen_msg_added_to_playlist)) } }
                 .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
         }
     }
@@ -460,7 +464,7 @@ class ListenViewModel @Inject constructor(
                                     trackCount = (detail.trackCount - 1).coerceAtLeast(0),
                                 )
                             },
-                            message = "已从歌单移除",
+                            message = uiText(R.string.listen_msg_removed_from_playlist),
                         )
                     }
                 }
@@ -473,7 +477,7 @@ class ListenViewModel @Inject constructor(
         viewModelScope.launch {
             repo.playMyPlaylist(pid)
                 .onSuccess {
-                    _state.update { it.copy(message = "歌单已加入共同队列") }
+                    _state.update { it.copy(message = uiText(R.string.listen_msg_playlist_queued)) }
                     loadState(silent = true)
                 }
                 .onFailure { err -> _state.update { it.copy(message = friendlyError(err)) } }
@@ -629,7 +633,7 @@ class ListenViewModel @Inject constructor(
     fun appendQueue(song: SongMeta) {
         if (song.songId.isBlank()) return
         repo.queueAppend(song)
-        _state.update { it.copy(message = "已加入队列") }
+        _state.update { it.copy(message = uiText(R.string.listen_added_to_queue)) }
     }
 
     fun removeQueue(index: Int) {
@@ -699,7 +703,7 @@ class ListenViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 resolvingUrl = false,
-                                message = if (response.errorKind != null) "这首歌暂时不能播放" else "未获取到播放地址",
+                                message = if (response.errorKind != null) uiText(R.string.listen_song_unavailable) else uiText(R.string.listen_no_play_url),
                             )
                         }
                     } else {
@@ -798,14 +802,14 @@ class ListenViewModel @Inject constructor(
         return clean.toRequestBody("text/plain".toMediaTypeOrNull())
     }
 
-    private fun friendlyError(error: Throwable): String {
+    private fun friendlyError(error: Throwable): UiText {
         val raw = error.message.orEmpty()
         return when {
-            raw.contains("409", ignoreCase = true) -> "请先登录网易云，或播放本地上传歌曲"
-            raw.contains("403", ignoreCase = true) -> "当前账号没有权限访问这个内容"
-            raw.contains("404", ignoreCase = true) -> "内容不存在或已被删除"
-            raw.isBlank() -> "操作失败，请稍后再试"
-            else -> raw
+            raw.contains("409", ignoreCase = true) -> uiText(R.string.listen_error_login_netease)
+            raw.contains("403", ignoreCase = true) -> uiText(R.string.listen_error_no_permission)
+            raw.contains("404", ignoreCase = true) -> uiText(R.string.listen_error_not_found)
+            raw.isBlank() -> uiText(R.string.msg_operation_failed)
+            else -> UiText.Raw(raw)
         }
     }
 

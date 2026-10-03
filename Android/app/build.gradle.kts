@@ -1,8 +1,22 @@
 import org.gradle.api.artifacts.ResolvedArtifact
 
+// 版本号统一取仓库根目录 VERSION（如 1.0.4-beta.5）：
+// versionName 原样使用；versionCode 按「主.次.补丁」三位生成，保证单调递增，
+// 避免手改遗漏导致降级安装失败。
+val rootVersion: String = run {
+    val file = rootProject.layout.projectDirectory.file("../VERSION").asFile
+    file.takeIf { it.exists() }?.readText()?.trim().orEmpty().ifBlank { "1.0.0" }
+}
+val appVersionName = rootVersion
+val appVersionCode = rootVersion.split('-').first().split('.')
+    .map { it.toIntOrNull() ?: 0 }
+    .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
+    .coerceAtLeast(1)
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
@@ -17,8 +31,8 @@ android {
         applicationId = "com.lovejournal.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -60,10 +74,6 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -87,6 +97,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
 
     implementation(libs.androidx.navigation.compose)
+
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

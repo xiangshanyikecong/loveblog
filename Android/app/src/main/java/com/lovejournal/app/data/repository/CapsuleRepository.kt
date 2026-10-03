@@ -17,9 +17,12 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.CapsuleCreateRequest
 import com.lovejournal.app.data.remote.dto.CapsuleResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,7 +43,7 @@ class CapsuleRepository @Inject constructor(
 
     suspend fun delete(uuid: String): Result<Unit> = runCatching {
         val response = api.deleteCapsule(uuid)
-        if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 }

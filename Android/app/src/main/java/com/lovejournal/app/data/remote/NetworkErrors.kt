@@ -3,8 +3,9 @@
  * Copyright (C) 2026 Love Journal Contributors
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, version 3 of the License.
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +18,9 @@
 
 package com.lovejournal.app.data.remote
 
+import com.lovejournal.app.R
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -31,39 +35,38 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Maps low-level network failures to short, actionable Chinese messages for the
- * login / test-connection UI. Raw OkHttp English strings are intentionally
- * avoided — they are meaningless to most users on a self-hosted setup.
+ * Maps low-level network failures to localized [UiText] for the login /
+ * test-connection UI. Raw OkHttp English strings are intentionally avoided —
+ * they are meaningless to most users on a self-hosted setup. Server-provided
+ * `detail` messages are surfaced verbatim as [UiText.Raw].
  */
 object NetworkErrors {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun toUserMessage(throwable: Throwable): String {
+    fun toUiText(throwable: Throwable): UiText {
         val root = throwable.rootCause()
         return when (root) {
-            is UnknownHostException ->
-                "无法解析服务器地址，请检查域名或 IP 是否输入正确"
-            is ConnectException ->
-                "无法连接服务器，请检查地址、端口（默认 8000）与 Wi‑Fi/局域网"
-            is SocketTimeoutException ->
-                "连接超时，请确认手机与服务器在同一网络且后端已启动"
-            is SSLHandshakeException ->
-                "HTTPS 握手失败。自部署若无 TLS，请改用 http:// 开头"
-            is SSLException ->
-                "安全连接失败，请确认协议（http/https）与证书配置是否正确"
-            is HttpException -> root.detailMessage() ?: run {
+            is UnknownHostException -> uiText(R.string.error_unknown_host)
+            is ConnectException -> uiText(R.string.error_connect)
+            is SocketTimeoutException -> uiText(R.string.error_timeout)
+            is SSLHandshakeException -> uiText(R.string.error_ssl_handshake)
+            is SSLException -> uiText(R.string.error_ssl)
+            is HttpException -> root.detailMessage()?.let { UiText.Raw(it) } ?: run {
                 when (root.code()) {
-                    401 -> "未授权，请检查用户名与密码"
-                    403 -> "访问被拒绝"
-                    404 -> "服务器可达，但未找到接口（请确认地址含端口 :8000）"
-                    else -> "服务器返回错误 (${root.code()})"
+                    401 -> uiText(R.string.error_401)
+                    403 -> uiText(R.string.error_403)
+                    404 -> uiText(R.string.error_404)
+                    else -> uiText(R.string.error_server_code, root.code())
                 }
             }
             is IOException ->
-                "网络异常：${root.message?.takeIf { it.isNotBlank() } ?: "请检查网络连接"}"
+                root.message?.takeIf { it.isNotBlank() }
+                    ?.let { uiText(R.string.error_network, it) }
+                    ?: uiText(R.string.error_network_fallback)
             else ->
-                throwable.message?.takeIf { it.isNotBlank() } ?: "操作失败，请稍后重试"
+                throwable.message?.takeIf { it.isNotBlank() }?.let { UiText.Raw(it) }
+                    ?: uiText(R.string.msg_operation_failed)
         }
     }
 

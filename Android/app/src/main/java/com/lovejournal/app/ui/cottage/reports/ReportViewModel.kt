@@ -22,6 +22,8 @@ import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.remote.dto.AnnualReportResponse
 import com.lovejournal.app.data.remote.dto.CottageMonthlyReportResponse
 import com.lovejournal.app.data.repository.ReportRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,11 +38,11 @@ data class ReportUiState(
     val year: Int,
     val month: Int,
     val report: CottageMonthlyReportResponse? = null,
-    val error: String? = null,
+    val error: UiText? = null,
     // ---- 恋爱年报 ----
     val annualLoading: Boolean = false,
     val annual: AnnualReportResponse? = null,
-    val annualError: String? = null,
+    val annualError: UiText? = null,
 )
 
 @HiltViewModel
@@ -63,7 +65,7 @@ class ReportViewModel @Inject constructor(
             _state.value = _state.value.copy(annualLoading = true, annualError = null)
             repository.annual(year).fold(
                 onSuccess = { _state.value = _state.value.copy(annualLoading = false, annual = it) },
-                onFailure = { _state.value = _state.value.copy(annualLoading = false, annualError = it.message ?: "年报加载失败") },
+                onFailure = { _state.value = _state.value.copy(annualLoading = false, annualError = it.toUiText()) },
             )
         }
     }
@@ -74,7 +76,7 @@ class ReportViewModel @Inject constructor(
         viewModelScope.launch {
             repository.monthly(current.year, current.month).fold(
                 onSuccess = { _state.value = _state.value.copy(loading = false, report = it, error = null) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }

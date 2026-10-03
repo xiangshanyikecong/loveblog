@@ -17,10 +17,13 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.ReminderCreateRequest
 import com.lovejournal.app.data.remote.dto.ReminderListResponse
 import com.lovejournal.app.data.remote.dto.ReminderResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.OffsetDateTime
@@ -56,7 +59,7 @@ class ReminderRepository @Inject constructor(
 
     suspend fun delete(rid: String): Result<Unit> = runCatching {
         val response = api.deleteReminder(rid)
-        if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 

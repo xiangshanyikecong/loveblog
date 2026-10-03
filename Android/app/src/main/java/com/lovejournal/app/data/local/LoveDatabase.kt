@@ -35,7 +35,7 @@ import com.lovejournal.app.data.local.entity.SyncQueueEntity
         EventEntity::class,
         SyncQueueEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class LoveDatabase : RoomDatabase() {

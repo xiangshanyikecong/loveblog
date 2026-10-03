@@ -39,36 +39,42 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun AdminToolsScreen(viewModel: AdminToolsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    state.message?.let { AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text("确定") } }, text = { Text(it) }) }
+    state.message?.let { AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text(stringResource(R.string.btn_confirm)) } }, text = { Text(it.asString()) }) }
     LovePage(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("服务器工具", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text("仅管理员接口会返回完整内容；普通伴侣账号看到无权限提示属于正常行为。")
+        Text(stringResource(R.string.admin_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.admin_desc))
         if (state.loading) CircularProgressIndicator()
-        AdminCard("系统健康", state.health)
-        AdminCard("存储统计", state.storage)
-        AdminCard("存储用量明细", state.storageUsage)
-        AdminCard("健康检查历史（近 24 小时）", state.healthHistory)
+        AdminCard(stringResource(R.string.admin_health), state.health)
+        AdminCard(stringResource(R.string.admin_storage), state.storage)
+        AdminCard(stringResource(R.string.admin_storage_usage), state.storageUsage)
+        AdminCard(stringResource(R.string.admin_health_history), state.healthHistory)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = viewModel::remediateNow, enabled = !state.remediating, modifier = Modifier.weight(1f)) {
-                if (state.remediating) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text("自动修复健康问题")
+                if (state.remediating) CircularProgressIndicator(Modifier.padding(2.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.admin_remediate))
             }
         }
-        AdminCard("备份计划与历史", state.backup)
-        Button(onClick = viewModel::runBackup, modifier = Modifier.fillMaxWidth()) { Text("立即执行自动备份") }
-        AdminCard("安全用户", state.users)
-        AdminCard("审计日志", state.audit)
-        OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth()) { Text("刷新") }
+        AdminCard(stringResource(R.string.admin_backup), state.backup)
+        Button(onClick = viewModel::runBackup, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.admin_run_backup)) }
+        AdminCard(stringResource(R.string.admin_users), state.users)
+        AdminCard(stringResource(R.string.admin_audit), state.audit)
+        OutlinedButton(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_refresh)) }
         LaunchedEffect(Unit) { viewModel.loadMore() }
         }
     }
 }
 
-@Composable private fun AdminCard(title: String, value: String) { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text(title, fontWeight = FontWeight.Bold); Text(value.ifBlank { "暂无数据" }, style = MaterialTheme.typography.bodySmall) } } }
+@Composable private fun AdminCard(title: String, value: UiText?) { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text(title, fontWeight = FontWeight.Bold); Text(value?.asString() ?: stringResource(R.string.msg_no_data), style = MaterialTheme.typography.bodySmall) } } }
+
+@Composable private fun AdminCard(title: String, lines: List<UiText>) { Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text(title, fontWeight = FontWeight.Bold); lines.forEach { Text(it.asString(), style = MaterialTheme.typography.bodySmall) } } } }

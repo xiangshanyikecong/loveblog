@@ -55,13 +55,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CapsuleResponse
 import com.lovejournal.app.ui.components.LoveEmptyState
 import com.lovejournal.app.ui.components.LoveSoftCard
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 import java.time.Instant
 import java.time.LocalDate
@@ -89,7 +92,7 @@ fun CapsuleScreen(viewModel: CapsuleViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -100,11 +103,11 @@ fun CapsuleScreen(viewModel: CapsuleViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        LoveEmptyState("💊", "还没有时间胶囊", "写一封给未来的你们吧", actionLabel = "写胶囊", onAction = { editorOpen = true })
+                        LoveEmptyState("💊", stringResource(R.string.capsules_no_capsules), stringResource(R.string.capsules_no_capsules_sub), actionLabel = stringResource(R.string.capsules_write), onAction = { editorOpen = true })
                     }
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -123,7 +126,7 @@ fun CapsuleScreen(viewModel: CapsuleViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "写一封")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.capsules_write_one))
         }
     }
 
@@ -145,12 +148,12 @@ private fun CapsuleCard(capsule: CapsuleResponse, onDelete: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    if (capsule.is_open) "已开启" else "未开启 🔒",
+                    if (capsule.is_open) stringResource(R.string.capsules_opened) else stringResource(R.string.capsules_not_opened),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (capsule.is_open) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 )
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.btn_delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
             if (capsule.is_open) {
@@ -159,14 +162,14 @@ private fun CapsuleCard(capsule: CapsuleResponse, onDelete: () -> Unit) {
                 }
                 if (capsule.has_media) {
                     Text(
-                        "含语音 / 视频附件（请在网页端查看）",
+                        stringResource(R.string.capsules_media_hint),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             } else {
                 Text(
-                    "将于 ${formatDateTime(capsule.open_at)} 开启",
+                    stringResource(R.string.capsules_open_at, formatDateTime(capsule.open_at)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -193,17 +196,17 @@ private fun CapsuleEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("写给未来") },
+        title = { Text(stringResource(R.string.capsules_write_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("想对未来的你们说的话") },
+                    label = { Text(stringResource(R.string.capsules_content_label)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text("开启日期", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.capsules_open_date), style = MaterialTheme.typography.labelMedium)
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(openDate.toString())
                 }
@@ -213,9 +216,9 @@ private fun CapsuleEditorDialog(
             TextButton(onClick = {
                 val iso = openDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toString()
                 onSave(content, iso)
-            }) { Text("封存") }
+            }) { Text(stringResource(R.string.btn_seal)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 
     if (showDatePicker) {
@@ -230,9 +233,9 @@ private fun CapsuleEditorDialog(
                         openDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
                     }
                     showDatePicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = dateState)
         }

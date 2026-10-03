@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.remote.dto.SearchResultItem
 import com.lovejournal.app.data.repository.SearchRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +36,7 @@ data class SearchUiState(
     val items: List<SearchResultItem> = emptyList(),
     val total: Int = 0,
     val searched: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 @HiltViewModel
@@ -66,7 +68,7 @@ class SearchViewModel @Inject constructor(
                 onFailure = {
                     _state.value = _state.value.copy(
                         loading = false,
-                        error = it.message ?: "搜索失败",
+                        error = it.toUiText(),
                         searched = true,
                     )
                 },

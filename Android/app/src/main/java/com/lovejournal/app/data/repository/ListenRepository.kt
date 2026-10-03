@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.CottageWebSocket
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
@@ -41,6 +42,8 @@ import com.lovejournal.app.data.remote.dto.SongMeta
 import com.lovejournal.app.data.remote.dto.SongSearchResponse
 import com.lovejournal.app.data.remote.dto.SongUrlResponse
 import com.lovejournal.app.data.remote.dto.ToplistResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -201,7 +204,7 @@ class ListenRepository @Inject constructor(
 
     suspend fun removeLiked(songId: String): Result<Unit> = runCatching {
         val response = api.listenRemoveLiked(songId)
-        if (!response.isSuccessful) error("取消收藏失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_operation_failed))
         Unit
     }
 
@@ -213,19 +216,19 @@ class ListenRepository @Inject constructor(
 
     suspend fun createMyPlaylist(name: String, description: String? = null): Result<Unit> = runCatching {
         val response = api.listenCreateMyPlaylist(MyPlaylistCreateRequest(name = name, description = description))
-        if (!response.isSuccessful) error("创建歌单失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_save_failed))
         Unit
     }
 
     suspend fun updateMyPlaylist(pid: String, name: String?, description: String? = null): Result<Unit> = runCatching {
         val response = api.listenUpdateMyPlaylist(pid, MyPlaylistUpdateRequest(name = name, description = description))
-        if (!response.isSuccessful) error("更新歌单失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_save_failed))
         Unit
     }
 
     suspend fun deleteMyPlaylist(pid: String): Result<Unit> = runCatching {
         val response = api.listenDeleteMyPlaylist(pid)
-        if (!response.isSuccessful) error("删除歌单失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 
@@ -242,10 +245,10 @@ class ListenRepository @Inject constructor(
             ),
         )
         if (!response.isSuccessful) {
-            error(
+            throw UiTextException(
                 when (response.code()) {
-                    409 -> "这首歌已经在歌单里了"
-                    else -> "添加歌曲失败: HTTP ${response.code()}"
+                    409 -> uiText(R.string.listen_error_song_in_playlist)
+                    else -> uiText(R.string.msg_operation_failed)
                 },
             )
         }
@@ -254,13 +257,13 @@ class ListenRepository @Inject constructor(
 
     suspend fun removeTrackFromMyPlaylist(pid: String, songId: String): Result<Unit> = runCatching {
         val response = api.listenRemoveTrackFromMyPlaylist(pid, songId)
-        if (!response.isSuccessful) error("移除歌曲失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_operation_failed))
         Unit
     }
 
     suspend fun playMyPlaylist(pid: String): Result<Unit> = runCatching {
         val response = api.listenPlayMyPlaylist(pid)
-        if (!response.isSuccessful) error("播放歌单失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.listen_play_failed))
         Unit
     }
 
@@ -280,7 +283,7 @@ class ListenRepository @Inject constructor(
     suspend fun deleteLocalTrack(songId: String): Result<Unit> = runCatching {
         val tid = songId.removePrefix("local:")
         val response = api.deleteListenLocalTrack(tid)
-        if (!response.isSuccessful) error("删除失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 
@@ -300,7 +303,7 @@ class ListenRepository @Inject constructor(
 
     suspend fun logoutNetease(): Result<Unit> = runCatching {
         val response = api.listenLogout()
-        if (!response.isSuccessful) error("退出网易云失败: HTTP ${response.code()}")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_operation_failed))
         Unit
     }
 

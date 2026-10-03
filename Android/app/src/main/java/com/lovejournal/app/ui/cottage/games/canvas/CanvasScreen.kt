@@ -59,11 +59,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
+import com.lovejournal.app.ui.components.asString
 
 private val palette = listOf(
     "#1e293b", "#ef4444", "#f59e0b", "#10b981",
@@ -80,7 +83,7 @@ fun CanvasScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.toast.collect { snackbar.showSnackbar(it) }
+        viewModel.toast.collect { snackbar.showSnackbar(it.asString(context)) }
     }
 
     var currentSid by remember { mutableStateOf<String?>(null) }
@@ -101,9 +104,9 @@ fun CanvasScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("协作画板", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.game_canvas), style = MaterialTheme.typography.titleLarge)
                 Text(
-                    if (state.partnerOnline) "对方在线" else "对方不在线",
+                    if (state.partnerOnline) stringResource(R.string.canvas_partner_online) else stringResource(R.string.canvas_partner_offline),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (state.partnerOnline) Color(0xFF16A34A) else Color(0xFF64748B),
                     modifier = Modifier
@@ -115,7 +118,7 @@ fun CanvasScreen(
                 )
             }
             Text(
-                "和 Ta 一起在同一块画布上涂鸦，落笔实时同步。",
+                stringResource(R.string.canvas_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -141,7 +144,7 @@ fun CanvasScreen(
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("粗细", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.canvas_thickness), style = MaterialTheme.typography.labelSmall)
                 Slider(
                     value = state.size,
                     onValueChange = { viewModel.setSize(it) },
@@ -166,18 +169,18 @@ fun CanvasScreen(
                         if (state.eraser) Modifier.background(Color(0xFFFDE68A), MaterialTheme.shapes.small)
                         else Modifier,
                     ),
-                ) { Text(if (state.eraser) "橡皮(开)" else "橡皮") }
-                OutlinedButton(onClick = { viewModel.undo() }) { Text("撤销") }
-                OutlinedButton(onClick = { viewModel.clear() }) { Text("清空") }
+                ) { Text(if (state.eraser) stringResource(R.string.canvas_eraser_on) else stringResource(R.string.canvas_eraser)) }
+                OutlinedButton(onClick = { viewModel.undo() }) { Text(stringResource(R.string.canvas_undo)) }
+                OutlinedButton(onClick = { viewModel.clear() }) { Text(stringResource(R.string.btn_clear)) }
                 OutlinedButton(
                     onClick = { viewModel.saveToTimeline(context.cacheDir) },
                     enabled = !state.saving,
-                ) { Text(if (state.saving) "保存中…" else "保存到时间轴") }
+                ) { Text(if (state.saving) stringResource(R.string.status_saving) else stringResource(R.string.canvas_save_timeline)) }
                 OutlinedButton(
                     onClick = { viewModel.saveToGallery(context.cacheDir) },
                     enabled = !state.savingToGallery,
-                ) { Text(if (state.savingToGallery) "保存中…" else "存入作品集") }
-                OutlinedButton(onClick = { onOpenGallery() }) { Text("作品集") }
+                ) { Text(if (state.savingToGallery) stringResource(R.string.status_saving) else stringResource(R.string.canvas_save_gallery)) }
+                OutlinedButton(onClick = { onOpenGallery() }) { Text(stringResource(R.string.canvas_gallery_btn)) }
             }
 
             // ── Canvas (no scroll — fills remaining space) ──────────────────

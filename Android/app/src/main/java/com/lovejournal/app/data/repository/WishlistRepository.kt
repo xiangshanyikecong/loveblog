@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.repository
 
 import androidx.room.withTransaction
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.local.dao.SyncQueueDao
 import com.lovejournal.app.data.local.entity.SyncQueueEntity
@@ -28,6 +29,8 @@ import com.lovejournal.app.data.remote.dto.WishCreateRequest
 import com.lovejournal.app.data.remote.dto.WishListResponse
 import com.lovejournal.app.data.remote.dto.WishUpdateRequest
 import com.lovejournal.app.sync.SyncActions
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -104,7 +107,7 @@ class WishlistRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             val uid = session.sessionFlow.first().uid
-                ?: return Result.failure(IllegalStateException("登录状态已失效"))
+                ?: return Result.failure(UiTextException(uiText(R.string.msg_session_expired)))
             val scope = serverConfig.dataScope(uid)
             db.withTransaction {
                 syncQueueDao.enqueue(
@@ -141,7 +144,7 @@ class WishlistRepository @Inject constructor(
     suspend fun delete(wid: String): Result<Unit> = runCatching {
         val response = api.deleteWish(wid)
         if (!response.isSuccessful) {
-            throw IllegalStateException("删除失败 (${response.code()})")
+            throw UiTextException(uiText(R.string.msg_delete_failed))
         }
         Unit
     }

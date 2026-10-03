@@ -42,32 +42,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CottageMonthlyReportResponse
 import com.lovejournal.app.data.remote.dto.CottageReportHighlight
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 
 private val STAT_LABELS = listOf(
-    "checkins" to "报备打卡",
-    "moods" to "心情打卡",
-    "questions" to "每日一问",
-    "answers" to "问题作答",
-    "chat_messages" to "悄悄话",
-    "wishes_created" to "新增心愿",
-    "wishes_completed" to "达成心愿",
-    "plans_created" to "新增计划",
-    "plans_completed" to "完成计划",
-    "reminders_created" to "新增提醒",
+    "checkins" to R.string.report_stat_checkins,
+    "moods" to R.string.report_stat_moods,
+    "questions" to R.string.report_stat_questions,
+    "answers" to R.string.report_stat_answers,
+    "chat_messages" to R.string.report_stat_chat_messages,
+    "wishes_created" to R.string.report_stat_wishes_created,
+    "wishes_completed" to R.string.report_stat_wishes_completed,
+    "plans_created" to R.string.report_stat_plans_created,
+    "plans_completed" to R.string.report_stat_plans_completed,
+    "reminders_created" to R.string.report_stat_reminders_created,
 )
 
+@Composable
 private fun highlightKindLabel(kind: String): String = when (kind) {
-    "wish" -> "心愿"
-    "plan" -> "计划"
-    "question" -> "每日一问"
+    "wish" -> stringResource(R.string.report_kind_wish)
+    "plan" -> stringResource(R.string.report_kind_plan)
+    "question" -> stringResource(R.string.report_kind_question)
     else -> kind
 }
 
@@ -85,15 +89,15 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = { viewModel.prevMonth() }) {
-                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "上个月")
+                Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.report_prev_month))
             }
             Text(
-                "${state.year} 年 ${state.month} 月",
+                stringResource(R.string.report_month_format, state.year, state.month),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             IconButton(onClick = { viewModel.nextMonth() }) {
-                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "下个月")
+                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.report_next_month))
             }
         }
 
@@ -105,10 +109,10 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && report == null ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 report == null ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("这个月还没有数据") }
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.report_no_data)) }
                 else -> ReportContent(report)
             }
         }
@@ -131,8 +135,8 @@ private fun ReportContent(report: CottageMonthlyReportResponse) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            rowItems.forEach { (key, label) ->
-                                StatCell(label, report.stats[key] ?: 0, Modifier.weight(1f))
+                            rowItems.forEach { (key, labelRes) ->
+                                StatCell(stringResource(labelRes), report.stats[key] ?: 0, Modifier.weight(1f))
                             }
                             if (rowItems.size == 1) Spacer(Modifier.weight(1f))
                         }
@@ -144,7 +148,7 @@ private fun ReportContent(report: CottageMonthlyReportResponse) {
 
         if (report.top_moods.isNotEmpty()) {
             item {
-                Text("常见心情", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.report_common_moods), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             item {
                 Card {
@@ -155,7 +159,7 @@ private fun ReportContent(report: CottageMonthlyReportResponse) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text("${mood.emoji ?: ""} ${mood.mood}", style = MaterialTheme.typography.bodyMedium)
-                                Text("${mood.count} 次", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.report_times, mood.count), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -165,7 +169,7 @@ private fun ReportContent(report: CottageMonthlyReportResponse) {
 
         if (report.highlights.isNotEmpty()) {
             item {
-                Text("高光时刻", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.report_highlights), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             items(report.highlights) { highlight ->
                 HighlightCard(highlight)
@@ -225,7 +229,7 @@ private fun AnnualReportSection(state: ReportUiState) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "${annual?.year ?: state.year} 年度报告",
+                    stringResource(R.string.report_annual_title, annual?.year ?: state.year),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
@@ -236,35 +240,35 @@ private fun AnnualReportSection(state: ReportUiState) {
             }
             when {
                 annual == null -> Text(
-                    state.annualError ?: "暂无年报数据",
+                    state.annualError?.asString() ?: stringResource(R.string.report_no_annual_data),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 else -> {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        StatCell("在一起天数", annual.days_together, Modifier.weight(1f))
-                        StatCell("文章", annual.stats.articles, Modifier.weight(1f))
-                        StatCell("照片", annual.stats.photos, Modifier.weight(1f))
-                        StatCell("报备", annual.stats.checkins, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_days_together), annual.days_together, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_articles), annual.stats.articles, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_photos), annual.stats.photos, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_checkin), annual.stats.checkins, Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        StatCell("悄悄话", annual.stats.messages, Modifier.weight(1f))
-                        StatCell("听歌次数", annual.stats.songs_played, Modifier.weight(1f))
-                        StatCell("达成心愿", annual.stats.wishes_completed, Modifier.weight(1f))
-                        StatCell("时光胶囊", annual.stats.capsules_created, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_chat_messages), annual.stats.messages, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_songs_played), annual.stats.songs_played, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_wishes_completed), annual.stats.wishes_completed, Modifier.weight(1f))
+                        StatCell(stringResource(R.string.report_stat_capsules), annual.stats.capsules_created, Modifier.weight(1f))
                     }
                     if (annual.top_songs.isNotEmpty()) {
-                        Text("年度歌曲 Top${minOf(3, annual.top_songs.size)}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.report_annual_top_songs, minOf(3, annual.top_songs.size)), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         annual.top_songs.take(3).forEachIndexed { i, song ->
                             Text(
-                                "${i + 1}. ${song.name} - ${song.artists.joinToString("/")}（${song.played_count} 次）",
+                                stringResource(R.string.report_annual_song_line, i + 1, song.name, song.artists.joinToString("/"), song.played_count),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
                     }
                     annual.highlights.take(3).forEach { Text("✨ \$it", style = MaterialTheme.typography.bodySmall) }
                     Text(
-                        "${annual.stats.songs_minutes} 分钟的共同旋律 · ${annual.stats.capsules_created} 颗时光胶囊",
+                        stringResource(R.string.report_annual_summary, annual.stats.songs_minutes, annual.stats.capsules_created),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

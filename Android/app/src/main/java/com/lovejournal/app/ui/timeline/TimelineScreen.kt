@@ -3,8 +3,9 @@
  * Copyright (C) 2026 Love Journal Contributors
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, version 3 of the License.
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -36,7 +37,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,29 +72,37 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.lovejournal.app.BuildConfig
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CommentNodeResponse
 import com.lovejournal.app.data.remote.dto.MomentResponse
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 
-private val VISIBILITY_OPTIONS = listOf("PartnersOnly" to "仅彼此", "Public" to "公开")
+private val VISIBILITY_OPTIONS = listOf("PartnersOnly" to R.string.timeline_visibility_partners_only, "Public" to R.string.timeline_visibility_public)
 
 /** 发动态时最多可选择的图片张数（与后端单条动态图片上限一致）。 */
 private const val MAX_MEDIA_PER_MOMENT = 9
 
+@Composable
 private fun visibilityLabel(value: String): String = when (value) {
-    "Public" -> "公开"
-    "PartnersOnly" -> "仅彼此"
-    "Encrypted" -> "加密"
+    "Public" -> stringResource(R.string.timeline_visibility_public)
+    "PartnersOnly" -> stringResource(R.string.timeline_visibility_partners_only)
+    "Encrypted" -> stringResource(R.string.timeline_visibility_encrypted)
     else -> value
 }
 
@@ -120,6 +128,7 @@ private fun yearOf(iso: String): Int? = iso.take(4).toIntOrNull()
 fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val moments = viewModel.moments.collectAsLazyPagingItems()
     var editorOpen by remember { mutableStateOf(false) }
     var previewUrl by remember { mutableStateOf<String?>(null) }
 
@@ -138,7 +147,7 @@ fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -150,7 +159,7 @@ fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
             )
             when (state.selectedTab) {
                 TimelineTab.MOMENTS -> MomentsContent(
-                    state = state,
+                    items = moments,
                     onDelete = viewModel::delete,
                     onComment = { mid, content, parentCid -> viewModel.comment(mid, content, parentCid) },
                     onPreviewImage = { previewUrl = it },
@@ -170,7 +179,7 @@ fun TimelineScreen(viewModel: TimelineViewModel = hiltViewModel()) {
                     .align(Alignment.BottomEnd)
                     .padding(20.dp),
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "发动态")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.timeline_post))
             }
         }
     }
@@ -203,45 +212,86 @@ private fun TimelineModeSwitch(selected: TimelineTab, onSelect: (TimelineTab) ->
             selected = selected == TimelineTab.MOMENTS,
             onClick = { onSelect(TimelineTab.MOMENTS) },
             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-        ) { Text("动态") }
+        ) { Text(stringResource(R.string.timeline_tab_moments)) }
         SegmentedButton(
             selected = selected == TimelineTab.MEMORIES,
             onClick = { onSelect(TimelineTab.MEMORIES) },
             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-        ) { Text("回忆") }
+        ) { Text(stringResource(R.string.timeline_tab_memories)) }
     }
 }
 
-/** 动态流分栏：列表 / 加载 / 错误 / 空态。 */
+/** 动态流分栏：分页列表 / 加载 / 错误 / 空态 / 追加加载尾部。 */
 @Composable
 private fun MomentsContent(
-    state: TimelineUiState,
+    items: LazyPagingItems<MomentResponse>,
     onDelete: (MomentResponse) -> Unit,
     onComment: (mid: String, content: String, parentCid: String?) -> Unit,
     onPreviewImage: (String) -> Unit,
 ) {
+    val refreshState = items.loadState.refresh
     when {
-        state.loading && state.items.isEmpty() ->
+        refreshState is LoadState.Loading && items.itemCount == 0 ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        state.error != null && state.items.isEmpty() ->
+        refreshState is LoadState.Error && items.itemCount == 0 ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        stringResource(R.string.msg_load_failed_with_error, refreshState.error.message ?: ""),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    TextButton(onClick = { items.retry() }) { Text(stringResource(R.string.btn_retry)) }
+                }
             }
-        state.items.isEmpty() ->
+        items.itemCount == 0 && refreshState is LoadState.NotLoading ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("还没有动态，点右下角发一条吧")
+                Text(stringResource(R.string.timeline_no_moments))
             }
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(state.items, key = { it.mid }) { moment ->
+            items(
+                count = items.itemCount,
+                key = items.itemKey { it.mid },
+            ) { index ->
+                val moment = items[index] ?: return@items
                 MomentCard(
                     moment = moment,
                     onDelete = { onDelete(moment) },
                     onComment = { content, parentCid -> onComment(moment.mid, content, parentCid) },
                     onPreviewImage = onPreviewImage,
                 )
+            }
+            // 追加加载中：列表尾部小 spinner。
+            if (items.loadState.append is LoadState.Loading) {
+                item(key = "append-loader") {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator(strokeWidth = 2.dp) }
+                }
+            }
+            // 追加失败：展示错误与重试（只重试追加，不影响已加载内容）。
+            val appendError = items.loadState.append as? LoadState.Error
+            if (appendError != null) {
+                item(key = "append-error") {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            stringResource(R.string.msg_load_failed_with_error, appendError.error.message ?: ""),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        TextButton(onClick = { items.retry() }) { Text(stringResource(R.string.btn_retry)) }
+                    }
+                }
             }
         }
     }
@@ -274,7 +324,7 @@ private fun MomentCard(
                     )
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.timeline_delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
 
@@ -283,7 +333,7 @@ private fun MomentCard(
             if (moment.comments.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "评论 ${moment.comments.size}",
+                    stringResource(R.string.timeline_comments_count, moment.comments.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -351,7 +401,7 @@ private fun MomentBody(moment: MomentResponse, onPreviewImage: (String) -> Unit)
             shape = RoundedCornerShape(50),
         ) {
             Text(
-                "♪ 语音 ${moment.audio_duration_sec ?: 0}s",
+                stringResource(R.string.timeline_voice_msg, moment.audio_duration_sec ?: 0),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -386,13 +436,13 @@ private fun MemoriesContent(
         state.memoriesError != null && state.memories.isEmpty() ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("加载失败：${state.memoriesError}", color = MaterialTheme.colorScheme.error)
-                    TextButton(onClick = onRetry) { Text("重试") }
+                    Text(state.memoriesError.asString(), color = MaterialTheme.colorScheme.error)
+                    TextButton(onClick = onRetry) { Text(stringResource(R.string.btn_retry)) }
                 }
             }
         state.memories.isEmpty() ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("还没有往年今日的回忆")
+                Text(stringResource(R.string.timeline_no_memories))
             }
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -401,19 +451,19 @@ private fun MemoriesContent(
             item {
                 Column {
                     Text(
-                        "回到那一天 · 往年今日",
+                        stringResource(R.string.timeline_memories_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        "那些同一天里发生过的小事",
+                        stringResource(R.string.timeline_memories_sub),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-            items(state.memories, key = { "memory-${it.mid}" }) { moment ->
-                MemoryCard(moment = moment, onPreviewImage = onPreviewImage)
+            items(state.memories.size, key = { "memory-${state.memories[it].mid}" }) { index ->
+                MemoryCard(moment = state.memories[index], onPreviewImage = onPreviewImage)
             }
         }
     }
@@ -429,7 +479,7 @@ private fun MemoryCard(moment: MomentResponse, onPreviewImage: (String) -> Unit)
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = yearOf(moment.timestamp)?.toString() ?: "那一年",
+                    text = yearOf(moment.timestamp)?.toString() ?: stringResource(R.string.timeline_year_fallback),
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -437,7 +487,7 @@ private fun MemoryCard(moment: MomentResponse, onPreviewImage: (String) -> Unit)
                 Column(modifier = Modifier.padding(bottom = 4.dp)) {
                     Text(moment.author_nickname, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(
-                        "回到那一天 · ${formatDateTime(moment.timestamp)}",
+                        stringResource(R.string.timeline_back_to_that_day, formatDateTime(moment.timestamp)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline,
                     )
@@ -449,7 +499,7 @@ private fun MemoryCard(moment: MomentResponse, onPreviewImage: (String) -> Unit)
             if (moment.comments.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "评论 ${moment.comments.size} 条（到动态里查看）",
+                    stringResource(R.string.timeline_comments_readonly, moment.comments.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -488,7 +538,7 @@ private fun CommentNode(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            "回复",
+            stringResource(R.string.timeline_reply),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.primary,
@@ -515,12 +565,12 @@ private fun CommentInputBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    "正在回复 ${replyTo.author_nickname}",
+                    stringResource(R.string.timeline_replying_to, replyTo.author_nickname),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    "取消",
+                    stringResource(R.string.btn_cancel),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.clickable(onClick = onDismissReply),
@@ -535,7 +585,15 @@ private fun CommentInputBar(
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                placeholder = { Text(if (replyTo != null) "回复 ${replyTo.author_nickname}…" else "写评论…") },
+                placeholder = {
+                    Text(
+                        if (replyTo != null) {
+                            stringResource(R.string.timeline_reply_placeholder, replyTo.author_nickname)
+                        } else {
+                            stringResource(R.string.timeline_comment_placeholder)
+                        },
+                    )
+                },
                 modifier = Modifier.weight(1f),
                 textStyle = MaterialTheme.typography.bodySmall,
                 singleLine = true,
@@ -543,7 +601,7 @@ private fun CommentInputBar(
             TextButton(
                 onClick = { onSend(text); text = "" },
                 enabled = text.isNotBlank(),
-            ) { Text("发送") }
+            ) { Text(stringResource(R.string.btn_send)) }
         }
     }
 }
@@ -555,7 +613,7 @@ private fun MomentThumb(path: String, modifier: Modifier = Modifier, onClick: ((
     var url by remember(path) { mutableStateOf(mediaUrl(deriveThumbnailPath(path))) }
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
-        contentDescription = "动态图片",
+        contentDescription = stringResource(R.string.timeline_image_desc),
         contentScale = ContentScale.Crop,
         onState = { state ->
             if (state is AsyncImagePainter.State.Error && url != mediaUrl(path)) {
@@ -582,7 +640,7 @@ private fun FullScreenImageDialog(url: String, onDismiss: () -> Unit) {
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current).data(url).crossfade(true).build(),
-                contentDescription = "图片预览",
+                contentDescription = stringResource(R.string.timeline_image_preview_desc),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -591,7 +649,7 @@ private fun FullScreenImageDialog(url: String, onDismiss: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 32.dp),
-            ) { Text("关闭", color = Color.White) }
+            ) { Text(stringResource(R.string.btn_close), color = Color.White) }
         }
     }
 }
@@ -612,13 +670,13 @@ private fun MomentEditorDialog(
 
     AlertDialog(
         onDismissRequest = { if (!posting) onDismiss() },
-        title = { Text("发一条动态") },
+        title = { Text(stringResource(R.string.timeline_post_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("此刻想说的话…") },
+                    label = { Text(stringResource(R.string.timeline_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
@@ -629,8 +687,11 @@ private fun MomentEditorDialog(
                     enabled = !posting && selectedUris.size < MAX_MEDIA_PER_MOMENT,
                 ) {
                     Text(
-                        if (selectedUris.isEmpty()) "添加图片（最多 $MAX_MEDIA_PER_MOMENT 张）"
-                        else "已选 ${selectedUris.size} 张，继续添加",
+                        if (selectedUris.isEmpty()) {
+                            stringResource(R.string.timeline_add_photo, MAX_MEDIA_PER_MOMENT)
+                        } else {
+                            stringResource(R.string.timeline_photos_selected, selectedUris.size)
+                        },
                     )
                 }
                 if (selectedUris.isNotEmpty()) {
@@ -643,7 +704,7 @@ private fun MomentEditorDialog(
                             Box {
                                 AsyncImage(
                                     model = uri,
-                                    contentDescription = "待发布图片",
+                                    contentDescription = stringResource(R.string.timeline_pending_image_desc),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .size(64.dp)
@@ -666,13 +727,13 @@ private fun MomentEditorDialog(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Text("谁可以看", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.timeline_who_can_see), style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    VISIBILITY_OPTIONS.forEach { (value, label) ->
+                    VISIBILITY_OPTIONS.forEach { (value, labelRes) ->
                         FilterChip(
                             selected = visibility == value,
                             onClick = { visibility = value },
-                            label = { Text(label) },
+                            label = { Text(stringResource(labelRes)) },
                         )
                     }
                 }
@@ -682,8 +743,13 @@ private fun MomentEditorDialog(
             TextButton(
                 onClick = { onSave(content, visibility, selectedUris) },
                 enabled = !posting && (content.isNotBlank() || selectedUris.isNotEmpty()),
-            ) { Text(if (posting) "发布中…" else "发布") }
+            ) {
+                Text(
+                    if (posting) stringResource(R.string.timeline_publishing)
+                    else stringResource(R.string.btn_publish),
+                )
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !posting) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !posting) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }

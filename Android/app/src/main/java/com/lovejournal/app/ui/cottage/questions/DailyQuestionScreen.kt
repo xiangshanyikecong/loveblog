@@ -40,13 +40,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.DailyQuestionAnswerDto
 import com.lovejournal.app.data.remote.dto.DailyQuestionResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun DailyQuestionScreen(viewModel: DailyQuestionViewModel = hiltViewModel()) {
@@ -57,7 +60,7 @@ fun DailyQuestionScreen(viewModel: DailyQuestionViewModel = hiltViewModel()) {
     Column(modifier = Modifier.fillMaxSize()) {
         message?.let {
             Text(
-                text = it,
+                text = it.asString(),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -68,7 +71,7 @@ fun DailyQuestionScreen(viewModel: DailyQuestionViewModel = hiltViewModel()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             state.error != null && state.question == null ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                 }
             state.question == null -> CreateQuestion(
                 submitting = state.submitting,
@@ -91,19 +94,19 @@ private fun CreateQuestion(submitting: Boolean, onCreate: (String) -> Unit) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("今天还没有问题", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text("写下一个想问 TA 的问题，发布后两人各自作答，都答完才会一起揭晓。", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.question_no_question), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.question_create_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedTextField(
             value = prompt,
             onValueChange = { prompt = it },
-            label = { Text("今天想问 TA…") },
+            label = { Text(stringResource(R.string.question_today_label)) },
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
             onClick = { onCreate(prompt) },
             enabled = !submitting,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("发布今天的问题") }
+        ) { Text(stringResource(R.string.question_publish)) }
     }
 }
 
@@ -137,17 +140,17 @@ private fun QuestionContent(
             OutlinedTextField(
                 value = draft,
                 onValueChange = { draft = it },
-                label = { Text("写下你的回答") },
+                label = { Text(stringResource(R.string.question_write_answer)) },
                 modifier = Modifier.fillMaxWidth(),
             )
             Button(
                 onClick = { onAnswer(draft) },
                 enabled = !submitting,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("提交回答") }
+            ) { Text(stringResource(R.string.question_submit_answer)) }
         } else if (!question.revealed) {
             Text(
-                "你已作答，等 TA 答完就能一起看啦 💌",
+                stringResource(R.string.question_waiting_partner),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -160,16 +163,16 @@ private fun AnswerCard(answer: DailyQuestionAnswerDto, revealed: Boolean) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                answer.author_nickname + if (answer.is_self) "（我）" else "",
+                answer.author_nickname + if (answer.is_self) stringResource(R.string.question_me) else "",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.height(4.dp))
             val body = when {
                 answer.content_visible && answer.content != null -> answer.content
-                answer.answered && !revealed -> "已作答 · 待揭晓"
-                answer.answered -> "已作答"
-                else -> "还没有回答"
+                answer.answered && !revealed -> stringResource(R.string.question_answered_waiting)
+                answer.answered -> stringResource(R.string.question_answered)
+                else -> stringResource(R.string.question_not_answered)
             }
             Text(body, style = MaterialTheme.typography.bodyMedium)
         }

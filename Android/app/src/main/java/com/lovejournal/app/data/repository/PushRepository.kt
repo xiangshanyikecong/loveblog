@@ -83,7 +83,7 @@ class PushRepository @Inject constructor(
         if (token.isBlank()) return@runCatching
         val response = api.deleteFcmToken(FcmTokenDeleteRequest(token))
         if (!response.isSuccessful) {
-            throw IllegalStateException("注销推送设备失败 (${response.code()})")
+            throw IllegalStateException("Failed to unregister push device (HTTP ${response.code()})")
         }
     }
 

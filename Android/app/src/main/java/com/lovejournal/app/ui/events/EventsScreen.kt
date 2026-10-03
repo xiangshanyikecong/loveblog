@@ -54,11 +54,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.EventResponse
+import com.lovejournal.app.ui.components.asString
 import java.time.LocalDate
 
 @Composable
@@ -84,7 +87,7 @@ fun EventsScreen(viewModel: EventsViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -98,12 +101,12 @@ fun EventsScreen(viewModel: EventsViewModel = hiltViewModel()) {
                 }
                 state.error != null && state.events.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 }
                 state.events.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有纪念日，点击右下角添加")
+                        Text(stringResource(R.string.events_no_events))
                     }
                 }
                 else -> {
@@ -131,7 +134,7 @@ fun EventsScreen(viewModel: EventsViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "添加纪念日")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.events_add))
         }
     }
 
@@ -165,19 +168,19 @@ private fun EventCard(event: EventResponse, onClick: () -> Unit, onDelete: () ->
                     }
                 }
                 Text(event.date, style = MaterialTheme.typography.bodySmall)
-                val label = if (event.type == "Anniversary") "纪念日" else "倒数日"
+                val label = if (event.type == "Anniversary") stringResource(R.string.events_anniversary) else stringResource(R.string.events_countdown)
                 Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
             }
             Column(horizontalAlignment = Alignment.End) {
                 event.next_occurrence_days?.let { days ->
                     Text(
-                        text = if (days == 0) "就在今天" else "还有 $days 天",
+                        text = if (days == 0) stringResource(R.string.events_today) else stringResource(R.string.events_days_left, days),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.btn_delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -199,13 +202,13 @@ private fun EventEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (existing == null) "添加纪念日" else "编辑纪念日") },
+        title = { Text(if (existing == null) stringResource(R.string.events_add_title) else stringResource(R.string.events_edit_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("标题") },
+                    label = { Text(stringResource(R.string.events_title_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -213,7 +216,7 @@ private fun EventEditorDialog(
                 OutlinedTextField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("日期 (YYYY-MM-DD)") },
+                    label = { Text(stringResource(R.string.events_date_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -222,30 +225,30 @@ private fun EventEditorDialog(
                     FilterChip(
                         selected = type == "Countdown",
                         onClick = { type = "Countdown" },
-                        label = { Text("倒数日") },
+                        label = { Text(stringResource(R.string.events_countdown)) },
                     )
                     FilterChip(
                         selected = type == "Anniversary",
                         onClick = { type = "Anniversary" },
-                        label = { Text("纪念日") },
+                        label = { Text(stringResource(R.string.events_anniversary)) },
                     )
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text("标记为重要")
+                    Text(stringResource(R.string.events_mark_important))
                     Switch(checked = important, onCheckedChange = { important = it })
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text("每年重复")
+                    Text(stringResource(R.string.events_yearly_repeat))
                     Switch(checked = yearly, onCheckedChange = { yearly = it })
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(title, date, type, important, yearly) }) { Text("保存") }
+            TextButton(onClick = { onSave(title, date, type, important, yearly) }) { Text(stringResource(R.string.btn_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) }
         },
     )
 }

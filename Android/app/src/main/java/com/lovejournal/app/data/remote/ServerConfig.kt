@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.remote
 
 import android.content.Context
+import androidx.annotation.StringRes
 import androidx.core.content.edit
 import com.lovejournal.app.BuildConfig
 import com.lovejournal.app.util.isEmulator
@@ -101,10 +102,11 @@ class ServerConfig @Inject constructor(
     }
 
     /**
-     * Validates user input before login. Returns an error message or null if OK.
-     * Exposed so the login screen can give immediate feedback without a round trip.
+     * Validates user input before login. Returns the error message resource
+     * ID (R.string.server_config_*) or null if OK. Exposed so the login
+     * screen can give immediate feedback without a round trip.
      */
-    fun validateAddressInput(raw: String): String? =
+    fun validateAddressInput(raw: String): Int? =
         ServerAddress.validateAddressInput(raw, BuildConfig.ALLOW_CLEARTEXT_LOCAL)
 
     private fun loadInitialApiBase(): String {

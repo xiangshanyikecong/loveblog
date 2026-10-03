@@ -74,6 +74,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -81,9 +83,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.WatchBookmark
 import com.lovejournal.app.data.remote.dto.WatchSourceResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -95,7 +99,8 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
     val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.uploadVideo(it) }
     }
-    LaunchedEffect(Unit) { viewModel.toast.collect { snackbar.showSnackbar(it) } }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.toast.collect { snackbar.showSnackbar(it.asString(context)) } }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LovePage(modifier = Modifier.padding(padding)) {
@@ -109,9 +114,9 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
                     Spacer(Modifier.size(6.dp))
                     Text(
                         text = when {
-                            !ui.connected -> "正在连接…"
-                            ui.partnerOnline -> "已连接 · 对方在看"
-                            else -> "已连接 · 对方暂时不在线"
+                            !ui.connected -> stringResource(R.string.watch_connecting)
+                            ui.partnerOnline -> stringResource(R.string.watch_connected_watching)
+                            else -> stringResource(R.string.watch_connected_offline)
                         },
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -143,29 +148,29 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
                     Button(onClick = { viewModel.togglePlay() }) {
                         Icon(
                             if (ui.isPlaying) Icons.Filled.Close else Icons.Filled.PlayArrow,
-                            contentDescription = if (ui.isPlaying) "暂停" else "播放",
+                            contentDescription = if (ui.isPlaying) stringResource(R.string.watch_pause) else stringResource(R.string.watch_play),
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(Modifier.size(6.dp))
-                        Text(if (ui.isPlaying) "暂停" else "播放")
+                        Text(if (ui.isPlaying) stringResource(R.string.watch_pause) else stringResource(R.string.watch_play))
                     }
                     OutlinedButton(onClick = { viewModel.seekBy(-10_000) }) { Text("−10s") }
                     OutlinedButton(onClick = { viewModel.seekBy(10_000) }) { Text("+10s") }
-                    FilledTonalButton(onClick = { viewModel.invite() }) { Text("邀请") }
+                    FilledTonalButton(onClick = { viewModel.invite() }) { Text(stringResource(R.string.btn_invite)) }
                 }
                 Spacer(Modifier.size(8.dp))
 
                 // ── Title / resume pill ────────────────────────────────────
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = ui.currentTitle ?: "从下面片库选一部一起看吧",
+                        text = ui.currentTitle ?: stringResource(R.string.watch_pick_video),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         modifier = Modifier.weight(1f),
                     )
                     if (ui.currentWsid != null) {
                         AssistChip(
                             onClick = { bookmarkOpen = true },
-                            label = { Text("书签 ${ui.currentBookmarks.size}") },
+                            label = { Text(stringResource(R.string.watch_bookmark_count, ui.currentBookmarks.size)) },
                             leadingIcon = {
                                 Icon(
                                     Icons.Filled.BookmarkAdd,
@@ -186,7 +191,7 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("片库", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.watch_library), style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         TextButton(
                             onClick = { videoPicker.launch(arrayOf("video/*")) },
@@ -195,13 +200,13 @@ fun WatchScreen(viewModel: WatchViewModel = hiltViewModel()) {
                             if (ui.uploading) {
                                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                             } else {
-                                Text("上传视频")
+                                Text(stringResource(R.string.watch_upload_video))
                             }
                         }
                         TextButton(onClick = { addOpen = true }) {
                             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.size(4.dp))
-                            Text("添加直链")
+                            Text(stringResource(R.string.watch_add_direct_link))
                         }
                     }
                 }
@@ -290,7 +295,7 @@ private fun SourceRow(
                         Spacer(Modifier.size(8.dp))
                         AssistChip(
                             onClick = {},
-                            label = { Text("播放中") },
+                            label = { Text(stringResource(R.string.watch_now_playing)) },
                             colors = AssistChipDefaults.assistChipColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 labelColor = MaterialTheme.colorScheme.onPrimary,
@@ -304,13 +309,13 @@ private fun SourceRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        if (src.kind == "upload") "本地上传" else "直链",
+                        if (src.kind == "upload") stringResource(R.string.watch_local_upload) else stringResource(R.string.watch_direct_link),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     if (src.last_position_ms > 0) {
                         Text(
-                            "上次看到 ${viewModelFormatTime(src.last_position_ms)}",
+                            stringResource(R.string.watch_last_position, viewModelFormatTime(src.last_position_ms)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium,
@@ -326,7 +331,7 @@ private fun SourceRow(
                 }
             }
             TextButton(onClick = onDelete, enabled = !deleting) {
-                Text(if (deleting) "删除中…" else "删除")
+                Text(if (deleting) stringResource(R.string.status_deleting) else stringResource(R.string.btn_delete))
             }
         }
     }
@@ -347,7 +352,7 @@ private fun BookmarksDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.BookmarkAdd, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.size(8.dp))
-                Text("书签")
+                Text(stringResource(R.string.watch_bookmarks))
             }
         },
         text = {
@@ -358,12 +363,12 @@ private fun BookmarksDialog(
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(6.dp))
-                    Text("在当前进度添加书签")
+                    Text(stringResource(R.string.watch_add_bookmark))
                 }
                 Spacer(Modifier.size(12.dp))
                 if (bookmarks.isEmpty()) {
                     Text(
-                        "还没有书签。\n看到心动的一幕，点上面按钮存个位置，随时秒跳回来。",
+                        stringResource(R.string.watch_no_bookmarks),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -386,7 +391,7 @@ private fun BookmarksDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("完成") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_done)) } },
     )
 }
 
@@ -409,7 +414,7 @@ private fun BookmarkRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    bm.label.ifBlank { "未命名片段" },
+                    bm.label.ifBlank { stringResource(R.string.watch_unnamed_clip) },
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
@@ -419,11 +424,11 @@ private fun BookmarkRow(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-            TextButton(onClick = onJump) { Text("跳到") }
+            TextButton(onClick = onJump) { Text(stringResource(R.string.watch_jump_to)) }
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Filled.Close,
-                    contentDescription = "删除书签",
+                    contentDescription = stringResource(R.string.watch_delete_bookmark),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -437,13 +442,13 @@ private fun AddSourceDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Un
     var url by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加片源（直链）") },
+        title = { Text(stringResource(R.string.watch_add_source_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("标题") },
+                    label = { Text(stringResource(R.string.watch_title_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -451,16 +456,16 @@ private fun AddSourceDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Un
                 OutlinedTextField(
                     value = url,
                     onValueChange = { url = it },
-                    label = { Text("视频直链 http(s)://") },
+                    label = { Text(stringResource(R.string.watch_url_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onAdd(title, url) }) { Text("添加") }
+            TextButton(onClick = { onAdd(title, url) }) { Text(stringResource(R.string.btn_add_source)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }
 

@@ -56,12 +56,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.CouponResponse
+import com.lovejournal.app.ui.components.asString
 
 @Composable
 fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
@@ -81,7 +84,7 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
         Column(modifier = Modifier.fillMaxSize()) {
             message?.let {
                 Text(
-                    text = it,
+                    text = it.asString(),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -92,11 +95,11 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 state.error != null && state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
                     }
                 state.items.isEmpty() ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("还没有兑换券，点右下角送 TA 一张吧")
+                        Text(stringResource(R.string.coupon_no_coupons))
                     }
                 else -> LazyColumn(
                     modifier = Modifier
@@ -106,7 +109,7 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
                 ) {
                     item {
                         Text(
-                            "有效 ${state.active} · 已兑换 ${state.redeemed}",
+                            stringResource(R.string.coupon_active_redeemed, state.active, state.redeemed),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -129,7 +132,7 @@ fun CouponScreen(viewModel: CouponViewModel = hiltViewModel()) {
                 .align(Alignment.BottomEnd)
                 .padding(20.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "送一张券")
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.coupon_add))
         }
     }
 
@@ -191,13 +194,13 @@ private fun CouponCard(coupon: CouponResponse, onRedeem: () -> Unit, onEdit: () 
                     )
                 }
                 Text(
-                    if (coupon.is_mine) "我送出的券" else "${coupon.author_nickname} 送给你",
+                    if (coupon.is_mine) stringResource(R.string.coupon_my_sent) else stringResource(R.string.coupon_sent_to_you, coupon.author_nickname),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (redeemed && coupon.redeemed_by_nickname != null) {
                     Text(
-                        "已由 ${coupon.redeemed_by_nickname} 兑换",
+                        stringResource(R.string.coupon_redeemed_by, coupon.redeemed_by_nickname),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline,
                     )
@@ -205,10 +208,10 @@ private fun CouponCard(coupon: CouponResponse, onRedeem: () -> Unit, onEdit: () 
             }
             Column(horizontalAlignment = Alignment.End) {
                 if (!coupon.is_mine && !redeemed) {
-                    FilledTonalButton(onClick = onRedeem) { Text("兑换") }
+                    FilledTonalButton(onClick = onRedeem) { Text(stringResource(R.string.btn_redeem)) }
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Filled.Delete, contentDescription = "删除", tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.btn_delete), tint = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -228,13 +231,13 @@ private fun CouponEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "送 TA 一张券" else "编辑兑换券") },
+        title = { Text(if (initial == null) stringResource(R.string.coupon_send_title) else stringResource(R.string.coupon_edit_title)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("券名，如 一次免做家务券") },
+                    label = { Text(stringResource(R.string.coupon_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -242,11 +245,11 @@ private fun CouponEditorDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("使用说明（可选）") },
+                    label = { Text(stringResource(R.string.coupon_usage_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text("图标", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.coupon_icon), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -266,9 +269,9 @@ private fun CouponEditorDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(title, description, icon) }) {
-                Text(if (initial == null) "送出" else "保存")
+                Text(if (initial == null) stringResource(R.string.btn_send_coupon) else stringResource(R.string.btn_save))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }

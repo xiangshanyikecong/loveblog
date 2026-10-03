@@ -30,27 +30,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.lovejournal.app.R
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.LoveSoftCard
 
 private data class GameEntry(
     val key: String,
     val emoji: String,
-    val name: String,
-    val desc: String,
+    val nameRes: Int,
+    val descRes: Int,
     val available: Boolean,
 )
 
 private val games = listOf(
-    GameEntry("gomoku", "⚫", "五子棋", "15×15，先连五子者胜", true),
-    GameEntry("tictactoe", "❌", "井字棋", "3×3，连成一线即胜", true),
-    GameEntry("reversi", "⚪", "黑白棋", "8×8，翻子多者胜", true),
-    GameEntry("memory", "🃏", "记忆翻牌", "合作翻出相同图案", true),
-    GameEntry("linklink", "🀄", "连连看", "配对相同图案，清空棋盘", true),
-    GameEntry("draw", "🎨", "你画我猜", "实时作画与猜词", true),
-    GameEntry("canvas", "🖌️", "协作画板", "同一块画布一起涂鸦", true),
+    GameEntry("gomoku", "⚫", R.string.game_gomoku, R.string.game_gomoku_desc, true),
+    GameEntry("tictactoe", "❌", R.string.game_tictactoe, R.string.game_tictactoe_desc, true),
+    GameEntry("reversi", "⚪", R.string.game_reversi, R.string.game_reversi_desc, true),
+    GameEntry("memory", "🃏", R.string.game_memory, R.string.game_memory_desc, true),
+    GameEntry("linklink", "🀄", R.string.game_linklink, R.string.game_linklink_desc, true),
+    GameEntry("draw", "🎨", R.string.game_draw, R.string.game_draw_desc, true),
+    GameEntry("canvas", "🖌️", R.string.game_canvas, R.string.game_canvas_desc, true),
 )
 
 @Composable
@@ -61,8 +63,8 @@ fun GamesLobbyScreen(onOpen: (String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text("一起玩", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            Text("选个游戏，和 TA 来一局", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.games_lobby_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.games_lobby_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         items(games.size) { i ->
             val g = games[i]
@@ -79,12 +81,12 @@ fun GamesLobbyScreen(onOpen: (String) -> Unit) {
                     Text(g.emoji, style = MaterialTheme.typography.headlineMedium)
                     Column {
                         Text(
-                            g.name,
+                            stringResource(g.nameRes),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = if (g.available) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
                         )
-                        Text(g.desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(g.descRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -50,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -60,6 +62,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.lovejournal.app.R
 import com.lovejournal.app.ui.albums.AlbumsScreen
 import com.lovejournal.app.ui.admin.AdminToolsScreen
 import com.lovejournal.app.ui.articles.ArticlesScreen
@@ -101,13 +104,13 @@ import com.lovejournal.app.ui.events.EventsScreen
 import com.lovejournal.app.ui.messages.MessagesScreen
 import com.lovejournal.app.ui.mood.MoodScreen
 
-private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
-    Dashboard("dashboard", "首页", Icons.Filled.Favorite),
-    Events("events", "纪念日", Icons.Filled.CalendarMonth),
-    Articles("articles", "文章", Icons.AutoMirrored.Filled.Article),
-    Albums("albums", "相册", Icons.Filled.PhotoLibrary),
-    Cottage(CottageRoute.HUB, "小屋", Icons.Filled.Cottage),
-    Messages("messages", "互动", Icons.AutoMirrored.Filled.Chat),
+private enum class Tab(val route: String, @StringRes val label: Int, val icon: ImageVector) {
+    Dashboard("dashboard", R.string.nav_home, Icons.Filled.Favorite),
+    Events("events", R.string.nav_events, Icons.Filled.CalendarMonth),
+    Articles("articles", R.string.nav_articles, Icons.AutoMirrored.Filled.Article),
+    Albums("albums", R.string.nav_albums, Icons.Filled.PhotoLibrary),
+    Cottage(CottageRoute.HUB, R.string.nav_cottage, Icons.Filled.Cottage),
+    Messages("messages", R.string.nav_messages, Icons.AutoMirrored.Filled.Chat),
 }
 
 /** 主端二级页路由（从顶栏入口进入，非底部 Tab）。 */
@@ -152,38 +155,38 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
     val currentDestination = backStack?.destination
     val currentRoute = currentDestination?.route
     val title = when (currentRoute) {
-        CottageRoute.HUB -> "我们的小屋"
-        CottageRoute.CHAT -> "悄悄话"
-        CottageRoute.MOOD -> "心情打卡"
-        CottageRoute.WISHLIST -> "心愿单"
-        CottageRoute.QUESTIONS -> "每日一问"
-        CottageRoute.GAMES -> "一起玩"
-        CottageRoute.WATCH -> "一起看"
-        CottageRoute.LISTEN -> "一起听"
-        CottageRoute.COUPONS -> "甜蜜兑换券"
-        CottageRoute.REMINDERS -> "小屋提醒"
-        CottageRoute.LEDGER -> "情侣账本"
-        CottageRoute.REPORTS -> "恋爱月报"
-        CottageRoute.FOOTPRINTS -> "足迹地图"
-        CottageRoute.PERIOD -> "生理期关怀"
-        CottageRoute.PLANS -> "约会计划"
-        CottageRoute.CHECKINS -> "报备签到"
-        CottageRoute.CANVAS -> "协作画板"
-        CottageRoute.CANVAS_GALLERY -> "作品集"
-        CottageRoute.CANVAS_ARTWORK -> "作品回放"
-        MainRoute.SEARCH -> "搜索"
-        MainRoute.NOTIFICATIONS -> "通知中心"
-        MainRoute.TIMELINE -> "时间线"
-        MainRoute.CAPSULES -> "时间胶囊"
-        MainRoute.SETTINGS -> "设置"
-        MainRoute.LICENSES -> "开源许可证"
-        MainRoute.SECURITY -> "账号安全"
-        MainRoute.PRIVACY -> "隐私中心"
-        MainRoute.RECYCLE_BIN -> "回收站"
-        MainRoute.ADMIN_TOOLS -> "后台管理"
-        Tab.Messages.route -> "留言板"
-        "cottage/games/{game}" -> "对局中"
-        else -> session.nickname ?: "恋爱记"
+        CottageRoute.HUB -> stringResource(R.string.title_cottage_hub)
+        CottageRoute.CHAT -> stringResource(R.string.title_chat)
+        CottageRoute.MOOD -> stringResource(R.string.title_mood)
+        CottageRoute.WISHLIST -> stringResource(R.string.title_wishlist)
+        CottageRoute.QUESTIONS -> stringResource(R.string.title_questions)
+        CottageRoute.GAMES -> stringResource(R.string.title_games)
+        CottageRoute.WATCH -> stringResource(R.string.title_watch)
+        CottageRoute.LISTEN -> stringResource(R.string.title_listen)
+        CottageRoute.COUPONS -> stringResource(R.string.title_coupons)
+        CottageRoute.REMINDERS -> stringResource(R.string.title_reminders)
+        CottageRoute.LEDGER -> stringResource(R.string.title_ledger)
+        CottageRoute.REPORTS -> stringResource(R.string.title_reports)
+        CottageRoute.FOOTPRINTS -> stringResource(R.string.title_footprints)
+        CottageRoute.PERIOD -> stringResource(R.string.title_period)
+        CottageRoute.PLANS -> stringResource(R.string.title_plans)
+        CottageRoute.CHECKINS -> stringResource(R.string.title_checkins)
+        CottageRoute.CANVAS -> stringResource(R.string.title_canvas)
+        CottageRoute.CANVAS_GALLERY -> stringResource(R.string.title_canvas_gallery)
+        CottageRoute.CANVAS_ARTWORK -> stringResource(R.string.title_canvas_artwork)
+        MainRoute.SEARCH -> stringResource(R.string.title_search)
+        MainRoute.NOTIFICATIONS -> stringResource(R.string.title_notifications)
+        MainRoute.TIMELINE -> stringResource(R.string.title_timeline)
+        MainRoute.CAPSULES -> stringResource(R.string.title_capsules)
+        MainRoute.SETTINGS -> stringResource(R.string.title_settings)
+        MainRoute.LICENSES -> stringResource(R.string.title_licenses)
+        MainRoute.SECURITY -> stringResource(R.string.title_security)
+        MainRoute.PRIVACY -> stringResource(R.string.title_privacy)
+        MainRoute.RECYCLE_BIN -> stringResource(R.string.title_recycle_bin)
+        MainRoute.ADMIN_TOOLS -> stringResource(R.string.title_admin_tools)
+        Tab.Messages.route -> stringResource(R.string.title_messages_board)
+        "cottage/games/{game}" -> stringResource(R.string.title_in_game)
+        else -> session.nickname ?: stringResource(R.string.app_name)
     }
 
     Scaffold(
@@ -194,39 +197,39 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
                 navigationIcon = {
                     if (currentRoute in SECONDARY_ROUTES) {
                         IconButton(onClick = { navController.navigateUp() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                         }
                     }
                 },
                 actions = {
                     if (currentRoute !in SECONDARY_ROUTES) {
                         IconButton(onClick = { navController.navigate(MainRoute.SEARCH) { launchSingleTop = true } }) {
-                            Icon(Icons.Filled.Search, contentDescription = "搜索")
+                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.action_search))
                         }
                         IconButton(onClick = { navController.navigate(MainRoute.NOTIFICATIONS) { launchSingleTop = true } }) {
-                            Icon(Icons.Filled.Notifications, contentDescription = "通知中心")
+                            Icon(Icons.Filled.Notifications, contentDescription = stringResource(R.string.action_notifications_center))
                         }
                         var menuOpen by remember { mutableStateOf(false) }
                         IconButton(onClick = { menuOpen = true }) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = "更多")
+                            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             DropdownMenuItem(
-                                text = { Text("时间线") },
+                                text = { Text(stringResource(R.string.title_timeline)) },
                                 onClick = {
                                     menuOpen = false
                                     navController.navigate(MainRoute.TIMELINE) { launchSingleTop = true }
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("时间胶囊") },
+                                text = { Text(stringResource(R.string.title_capsules)) },
                                 onClick = {
                                     menuOpen = false
                                     navController.navigate(MainRoute.CAPSULES) { launchSingleTop = true }
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("设置") },
+                                text = { Text(stringResource(R.string.title_settings)) },
                                 onClick = {
                                     menuOpen = false
                                     navController.navigate(MainRoute.SETTINGS) { launchSingleTop = true }
@@ -262,8 +265,8 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
+                            icon = { Icon(tab.icon, contentDescription = stringResource(tab.label)) },
+                            label = { Text(stringResource(tab.label), style = MaterialTheme.typography.labelSmall) },
                             alwaysShowLabel = true,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,

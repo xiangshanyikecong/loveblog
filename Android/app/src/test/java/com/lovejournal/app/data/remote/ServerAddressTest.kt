@@ -17,10 +17,9 @@
 
 package com.lovejournal.app.data.remote
 
+import com.lovejournal.app.R
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -147,15 +146,16 @@ class ServerAddressTest {
     }
 
     // ----------------------------------------------------------- validateAddressInput
+    // 断言返回 @StringRes 资源 ID：哪种输入 → 哪个错误 key（null = 通过）。
 
     @Test
     fun `blank input reports missing address`() {
-        assertEquals("请输入服务器地址", ServerAddress.validateAddressInput("   ", false))
+        assertEquals(R.string.server_config_empty as Int?, ServerAddress.validateAddressInput("   ", false))
     }
 
     @Test
     fun `missing scheme reports incomplete address`() {
-        assertEquals("请填写完整的 https:// 服务器地址", ServerAddress.validateAddressInput("demo.com", false))
+        assertEquals(R.string.server_config_incomplete_https as Int?, ServerAddress.validateAddressInput("demo.com", false))
     }
 
     @Test
@@ -168,15 +168,13 @@ class ServerAddressTest {
         assertNull(ServerAddress.validateAddressInput("http://192.168.1.5:8000", true))
         assertNull(ServerAddress.validateAddressInput("http://10.0.2.2:8000", true))
         // 公网域名走 HTTP 始终拒绝，即便调试版放开了明文限制
-        assertNotNull(ServerAddress.validateAddressInput("http://demo.com", true))
+        assertEquals(R.string.server_config_https_only as Int?, ServerAddress.validateAddressInput("http://demo.com", true))
         // 正式版（allowCleartext=false）一切明文都拒绝
-        assertNotNull(ServerAddress.validateAddressInput("http://192.168.1.5:8000", false))
+        assertEquals(R.string.server_config_https_only as Int?, ServerAddress.validateAddressInput("http://192.168.1.5:8000", false))
     }
 
     @Test
     fun `garbage host reports format error`() {
-        val error = ServerAddress.validateAddressInput("https://de mo.com", false)
-        assertNotNull(error)
-        assertTrue(error!!.contains("格式"))
+        assertEquals(R.string.server_config_invalid as Int?, ServerAddress.validateAddressInput("https://de mo.com", false))
     }
 }

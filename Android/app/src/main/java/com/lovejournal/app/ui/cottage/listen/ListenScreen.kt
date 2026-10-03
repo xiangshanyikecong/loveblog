@@ -95,6 +95,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -102,6 +104,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.ListenHistoryItem
 import com.lovejournal.app.data.remote.dto.MyPlaylistDetail
 import com.lovejournal.app.data.remote.dto.LyricLine
@@ -110,6 +113,7 @@ import com.lovejournal.app.data.remote.dto.RoomCurrent
 import com.lovejournal.app.data.remote.dto.SongMeta
 import com.lovejournal.app.data.remote.dto.ToplistItem
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.ui.theme.LoveMint
 
 /**
@@ -140,11 +144,12 @@ private fun formatMs(ms: Long): String {
 fun ListenScreen(viewModel: ListenViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     LaunchedEffect(Unit) { viewModel.start() }
     LaunchedEffect(state.message) {
         val message = state.message
-        if (!message.isNullOrBlank()) {
-            snackbar.showSnackbar(message)
+        if (message != null) {
+            snackbar.showSnackbar(message.asString(context))
             viewModel.clearMessage()
         }
     }
@@ -214,7 +219,7 @@ private fun ListenScreenContent(
         LovePage(modifier = Modifier.padding(padding)) {
         when {
             state.loading && state.roomState == null -> LoadingState()
-            state.error != null && state.roomState == null -> ErrorState(message = state.error)
+            state.error != null && state.roomState == null -> ErrorState(message = state.error?.asString())
             else -> ListenBody(
                 state = state,
                 modifier = Modifier,
@@ -361,18 +366,18 @@ private fun NowPlayingCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     FilledTonalIconButton(onClick = onPrev) {
-                        Icon(Icons.Filled.SkipPrevious, contentDescription = "上一首")
+                        Icon(Icons.Filled.SkipPrevious, contentDescription = stringResource(R.string.listen_prev))
                     }
                     Spacer(Modifier.width(20.dp))
                     FilledIconButton(onClick = onPlayPause, modifier = Modifier.size(56.dp)) {
                         Icon(
                             imageVector = if (current?.paused == false) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = if (current?.paused == false) "暂停" else "播放",
+                            contentDescription = if (current?.paused == false) stringResource(R.string.listen_pause) else stringResource(R.string.listen_play),
                         )
                     }
                     Spacer(Modifier.width(20.dp))
                     FilledTonalIconButton(onClick = onNext) {
-                        Icon(Icons.Filled.SkipNext, contentDescription = "下一首")
+                        Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.listen_next))
                     }
                 }
             }
@@ -394,8 +399,8 @@ private fun EmptyNowPlaying() {
         }
         Spacer(Modifier.width(12.dp))
         Column {
-            Text("还没有正在播放", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("从下方选择歌曲", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.listen_no_playing), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.listen_select_below), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -416,7 +421,7 @@ private fun CurrentSongInfo(current: RoomCurrent?) {
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                meta?.name?.takeIf { it.isNotBlank() } ?: "未知歌曲",
+                meta?.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.listen_unknown_song),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
@@ -481,7 +486,7 @@ private fun ConnectionBadge(connected: Boolean, partners: Int) {
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            if (connected) "实时同步 · $partners 人" else "连接中",
+            if (connected) stringResource(R.string.listen_connected_partners, partners) else stringResource(R.string.listen_connecting),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -505,13 +510,13 @@ private fun LyricPanel(
             loading -> LyricHint {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.height(8.dp))
-                Text("歌词加载中", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.listen_lyrics_loading), style = MaterialTheme.typography.bodySmall)
             }
             kind == "instrumental" -> LyricHint {
-                Text("纯音乐", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.listen_instrumental), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             lines.isEmpty() -> LyricHint {
-                Text("暂无歌词", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.listen_no_lyrics), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> LyricScroller(lines = lines, positionMs = positionMs, modifier = Modifier.fillMaxSize())
         }
@@ -573,7 +578,7 @@ private fun LibraryTabs(selected: ListenLibraryTab, onSelected: (ListenLibraryTa
             Tab(
                 selected = selected == tab,
                 onClick = { onSelected(tab) },
-                text = { Text(tab.title, maxLines = 1) },
+                text = { Text(stringResource(tab.titleRes), maxLines = 1) },
                 icon = { Icon(tab.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
             )
         }
@@ -631,17 +636,17 @@ private fun SearchTab(
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                placeholder = { Text("搜索歌曲") },
+                placeholder = { Text(stringResource(R.string.listen_search_placeholder)) },
             )
             Spacer(Modifier.width(8.dp))
             FilledIconButton(onClick = { onSearch(state.searchKeyword) }) {
-                Icon(Icons.Filled.Search, contentDescription = "搜索")
+                Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.listen_tab_search))
             }
         }
         LoadingLine(state.searchLoading)
         SongList(
             songs = state.searchResults,
-            emptyMessage = if (state.searchKeyword.isBlank()) "输入关键词搜索" else "没有搜索结果",
+            emptyMessage = if (state.searchKeyword.isBlank()) stringResource(R.string.listen_input_keyword) else stringResource(R.string.listen_no_results),
             onPlaySong = onPlaySong,
             onQueueSong = onQueueSong,
             modifier = Modifier.weight(1f),
@@ -663,20 +668,20 @@ private fun DiscoverTab(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            SectionHeader(title = "每日推荐", loading = state.discoverLoading, onRefresh = onRefresh)
+            SectionHeader(title = stringResource(R.string.listen_daily_recommend), loading = state.discoverLoading, onRefresh = onRefresh)
         }
         if (state.recommendSongs.isEmpty()) {
-            item { EmptyText("暂无推荐歌曲") }
+            item { EmptyText(stringResource(R.string.listen_no_recommend)) }
         } else {
             items(state.recommendSongs.take(12)) { song ->
                 SongRow(song = song, onPlay = { onPlaySong(song) }, onQueue = { onQueueSong(song) })
             }
         }
         item {
-            SectionHeader(title = "推荐歌单", loading = state.discoverLoading, onRefresh = onRefresh)
+            SectionHeader(title = stringResource(R.string.listen_recommend_playlists), loading = state.discoverLoading, onRefresh = onRefresh)
         }
         if (state.discoverPlaylists.isEmpty()) {
-            item { EmptyText("暂无推荐歌单") }
+            item { EmptyText(stringResource(R.string.listen_no_recommend_playlists)) }
         } else {
             items(state.discoverPlaylists) { playlist ->
                 PlaylistRow(
@@ -708,9 +713,9 @@ private fun PlaylistsTab(
         modifier = modifier.padding(top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item { SectionHeader(title = "我的歌单", loading = state.playlistsLoading, onRefresh = onRefresh) }
+        item { SectionHeader(title = stringResource(R.string.listen_my_playlists), loading = state.playlistsLoading, onRefresh = onRefresh) }
         if (state.playlists.isEmpty()) {
-            item { EmptyText("暂无歌单") }
+            item { EmptyText(stringResource(R.string.listen_no_playlists)) }
         } else {
             items(state.playlists) { playlist ->
                 PlaylistRow(
@@ -742,9 +747,9 @@ private fun ChartsTab(
         modifier = modifier.padding(top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        item { SectionHeader(title = "榜单", loading = state.chartsLoading, onRefresh = onRefresh) }
+        item { SectionHeader(title = stringResource(R.string.listen_tab_charts), loading = state.chartsLoading, onRefresh = onRefresh) }
         if (state.toplists.isEmpty()) {
-            item { EmptyText("暂无榜单") }
+            item { EmptyText(stringResource(R.string.listen_no_charts)) }
         } else {
             items(state.toplists) { toplist ->
                 ToplistRow(
@@ -772,10 +777,10 @@ private fun HistoryTab(
     modifier: Modifier,
 ) {
     Column(modifier = modifier.padding(top = 12.dp)) {
-        SectionHeader(title = "听歌历史", loading = state.historyLoading, onRefresh = onRefresh)
+        SectionHeader(title = stringResource(R.string.listen_listen_history), loading = state.historyLoading, onRefresh = onRefresh)
         SongList(
             songs = state.history.map { it.toSongMeta() },
-            emptyMessage = "还没有听歌记录",
+            emptyMessage = stringResource(R.string.listen_no_history),
             onPlaySong = onPlaySong,
             onQueueSong = onQueueSong,
             modifier = Modifier.weight(1f),
@@ -798,21 +803,21 @@ private fun LocalTab(
     }
     Column(modifier = modifier.padding(top = 12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            SectionTitle("本地上传", modifier = Modifier.weight(1f))
+            SectionTitle(stringResource(R.string.listen_local_upload), modifier = Modifier.weight(1f))
             IconButton(onClick = onRefresh) {
-                Icon(Icons.Filled.Refresh, contentDescription = "刷新")
+                Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.btn_refresh))
             }
             FilledTonalIconButton(onClick = { launcher.launch(arrayOf("audio/*")) }) {
                 if (state.localUploading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Icon(Icons.Filled.FileUpload, contentDescription = "上传")
+                    Icon(Icons.Filled.FileUpload, contentDescription = stringResource(R.string.listen_upload))
                 }
             }
         }
         LoadingLine(state.localLoading || state.localUploading)
         if (state.localTracks.isEmpty()) {
-            EmptyState(message = "还没有本地歌曲")
+            EmptyState(message = stringResource(R.string.listen_no_local))
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
                 items(state.localTracks) { song ->
@@ -822,7 +827,7 @@ private fun LocalTab(
                         onQueue = { onQueueSong(song) },
                         trailing = {
                             IconButton(onClick = { onDelete(song) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "删除")
+                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.btn_delete))
                             }
                         },
                     )
@@ -842,13 +847,13 @@ private fun QueueTab(
 ) {
     Column(modifier = modifier.padding(top = 12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            SectionTitle("播放队列", modifier = Modifier.weight(1f))
+            SectionTitle(stringResource(R.string.listen_queue), modifier = Modifier.weight(1f))
             TextButton(onClick = onClearQueue, enabled = state.queue.isNotEmpty()) {
-                Text("清空")
+                Text(stringResource(R.string.btn_clear))
             }
         }
         if (state.queue.isEmpty()) {
-            EmptyState(message = "队列为空")
+            EmptyState(message = stringResource(R.string.listen_queue_empty))
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
                 itemsIndexed(state.queue) { index, song ->
@@ -859,7 +864,7 @@ private fun QueueTab(
                         leadingText = "${index + 1}",
                         trailing = {
                             IconButton(onClick = { onRemoveQueue(index) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "移除")
+                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.listen_remove))
                             }
                         },
                     )
@@ -895,18 +900,18 @@ private fun MineTab(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    "我的歌单",
+                    stringResource(R.string.listen_my_playlists),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = { showCreateDialog = true }) { Text("新建") }
+                TextButton(onClick = { showCreateDialog = true }) { Text(stringResource(R.string.listen_btn_new)) }
             }
             when {
                 state.myPlaylistsLoading -> Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                 }
                 state.myPlaylists.isEmpty() -> Text(
-                    "还没有自建歌单，点右上角「新建」创建一个吧",
+                    stringResource(R.string.listen_no_my_playlists),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -930,44 +935,44 @@ private fun MineTab(
                             Column(Modifier.weight(1f).padding(start = 8.dp)) {
                                 Text(playlist.name, style = MaterialTheme.typography.bodyMedium)
                                 Text(
-                                    "${playlist.trackCount} 首",
+                                    stringResource(R.string.listen_tracks_count, playlist.trackCount),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             IconButton(onClick = { mine.playPlaylist(playlist.pid) }) {
-                                Icon(Icons.Filled.PlayArrow, contentDescription = "投入共同队列", tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.listen_add_to_shared_queue), tint = MaterialTheme.colorScheme.primary)
                             }
                             IconButton(onClick = { mine.deletePlaylist(playlist.pid) }) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "删除歌单", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.listen_delete_playlist), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
                 }
             }
             Spacer(Modifier.height(10.dp))
-            SectionHeader(title = "我喜欢的音乐", loading = state.likedLoading, onRefresh = mine.loadLiked)
+            SectionHeader(title = stringResource(R.string.listen_liked_title), loading = state.likedLoading, onRefresh = mine.loadLiked)
             SongList(
                 songs = state.likedTracks,
-                emptyMessage = "还没有收藏的歌曲，搜索页点红心收藏",
+                emptyMessage = stringResource(R.string.listen_no_liked),
                 onPlaySong = onPlaySong,
                 onQueueSong = onQueueSong,
                 modifier = Modifier.weight(1f),
             )
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = mine.closePlaylist) { Text("← 返回") }
+                TextButton(onClick = mine.closePlaylist) { Text(stringResource(R.string.listen_back)) }
                 Text(
                     selected.name,
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = { mine.playPlaylist(selected.pid) }) { Text("共同播放") }
+                TextButton(onClick = { mine.playPlaylist(selected.pid) }) { Text(stringResource(R.string.listen_play_shared)) }
             }
             if (selected.tracks.isEmpty()) {
                 Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        "歌单是空的，去搜索页把喜欢的歌加进来",
+                        stringResource(R.string.listen_playlist_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -986,7 +991,7 @@ private fun MineTab(
                                 IconButton(onClick = { mine.removeTrack(selected.pid, song.songId) }) {
                                     Icon(
                                         Icons.Outlined.RemoveCircleOutline,
-                                        contentDescription = "从歌单移除",
+                                        contentDescription = stringResource(R.string.listen_remove_from_playlist),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(18.dp),
                                     )
@@ -1017,21 +1022,21 @@ private fun CreatePlaylistDialog(
     var name by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新建歌单") },
+        title = { Text(stringResource(R.string.listen_create_playlist_title)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("歌单名") },
+                label = { Text(stringResource(R.string.listen_playlist_name_label)) },
                 singleLine = true,
             )
         },
         confirmButton = {
             TextButton(onClick = { if (name.isNotBlank()) onConfirm(name.trim()) }, enabled = name.isNotBlank()) {
-                Text("创建")
+                Text(stringResource(R.string.btn_create))
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },
     )
 }
 
@@ -1098,7 +1103,7 @@ private fun SongRow(
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    song.name.ifBlank { "未知歌曲" },
+                    song.name.ifBlank { stringResource(R.string.listen_unknown_song) },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -1113,11 +1118,11 @@ private fun SongRow(
                 )
             }
             IconButton(onClick = onPlay) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = "播放")
+                Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.listen_play))
             }
             if (onQueue != null) {
                 IconButton(onClick = onQueue) {
-                    Icon(Icons.Filled.PlaylistAdd, contentDescription = "加入队列")
+                    Icon(Icons.Filled.PlaylistAdd, contentDescription = stringResource(R.string.listen_add_to_queue))
                 }
             }
             trailing?.invoke()
@@ -1160,7 +1165,7 @@ private fun PlaylistRow(playlist: PlaylistItem, selected: Boolean, onClick: () -
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    "${playlist.trackCount} 首",
+                    stringResource(R.string.listen_tracks_count, playlist.trackCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1204,7 +1209,7 @@ private fun ToplistRow(toplist: ToplistItem, selected: Boolean, onClick: () -> U
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    listOfNotNull(toplist.updateFrequency, "${toplist.trackCount} 首").joinToString(" · "),
+                    listOfNotNull(toplist.updateFrequency, stringResource(R.string.listen_tracks_count, toplist.trackCount)).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1219,7 +1224,7 @@ private fun SectionHeader(title: String, loading: Boolean, onRefresh: () -> Unit
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             SectionTitle(title, modifier = Modifier.weight(1f))
             IconButton(onClick = onRefresh) {
-                Icon(Icons.Filled.Refresh, contentDescription = "刷新")
+                Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.btn_refresh))
             }
         }
         LoadingLine(loading)
@@ -1291,7 +1296,7 @@ private fun LoadingState() {
 private fun ErrorState(message: String?) {
     Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Text(
-            message ?: "加载失败",
+            message ?: stringResource(R.string.msg_load_failed),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center,

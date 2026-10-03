@@ -20,6 +20,7 @@ package com.lovejournal.app.ui.cottage.chat
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.ServerConfig
@@ -30,6 +31,9 @@ import com.lovejournal.app.data.remote.dto.ChatPinnedQuoteResponse
 import com.lovejournal.app.data.repository.ChatRepository
 import com.lovejournal.app.data.repository.ChatWsEvent
 import com.lovejournal.app.data.repository.UploadRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -84,8 +88,8 @@ class ChatViewModel @Inject constructor(
     private val _state = MutableStateFlow(ChatUiState())
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
 
-    private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toast: SharedFlow<String> = _toast
+    private val _toast = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val toast: SharedFlow<UiText> = _toast
 
     // mid -> message; sorted by server id when emitted (dedups REST + WS echoes).
     private val messageMap = linkedMapOf<String, ChatMessageResponse>()
@@ -128,30 +132,30 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun unlockE2ee(passphrase: String, onDone: (String?) -> Unit) {
+    fun unlockE2ee(passphrase: String, onDone: (UiText?) -> Unit) {
         viewModelScope.launch {
             repository.unlockKey(passphrase.toCharArray())
                 .onSuccess { onDone(null) }
-                .onFailure { onDone(it.message ?: "解锁失败") }
+                .onFailure { onDone(it.toUiText()) }
         }
     }
 
-    fun setupE2ee(passphrase: String, onDone: (String?) -> Unit) {
+    fun setupE2ee(passphrase: String, onDone: (UiText?) -> Unit) {
         viewModelScope.launch {
             repository.setupKey(passphrase.toCharArray())
                 .onSuccess {
                     _state.update { it.copy(e2eeInitialized = true) }
                     onDone(null)
                 }
-                .onFailure { onDone(it.message ?: "设置失败") }
+                .onFailure { onDone(it.toUiText()) }
         }
     }
 
-    fun rekeyE2ee(passphrase: String, onDone: (String?) -> Unit) {
+    fun rekeyE2ee(passphrase: String, onDone: (UiText?) -> Unit) {
         viewModelScope.launch {
             repository.rekeyKey(passphrase.toCharArray())
                 .onSuccess { onDone(null) }
-                .onFailure { onDone(it.message ?: "更换口令失败") }
+                .onFailure { onDone(it.toUiText()) }
         }
     }
 
@@ -201,7 +205,7 @@ class ChatViewModel @Inject constructor(
                         _state.update { it.copy(partnerTyping = event.isTyping) }
                         if (event.isTyping) scheduleTypingReset()
                     }
-                    is ChatWsEvent.Poke -> _toast.tryEmit("${event.fromNickname} ${event.label}")
+                    is ChatWsEvent.Poke -> _toast.tryEmit(uiText(R.string.chat_poked_by, event.fromNickname))
                     ChatWsEvent.Read -> Unit
                 }
             }
@@ -272,7 +276,7 @@ class ChatViewModel @Inject constructor(
             // 在同步队列里反复失败。状态就绪后：已启用 → 必须本地加密；
             // 已启用但未解锁 → 拦截提示。
             if (!_state.value.e2eeReady) {
-                _toast.tryEmit("正在同步加密设置，请稍候再发送")
+                _toast.tryEmit(uiText(R.string.chat_e2ee_syncing))
                 refreshKeyState() // 每次发送尝试都顺带重试拉取加密状态
                 return@launch
             }
@@ -282,7 +286,7 @@ class ChatViewModel @Inject constructor(
                 null
             }
             if (_state.value.e2eeInitialized && envelope == null) {
-                _toast.tryEmit("聊天已加密，请先输入共享口令解锁")
+                _toast.tryEmit(uiText(R.string.chat_e2ee_need_unlock))
                 return@launch
             }
             // Offline-aware: a network failure parks the payload in the
@@ -298,7 +302,10 @@ class ChatViewModel @Inject constructor(
                     }
                     emitMessages()
                 }
-                .onFailure { _toast.tryEmit(it.message ?: "已存入待发送队列") }
+                .onFailure { err ->
+                    // 无异常详情说明只是离线入队（仓库已暂存进同步队列）。
+                    _toast.tryEmit(err.message?.let { UiText.Raw(it) } ?: uiText(R.string.messages_msg_offline_saved))
+                }
         }
     }
 
@@ -315,11 +322,11 @@ class ChatViewModel @Inject constructor(
         // E2EE 图片链路尚未实现：加密已启用时放行明文图片会绕过端到端加密，
         // 与网页端行为不一致，因此直接拦截提示。
         if (_state.value.e2eeInitialized) {
-            _toast.tryEmit("加密聊天暂不支持图片消息")
+            _toast.tryEmit(uiText(R.string.chat_e2ee_image_unsupported))
             return
         }
         if (!connectivity.isOnline()) {
-            _toast.tryEmit("当前离线，图片消息需要联网后发送")
+            _toast.tryEmit(uiText(R.string.chat_image_offline_hint))
             return
         }
         _state.update { it.copy(uploadingImage = true) }
@@ -332,9 +339,9 @@ class ChatViewModel @Inject constructor(
                         mediaUrl = uploaded.url,
                     )
                         .onSuccess { messageMap[it.mid] = it; emitMessages() }
-                        .onFailure { _toast.tryEmit(it.message ?: "图片发送失败") }
+                        .onFailure { _toast.tryEmit(it.toUiText()) }
                 }
-                .onFailure { _toast.tryEmit(it.message ?: "图片上传失败") }
+                .onFailure { _toast.tryEmit(it.toUiText()) }
             _state.update { it.copy(uploadingImage = false) }
         }
     }
@@ -354,21 +361,21 @@ class ChatViewModel @Inject constructor(
     fun poke() {
         viewModelScope.launch {
             repository.poke("poke")
-                .onSuccess { _toast.tryEmit("已戳一戳对方 👉") }
-                .onFailure { _toast.tryEmit(it.message ?: "戳一戳失败") }
+                .onSuccess { _toast.tryEmit(uiText(R.string.chat_poke_sent)) }
+                .onFailure { _toast.tryEmit(it.toUiText()) }
         }
     }
 
     fun recall(message: ChatMessageResponse) = viewModelScope.launch {
-        repository.recall(message.mid).fold(onSuccess = { messageMap[it.mid] = it; emitMessages() }, onFailure = { _toast.tryEmit(it.message ?: "撤回失败") })
+        repository.recall(message.mid).fold(onSuccess = { messageMap[it.mid] = it; emitMessages() }, onFailure = { _toast.tryEmit(it.toUiText()) })
     }
 
     fun toggleFavorite(message: ChatMessageResponse) = viewModelScope.launch {
-        repository.favorite(message.mid, !message.is_favorite).fold(onSuccess = { messageMap[it.mid] = it; emitMessages() }, onFailure = { _toast.tryEmit(it.message ?: "操作失败") })
+        repository.favorite(message.mid, !message.is_favorite).fold(onSuccess = { messageMap[it.mid] = it; emitMessages() }, onFailure = { _toast.tryEmit(it.toUiText()) })
     }
 
     fun pin(message: ChatMessageResponse) = viewModelScope.launch {
-        repository.pin(message.mid).fold(onSuccess = { _state.update { state -> state.copy(pinnedQuote = it) } }, onFailure = { _toast.tryEmit(it.message ?: "置顶失败") })
+        repository.pin(message.mid).fold(onSuccess = { _state.update { state -> state.copy(pinnedQuote = it) } }, onFailure = { _toast.tryEmit(it.toUiText()) })
     }
 
     fun clearPin() = viewModelScope.launch {

@@ -17,11 +17,14 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.PlanChecklistItemDto
 import com.lovejournal.app.data.remote.dto.PlanCreateRequest
 import com.lovejournal.app.data.remote.dto.PlanListResponse
 import com.lovejournal.app.data.remote.dto.PlanUpdateRequest
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -66,7 +69,7 @@ class PlanRepository @Inject constructor(
 
     suspend fun delete(pid: String): Result<Unit> = runCatching {
         val response = api.deletePlan(pid)
-        if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 }

@@ -35,14 +35,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.FootprintCity
 import com.lovejournal.app.data.remote.dto.FootprintRecent
 import com.lovejournal.app.data.remote.dto.FootprintResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDateTime
 
 @Composable
@@ -56,11 +59,11 @@ fun FootprintScreen(viewModel: FootprintViewModel = hiltViewModel()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         state.error != null && data == null ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("加载失败：${state.error}", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.msg_load_failed_with_error, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
             }
         data == null || (data.cities.isEmpty() && data.recent.isEmpty()) ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("还没有足迹，去「报备打卡」解锁你们去过的城市吧")
+                Text(stringResource(R.string.footprint_no_data))
             }
         else -> FootprintContent(data)
     }
@@ -80,9 +83,9 @@ private fun FootprintContent(data: FootprintResponse) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("我们的足迹", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.footprint_our_footprints), style = MaterialTheme.typography.labelMedium)
                     Text(
-                        "${data.total_cities} 座城市 · ${data.total_checkins} 次打卡",
+                        stringResource(R.string.footprint_cities_checkins, data.total_cities, data.total_checkins),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
@@ -92,7 +95,7 @@ private fun FootprintContent(data: FootprintResponse) {
 
         if (data.cities.isNotEmpty()) {
             item {
-                Text("去过的地方", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.footprint_visited_places), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             items(data.cities, key = { it.city }) { city ->
                 CityCard(city)
@@ -101,7 +104,7 @@ private fun FootprintContent(data: FootprintResponse) {
 
         if (data.recent.isNotEmpty()) {
             item {
-                Text("最近足迹", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.footprint_recent_footprints), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
             }
             items(data.recent.size) { index ->
                 RecentRow(data.recent[index])
@@ -122,13 +125,13 @@ private fun CityCard(city: FootprintCity) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(city.city, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
-                    "最近 ${formatDateTime(city.last_at)}",
+                    stringResource(R.string.footprint_last_time, formatDateTime(city.last_at)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
-                "${city.count} 次",
+                stringResource(R.string.footprint_times, city.count),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )

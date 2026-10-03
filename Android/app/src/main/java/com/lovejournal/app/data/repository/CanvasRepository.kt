@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.CottageWebSocket
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
@@ -25,6 +26,8 @@ import com.lovejournal.app.data.remote.dto.CanvasArtworkListResponse
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
 import com.lovejournal.app.data.remote.dto.MomentCreateRequest
 import com.lovejournal.app.data.remote.dto.UploadResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -97,7 +100,7 @@ class CanvasRepository @Inject constructor(
 
     suspend fun deleteArtwork(caid: String): Result<Unit> = runCatching {
         val resp = api.deleteCanvasArtwork(caid)
-        if (!resp.isSuccessful) throw IllegalStateException("删除失败 (${resp.code()})")
+        if (!resp.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 

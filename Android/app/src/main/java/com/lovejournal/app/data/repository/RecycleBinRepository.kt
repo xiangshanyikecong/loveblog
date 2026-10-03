@@ -17,8 +17,11 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.RecycleBinResponse
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,19 +38,19 @@ class RecycleBinRepository @Inject constructor(
 
     suspend fun restore(type: String, id: String): Result<Unit> = runCatching {
         val response = api.restoreRecycleItem(type, id)
-        if (!response.isSuccessful) throw IllegalStateException("恢复失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_restore_failed))
         Unit
     }
 
     suspend fun deleteForever(type: String, id: String): Result<Unit> = runCatching {
         val response = api.deleteRecycleItem(type, id)
-        if (!response.isSuccessful) throw IllegalStateException("删除失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_delete_failed))
         Unit
     }
 
     suspend fun clear(type: String? = null): Result<Unit> = runCatching {
         val response = api.clearRecycleBin(type)
-        if (!response.isSuccessful) throw IllegalStateException("清空失败 (${response.code()})")
+        if (!response.isSuccessful) throw UiTextException(uiText(R.string.msg_clear_failed))
         Unit
     }
 }

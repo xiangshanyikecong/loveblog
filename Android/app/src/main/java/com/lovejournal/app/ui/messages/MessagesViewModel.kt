@@ -20,6 +20,7 @@ package com.lovejournal.app.ui.messages
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.entity.MessageEntity
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.NetworkErrors
@@ -27,6 +28,8 @@ import com.lovejournal.app.data.remote.dto.ContentVersion
 import com.lovejournal.app.data.repository.MessageRepository
 import com.lovejournal.app.data.repository.MessageRepository.SendOutcome
 import com.lovejournal.app.sync.SyncScheduler
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,8 +58,8 @@ class MessagesViewModel @Inject constructor(
     private val _versions = MutableStateFlow<List<ContentVersion>>(emptyList())
     val versions: StateFlow<List<ContentVersion>> = _versions.asStateFlow()
 
-    private val _status = MutableStateFlow<String?>(null)
-    val status: StateFlow<String?> = _status.asStateFlow()
+    private val _status = MutableStateFlow<UiText?>(null)
+    val status: StateFlow<UiText?> = _status.asStateFlow()
 
     init {
         refresh()
@@ -72,8 +75,8 @@ class MessagesViewModel @Inject constructor(
         viewModelScope.launch {
             val outcome = repository.send(content.trim(), isPublic = isPublic)
             _status.value = when (outcome) {
-                SendOutcome.QUEUED_ONLINE -> if (isPublic) "已发送" else "私密留言已发送"
-                SendOutcome.QUEUED_OFFLINE -> "离线已保存，联网后自动同步"
+                SendOutcome.QUEUED_ONLINE -> if (isPublic) uiText(R.string.messages_msg_sent) else uiText(R.string.messages_msg_sent_private)
+                SendOutcome.QUEUED_OFFLINE -> uiText(R.string.messages_msg_offline_saved)
             }
             // Kick an immediate sync attempt; WorkManager no-ops when offline.
             SyncScheduler.requestSyncNow(getApplication())
@@ -87,13 +90,13 @@ class MessagesViewModel @Inject constructor(
     fun editMessage(message: MessageEntity, newContent: String, newIsPublic: Boolean) {
         val content = newContent.trim()
         if (content.isEmpty()) {
-            _status.value = "留言内容不能为空"
+            _status.value = uiText(R.string.messages_error_empty_content)
             return
         }
         val contentChanged = content != message.content
         val visibilityChanged = newIsPublic != message.isPublic
         if (!contentChanged && !visibilityChanged) {
-            _status.value = "没有需要保存的修改"
+            _status.value = uiText(R.string.messages_error_no_changes)
             return
         }
         viewModelScope.launch {
@@ -103,10 +106,10 @@ class MessagesViewModel @Inject constructor(
                 isPublic = if (visibilityChanged) newIsPublic else null,
             ).fold(
                 onSuccess = {
-                    _status.value = "保存成功"
+                    _status.value = uiText(R.string.msg_saved)
                     refresh()
                 },
-                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+                onFailure = { _status.value = NetworkErrors.toUiText(it) },
             )
         }
     }
@@ -116,10 +119,10 @@ class MessagesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.remove(msgId).fold(
                 onSuccess = {
-                    _status.value = "已删除"
+                    _status.value = uiText(R.string.msg_deleted)
                     refresh()
                 },
-                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+                onFailure = { _status.value = NetworkErrors.toUiText(it) },
             )
         }
     }
@@ -129,7 +132,7 @@ class MessagesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.versions(msgId).fold(
                 onSuccess = { _versions.value = it },
-                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+                onFailure = { _status.value = NetworkErrors.toUiText(it) },
             )
         }
     }
@@ -139,11 +142,11 @@ class MessagesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.rollback(msgId, version).fold(
                 onSuccess = {
-                    _status.value = "已回滚到版本 $version"
+                    _status.value = uiText(R.string.messages_rolled_back, version)
                     _versions.value = emptyList()
                     refresh()
                 },
-                onFailure = { _status.value = NetworkErrors.toUserMessage(it) },
+                onFailure = { _status.value = NetworkErrors.toUiText(it) },
             )
         }
     }

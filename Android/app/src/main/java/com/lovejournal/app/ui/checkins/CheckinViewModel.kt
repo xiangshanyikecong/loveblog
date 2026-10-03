@@ -33,12 +33,16 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.CheckInResponse
 import com.lovejournal.app.data.repository.CheckinRepository
 import com.lovejournal.app.data.repository.UploadRepository
 import com.lovejournal.app.sync.SyncScheduler
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlin.coroutines.resume
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +57,7 @@ data class CheckinUiState(
     val loading: Boolean = false,
     val items: List<CheckInResponse> = emptyList(),
     val total: Int = 0,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 /** 正在编辑的报备草稿：已上传的照片路径、上传中 / 提交中标记。 */
@@ -65,7 +69,7 @@ data class CheckinDraft(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationPermissionDenied: Boolean = false,
-    val locationMessage: String? = null,
+    val locationMessage: UiText? = null,
 )
 
 @HiltViewModel
@@ -83,8 +87,8 @@ class CheckinViewModel @Inject constructor(
     private val _draft = MutableStateFlow(CheckinDraft())
     val draft: StateFlow<CheckinDraft> = _draft.asStateFlow()
 
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
 
     init {
         refresh()
@@ -98,7 +102,7 @@ class CheckinViewModel @Inject constructor(
         viewModelScope.launch {
             repository.list().fold(
                 onSuccess = { _state.value = CheckinUiState(items = it.items, total = it.total) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
@@ -115,7 +119,7 @@ class CheckinViewModel @Inject constructor(
                 },
                 onFailure = {
                     _draft.value = _draft.value.copy(uploading = false)
-                    _message.value = it.message ?: "图片上传失败"
+                    _message.value = it.toUiText()
                 },
             )
         }
@@ -135,7 +139,7 @@ class CheckinViewModel @Inject constructor(
             latitude = null,
             longitude = null,
             locationPermissionDenied = false,
-            locationMessage = "正在获取位置…",
+            locationMessage = uiText(R.string.checkin_locating_msg),
         )
         viewModelScope.launch {
             val location = runCatching { currentLocation() }.getOrNull()
@@ -145,7 +149,7 @@ class CheckinViewModel @Inject constructor(
                     latitude = location.latitude,
                     longitude = location.longitude,
                     locationPermissionDenied = false,
-                    locationMessage = "已获取位置",
+                    locationMessage = uiText(R.string.checkin_location_ok),
                 )
             } else {
                 _draft.value = _draft.value.copy(
@@ -153,9 +157,9 @@ class CheckinViewModel @Inject constructor(
                     latitude = null,
                     longitude = null,
                     locationPermissionDenied = false,
-                    locationMessage = "暂时没有拿到位置",
+                    locationMessage = uiText(R.string.checkin_location_failed_msg),
                 )
-                _message.value = "暂时没有拿到位置，本次可先提交文字或照片"
+                _message.value = uiText(R.string.checkin_location_failed_hint)
             }
         }
     }
@@ -166,7 +170,7 @@ class CheckinViewModel @Inject constructor(
             latitude = null,
             longitude = null,
             locationPermissionDenied = true,
-            locationMessage = "已记录未授权位置",
+            locationMessage = uiText(R.string.checkin_location_denied_msg),
         )
     }
 
@@ -187,7 +191,7 @@ class CheckinViewModel @Inject constructor(
         val hasLocationIntent = (draft.latitude != null && draft.longitude != null) ||
             draft.locationPermissionDenied
         if (text == null && media.isEmpty() && !hasLocationIntent) {
-            _message.value = "写点什么，或加一张照片吧"
+            _message.value = uiText(R.string.checkin_msg_say_something)
             return
         }
         _draft.value = draft.copy(submitting = true)
@@ -201,7 +205,7 @@ class CheckinViewModel @Inject constructor(
             ).fold(
                 onSuccess = {
                     _draft.value = CheckinDraft()
-                    _message.value = "已报备"
+                    _message.value = uiText(R.string.checkin_msg_checkin_done)
                     onDone()
                     refresh()
                 },
@@ -210,12 +214,12 @@ class CheckinViewModel @Inject constructor(
                         // 离线：请求已由仓库暂存进同步队列，联网后由
                         // SyncWorker 自动补发，这里按成功收尾避免重复提交。
                         _draft.value = CheckinDraft()
-                        _message.value = "已离线暂存，联网后自动同步"
+                        _message.value = uiText(R.string.messages_msg_offline_saved)
                         onDone()
                         SyncScheduler.requestSyncNow(getApplication())
                     } else {
                         _draft.value = _draft.value.copy(submitting = false)
-                        _message.value = e.message ?: "报备失败"
+                        _message.value = e.toUiText()
                     }
                 },
             )

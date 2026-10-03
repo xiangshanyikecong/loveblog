@@ -18,6 +18,7 @@
 package com.lovejournal.app.data.repository
 
 import androidx.room.withTransaction
+import com.lovejournal.app.R
 import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.crypto.ChatCrypto
 import com.lovejournal.app.data.local.LoveDatabase
@@ -44,6 +45,8 @@ import com.lovejournal.app.data.remote.dto.ChatSearchResponse
 import com.lovejournal.app.data.remote.dto.PokeRequest
 import com.lovejournal.app.sync.SyncActions
 import com.lovejournal.app.sync.SyncScheduler
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -171,11 +174,11 @@ class ChatRepository @Inject constructor(
     suspend fun unlockKey(passphrase: CharArray): Result<Unit> = runCatching {
         val meta = api.chatKeyMeta()
         e2eeInitialized = meta.initialized
-        val salt = meta.salt ?: throw IllegalStateException("服务器未启用加密聊天")
-        val verifierIv = meta.verifier_iv ?: throw IllegalStateException("服务器未启用加密聊天")
-        val verifierCipher = meta.verifier_cipher ?: throw IllegalStateException("服务器未启用加密聊天")
+        val salt = meta.salt ?: throw UiTextException(uiText(R.string.chat_error_e2ee_not_setup))
+        val verifierIv = meta.verifier_iv ?: throw UiTextException(uiText(R.string.chat_error_e2ee_not_setup))
+        val verifierCipher = meta.verifier_cipher ?: throw UiTextException(uiText(R.string.chat_error_e2ee_not_setup))
         if (!ChatCrypto.verifyPassphrase(passphrase, salt, meta.iterations ?: ChatCrypto.DEFAULT_ITERATIONS, verifierIv, verifierCipher)) {
-            throw IllegalArgumentException("口令不正确")
+            throw UiTextException(uiText(R.string.chat_error_wrong_passphrase))
         }
         val key = ChatCrypto.deriveKey(passphrase, salt, meta.iterations ?: ChatCrypto.DEFAULT_ITERATIONS)
         // 与 web 相同：解锁后发送一次性 proof（服务端仅作记录，不参与密钥校验）。
@@ -317,7 +320,7 @@ class ChatRepository @Inject constructor(
             // 媒体消息不入同步队列（队列是纯文本设计）。
             if (type != "text") return Result.failure(e)
             val uid = session.sessionFlow.first().uid
-                ?: return Result.failure(IllegalStateException("登录状态已失效"))
+                ?: return Result.failure(UiTextException(uiText(R.string.msg_session_expired)))
             val scope = serverConfigScope.dataScope(uid)
             db.withTransaction {
                 syncQueueDao.enqueue(

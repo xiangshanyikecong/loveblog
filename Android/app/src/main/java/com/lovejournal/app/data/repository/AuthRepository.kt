@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.data.repository
 
+import com.lovejournal.app.R
 import com.lovejournal.app.data.local.LoveDatabase
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.AuthCookieJar
@@ -25,6 +26,9 @@ import com.lovejournal.app.data.remote.NetworkErrors
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.LoginRequest
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.UiTextException
+import com.lovejournal.app.ui.components.uiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -55,22 +59,19 @@ class AuthRepository @Inject constructor(
         val response = api.login(LoginRequest(username.trim(), password))
         if (!response.isSuccessful) {
             val msg = when (response.code()) {
-                401 -> "用户名或密码错误"
-                403 -> "账号被冻结或封禁，请稍后再试"
-                429 -> "尝试过于频繁，请稍后再试"
-                else -> "登录失败 (${response.code()})"
+                401 -> uiText(R.string.auth_error_wrong_credentials)
+                403 -> uiText(R.string.auth_error_frozen)
+                429 -> uiText(R.string.auth_error_too_frequent)
+                else -> uiText(R.string.auth_error_login_failed, response.code())
             }
-            throw IllegalStateException(msg)
+            throw UiTextException(msg)
         }
         val profile = try {
             api.me()
         } catch (e: HttpException) {
             if (e.code() == 401) {
                 cookieJar.clear()
-                throw IllegalStateException(
-                    "登录成功但会话未保持。若使用 http 自部署，请确认服务端 COOKIE_SECURE 未强制开启，" +
-                        "且反代未误传 X-Forwarded-Proto: https",
-                )
+                throw UiTextException(uiText(R.string.auth_error_session_not_kept))
             }
             throw e
         }
@@ -78,19 +79,19 @@ class AuthRepository @Inject constructor(
         runCatching { pushRepository.registerCurrentFcmToken().getOrThrow() }
         Unit
     }.recoverCatching { error ->
-        if (error is IllegalStateException) throw error
-        throw IllegalStateException(NetworkErrors.toUserMessage(error), error)
+        if (error is UiTextException) throw error
+        throw UiTextException(NetworkErrors.toUiText(error), error)
     }
 
     /**
      * Hits GET /health on the configured origin to verify reachability before login.
      * Does not require credentials.
      */
-    suspend fun testConnection(serverAddress: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun testConnection(serverAddress: String): Result<UiText> = withContext(Dispatchers.IO) {
         runCatching {
             val base = serverConfig.healthBaseFor(serverAddress)
             if (base.isBlank()) {
-                throw IllegalStateException("请先填写服务器地址")
+                throw UiTextException(uiText(R.string.auth_error_no_server))
             }
             val request = Request.Builder()
                 .url("$base/health")
@@ -104,18 +105,18 @@ class AuthRepository @Inject constructor(
                 .build()
             publicClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
-                    throw IllegalStateException(
+                    throw UiTextException(
                         when (response.code) {
-                            404 -> "服务器可达，但未找到健康检查接口（请确认端口为 :8000）"
-                            else -> "服务器返回 ${response.code}"
+                            404 -> uiText(R.string.auth_health_404)
+                            else -> uiText(R.string.auth_health_code, response.code)
                         },
                     )
                 }
-                "连接成功，后端运行正常"
+                uiText(R.string.auth_connection_ok)
             }
         }.recoverCatching { error ->
-            if (error is IllegalStateException) throw error
-            throw IllegalStateException(NetworkErrors.toUserMessage(error), error)
+            if (error is UiTextException) throw error
+            throw UiTextException(NetworkErrors.toUiText(error), error)
         }
     }
 
@@ -147,10 +148,10 @@ class AuthRepository @Inject constructor(
     suspend fun bootstrapStatus(): Result<Boolean> = runCatching {
         val element = api.bootstrapStatus()
         element.jsonObject["bootstrapped"]?.let { (it as? JsonPrimitive)?.booleanOrNull }
-            ?: throw IllegalStateException("无法识别站点初始化状态")
+            ?: throw UiTextException(uiText(R.string.bootstrap_error_unrecognized))
     }.recoverCatching { error ->
-        if (error is IllegalStateException) throw error
-        throw IllegalStateException(NetworkErrors.toUserMessage(error), error)
+        if (error is UiTextException) throw error
+        throw UiTextException(NetworkErrors.toUiText(error), error)
     }
 
     /**
@@ -178,15 +179,15 @@ class AuthRepository @Inject constructor(
         api.bootstrap(bootstrapToken, body)
         Unit
     }.recoverCatching { error ->
-        throw IllegalStateException(
-            when {
-                error is HttpException -> when (error.code()) {
-                    401 -> "初始化令牌不正确"
-                    403 -> "该站点未启用初始化令牌"
-                    409 -> "该站点已完成初始化或用户名已存在"
-                    else -> NetworkErrors.toUserMessage(error)
+        throw UiTextException(
+            when (error) {
+                is HttpException -> when (error.code()) {
+                    401 -> uiText(R.string.bootstrap_error_token)
+                    403 -> uiText(R.string.bootstrap_error_disabled)
+                    409 -> uiText(R.string.bootstrap_error_conflict)
+                    else -> NetworkErrors.toUiText(error)
                 }
-                else -> NetworkErrors.toUserMessage(error)
+                else -> NetworkErrors.toUiText(error)
             },
             error,
         )
@@ -212,14 +213,14 @@ class AuthRepository @Inject constructor(
         api.register(body)
         Unit
     }.recoverCatching { error ->
-        throw IllegalStateException(
-            when {
-                error is HttpException -> when (error.code()) {
-                    403 -> "只有伴侣账号才能开通另一半"
-                    409 -> "该名额已存在账号"
-                    else -> NetworkErrors.toUserMessage(error)
+        throw UiTextException(
+            when (error) {
+                is HttpException -> when (error.code()) {
+                    403 -> uiText(R.string.register_error_not_partner)
+                    409 -> uiText(R.string.register_error_conflict)
+                    else -> NetworkErrors.toUiText(error)
                 }
-                else -> NetworkErrors.toUserMessage(error)
+                else -> NetworkErrors.toUiText(error)
             },
             error,
         )

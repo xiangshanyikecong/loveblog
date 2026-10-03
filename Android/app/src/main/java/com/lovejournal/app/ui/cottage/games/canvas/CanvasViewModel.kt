@@ -20,9 +20,14 @@ package com.lovejournal.app.ui.cottage.games.canvas
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.prefs.SessionManager
 import com.lovejournal.app.data.remote.dto.CanvasArtworkResponse
 import com.lovejournal.app.data.repository.CanvasRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.uiText
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -90,13 +95,15 @@ data class CanvasUiState(
 class CanvasViewModel @Inject constructor(
     private val repository: CanvasRepository,
     session: SessionManager,
+    // 仅用于把「我们一起画的」这类发往服务端的默认内容按系统语言本地化。
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CanvasUiState())
     val state: StateFlow<CanvasUiState> = _state.asStateFlow()
 
-    private val _toast = MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toast: SharedFlow<String> = _toast
+    private val _toast = MutableSharedFlow<UiText>(extraBufferCapacity = 4)
+    val toast: SharedFlow<UiText> = _toast
 
     private val outBuffer = mutableListOf<CanvasSegment>()
     private var flushJob: Job? = null
@@ -328,9 +335,9 @@ class CanvasViewModel @Inject constructor(
                         idempotencyKey = idempotencyKey,
                     ).getOrThrow()
                 }
-                _toast.tryEmit("已保存到作品集（${created.collaborators.size} 位合作者）")
+                _toast.tryEmit(uiText(R.string.canvas_msg_saved_gallery, created.collaborators.size))
             } catch (e: Exception) {
-                _toast.tryEmit("保存失败: ${e.message}")
+                _toast.tryEmit(uiText(R.string.canvas_msg_save_failed_with, e.message ?: "?"))
             } finally {
                 _state.value = _state.value.copy(savingToGallery = false)
             }
@@ -388,12 +395,12 @@ class CanvasViewModel @Inject constructor(
                 val upload = withContext(Dispatchers.IO) { repository.uploadTimelineImage(part) }
                 upload.getOrThrow()
                 withContext(Dispatchers.IO) {
-                    repository.createMoment("我们一起画的", listOf(upload.getOrThrow().url))
+                    repository.createMoment(context.getString(R.string.canvas_default_title), listOf(upload.getOrThrow().url))
                 }.getOrThrow()
-                _toast.tryEmit("已保存到时间轴")
+                _toast.tryEmit(uiText(R.string.canvas_msg_saved_timeline))
                 file.delete()
             } catch (e: Exception) {
-                _toast.tryEmit("保存失败: ${e.message}")
+                _toast.tryEmit(uiText(R.string.canvas_msg_save_failed_with, e.message ?: "?"))
             } finally {
                 _state.value = _state.value.copy(saving = false)
             }

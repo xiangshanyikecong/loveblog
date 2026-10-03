@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.data.remote
 
+import com.lovejournal.app.R
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -58,16 +59,21 @@ internal object ServerAddress {
         return builder.build().toString().trimEnd('/')
     }
 
-    /** [ServerConfig.validateAddressInput] — returns an error message or null if OK. */
-    fun validateAddressInput(raw: String, allowCleartext: Boolean): String? {
+    /**
+     * [ServerConfig.validateAddressInput] — returns the error message resource
+     * ID (R.string.server_config_*) or null if OK. Returning a resource id
+     * (not a resolved string) keeps the JVM-pure rules testable and lets
+     * callers localize.
+     */
+    fun validateAddressInput(raw: String, allowCleartext: Boolean): Int? {
         val trimmed = raw.trim()
-        if (trimmed.isEmpty()) return "请输入服务器地址"
+        if (trimmed.isEmpty()) return R.string.server_config_empty
         if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-            return "请填写完整的 https:// 服务器地址"
+            return R.string.server_config_incomplete_https
         }
-        val parsed = trimmed.toHttpUrlOrNull() ?: return "服务器地址格式不正确"
+        val parsed = trimmed.toHttpUrlOrNull() ?: return R.string.server_config_invalid
         if (!parsed.isHttps && (!allowCleartext || !isLocalDevelopmentHost(parsed.host))) {
-            return "为保护账号和会话，正式版仅允许 HTTPS；本地 HTTP 仅限调试版私有地址"
+            return R.string.server_config_https_only
         }
         return null
     }

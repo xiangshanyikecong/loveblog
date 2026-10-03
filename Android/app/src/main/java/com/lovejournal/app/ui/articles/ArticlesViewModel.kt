@@ -19,6 +19,7 @@ package com.lovejournal.app.ui.articles
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.dto.ArticleDetail
 import com.lovejournal.app.data.remote.dto.ArticleBlockRequest
@@ -26,6 +27,9 @@ import com.lovejournal.app.data.remote.dto.ArticleCreateRequest
 import com.lovejournal.app.data.remote.dto.ArticleSummary
 import com.lovejournal.app.data.remote.dto.ContentVersion
 import com.lovejournal.app.data.repository.ArticlesRepository
+import com.lovejournal.app.ui.components.UiText
+import com.lovejournal.app.ui.components.toUiText
+import com.lovejournal.app.ui.components.uiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,13 +40,13 @@ import javax.inject.Inject
 data class ArticlesUiState(
     val loading: Boolean = false,
     val articles: List<ArticleSummary> = emptyList(),
-    val error: String? = null,
+    val error: UiText? = null,
     val detail: ArticleDetail? = null,
     val detailLoading: Boolean = false,
-    val detailError: String? = null,
+    val detailError: UiText? = null,
     val saving: Boolean = false,
     val versions: List<ContentVersion> = emptyList(),
-    val message: String? = null,
+    val message: UiText? = null,
 )
 
 @HiltViewModel
@@ -63,7 +67,7 @@ class ArticlesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.list().fold(
                 onSuccess = { _state.value = _state.value.copy(loading = false, articles = it, error = null) },
-                onFailure = { _state.value = _state.value.copy(loading = false, error = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(loading = false, error = it.toUiText()) },
             )
         }
     }
@@ -73,7 +77,7 @@ class ArticlesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.detail(aid).fold(
                 onSuccess = { _state.value = _state.value.copy(detailLoading = false, detail = it) },
-                onFailure = { _state.value = _state.value.copy(detailLoading = false, detailError = it.message ?: "加载失败") },
+                onFailure = { _state.value = _state.value.copy(detailLoading = false, detailError = it.toUiText()) },
             )
         }
     }
@@ -84,7 +88,7 @@ class ArticlesViewModel @Inject constructor(
 
     fun save(title: String, excerpt: String, content: String, published: Boolean, tags: String) {
         if (title.isBlank() || content.isBlank()) {
-            _state.value = _state.value.copy(message = "标题和正文不能为空")
+            _state.value = _state.value.copy(message = uiText(R.string.articles_error_title_content_required))
             return
         }
         val current = _state.value.detail
@@ -116,10 +120,10 @@ class ArticlesViewModel @Inject constructor(
             }
             result.fold(
                 onSuccess = {
-                    _state.value = _state.value.copy(saving = false, detail = it, message = "保存成功")
+                    _state.value = _state.value.copy(saving = false, detail = it, message = uiText(R.string.msg_saved))
                     refresh()
                 },
-                onFailure = { _state.value = _state.value.copy(saving = false, message = it.message ?: "保存失败") },
+                onFailure = { _state.value = _state.value.copy(saving = false, message = it.toUiText()) },
             )
         }
     }
@@ -130,10 +134,10 @@ class ArticlesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.delete(current.aid).fold(
                 onSuccess = {
-                    _state.value = _state.value.copy(saving = false, detail = null, message = "已删除")
+                    _state.value = _state.value.copy(saving = false, detail = null, message = uiText(R.string.msg_deleted))
                     refresh()
                 },
-                onFailure = { _state.value = _state.value.copy(saving = false, message = it.message ?: "删除失败") },
+                onFailure = { _state.value = _state.value.copy(saving = false, message = it.toUiText()) },
             )
         }
     }
@@ -144,7 +148,7 @@ class ArticlesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.comment(current.aid, content.trim()).fold(
                 onSuccess = { open(current.aid) },
-                onFailure = { _state.value = _state.value.copy(message = it.message ?: "评论失败") },
+                onFailure = { _state.value = _state.value.copy(message = it.toUiText()) },
             )
         }
     }
@@ -154,7 +158,7 @@ class ArticlesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.versions(current.aid).fold(
                 onSuccess = { _state.value = _state.value.copy(versions = it) },
-                onFailure = { _state.value = _state.value.copy(message = it.message ?: "版本加载失败") },
+                onFailure = { _state.value = _state.value.copy(message = it.toUiText()) },
             )
         }
     }
@@ -163,8 +167,8 @@ class ArticlesViewModel @Inject constructor(
         val current = _state.value.detail ?: return
         viewModelScope.launch {
             repository.rollback(current.aid, version).fold(
-                onSuccess = { _state.value = _state.value.copy(detail = it, versions = emptyList(), message = "已回滚") ; refresh() },
-                onFailure = { _state.value = _state.value.copy(message = it.message ?: "回滚失败") },
+                onSuccess = { _state.value = _state.value.copy(detail = it, versions = emptyList(), message = uiText(R.string.messages_rolled_back, version)) ; refresh() },
+                onFailure = { _state.value = _state.value.copy(message = it.toUiText()) },
             )
         }
     }
