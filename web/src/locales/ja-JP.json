@@ -102,6 +102,9 @@
     "genericError": "操作が完了しませんでした、後で再試行してください",
     "genericRetryError": "操作が完了しませんでした、確認して再試行してください"
   },
+  "aiFeature": {
+    "unavailable": "AI が未設定か、一時的に利用できません"
+  },
   "auth": {
     "logoutSuccess": "ログアウトしました",
     "logoutPartialFail": "ローカルリソースは停止しましたが、サーバーセッションのログアウトに失敗しました、ネットワークを確認してください",
@@ -228,6 +231,7 @@
       "watch": { "title": "一緒に観る", "desc": "同じ動画を同期再生、一緒に視聴。" },
       "games": { "title": "一緒に遊ぶ", "desc": "五目並べ、マルバツゲーム、オセロ、お相手を誘って一局。" },
       "reports": { "title": "ラブ月報", "desc": "今月の小屋でのやり取りを見よう。" },
+      "achievements": { "title": "ラブ実績", "desc": "バッジを集めて、二人のレベルを確認。" },
       "calendar": { "title": "共有カレンダー", "desc": "記念日、気分、チェックイン、計画を一目で。" },
       "ledger": { "title": "カップル家計簿", "desc": "一緒に記録して、誰が誰にいくら借りているか。" },
       "footprints": { "title": "フットプリントマップ", "desc": "一緒に行った街を振り返る。" },
@@ -506,7 +510,10 @@
     "sealedHint": "答えはまだ封筒の中。二人とも書き終わるのを待っています。",
     "createdToast": "今日の質問を小屋に置きました",
     "revealedToast": "答えが公開されました！",
-    "savedToast": "答えを保存しました"
+    "savedToast": "答えを保存しました",
+    "aiGenerate": "AI 出題",
+    "aiGenerating": "AI 出題中…",
+    "aiPickHint": "質問をタップすると下の入力欄に反映されます。確認してから作成："
   },
   "cottageLedger": {
     "title": "カップル家計簿",
@@ -1011,7 +1018,53 @@
     "statWishesCompleted": "達成願い",
     "kindWish": "願い",
     "kindPlan": "計画",
-    "kindQuestion": "Q&A"
+    "kindQuestion": "Q&A",
+    "aiNarrative": "AI コメント",
+    "aiGenerating": "AI 作成中…"
+  },
+  "cottageAchievements": {
+    "title": "ラブ実績",
+    "subtitle": "二人の歩みのバッジとレベル。",
+    "back": "小屋に戻る",
+    "loading": "読み込み中...",
+    "loadFailed": "実績の読み込みに失敗しました",
+    "points": "ラブポイント {n}",
+    "nextLevel": "「{title}」まであと {points} ポイント",
+    "maxLevel": "最高レベル達成！これからも仲良く♪",
+    "statsTitle": "主な統計",
+    "badgesTitle": "実績バッジ",
+    "badgesCount": "{done} / {total} 解除",
+    "badgeProgress": "{current} / {target}",
+    "achieved": "達成済み",
+    "tierBronze": "ブロンズ",
+    "tierSilver": "シルバー",
+    "tierGold": "ゴールド",
+    "emptyBadges": "バッジはまだありません。小屋でもっと交流しよう！",
+    "statLoveDays": "一緒の日数",
+    "statCheckinStreak": "連続チェックイン(日)",
+    "statMoodStreak": "連続気分記録(日)",
+    "statArticles": "日記",
+    "statAlbums": "アルバム",
+    "statMoments": "つぶやき",
+    "statCapsules": "タイムカプセル",
+    "statChatMessages": "ヒソヒソ話",
+    "statWishesCompleted": "達成願い",
+    "statGames": "一緒に遊んだ回数"
+  },
+  "cottageTaps": {
+    "title": "タップでひとこと",
+    "desc": "軽くひと押しで、相手のスマホに「考えてるよ」が届きます。",
+    "tap": "コンコン",
+    "heartbeat": "ハートビート",
+    "sentTap": "{name} をコンコンしました、すぐに伝わりますよ～",
+    "sentHeartbeat": "{name} にハートビートを送りました 💓",
+    "noPartner": "パートナーアカウントがまだありません。まず招待しましょう",
+    "tooFast": "送りすぎですよ、少し休んでからまたタップしてね～",
+    "recentTitle": "最近のタップ",
+    "keptCount": "全 {n} 件",
+    "recordTap": "{from} が {to} をコンコンしました",
+    "recordHeartbeat": "{from} が {to} にハートビートを送りました",
+    "empty": "タップ記録はまだありません。ひと押ししてみよう～"
   },
   "cottageFootprints": {
     "title": "フットプリントマップ",
@@ -1116,7 +1169,21 @@
     "uploadFailed": "アップロードに失敗しました",
     "imageUploadFailed": "画像のアップロードに失敗しました",
     "leaveWithUnsaved": "未保存の変更があります。本当に離れますか？",
-    "imageAlt": "画像"
+    "imageAlt": "画像",
+    "aiGroup": "AI アシスト",
+    "aiPolish": "推敲",
+    "aiContinue": "続きを書く",
+    "aiProofread": "校正",
+    "aiPanelTitle": "AI {action}結果",
+    "aiWorking": "AI が考えています…",
+    "aiOutputLabel": "AI 生成結果",
+    "aiInsert": "本文に挿入",
+    "aiReplace": "本文を置き換え",
+    "aiReplaceConfirm": "AI の結果で現在の本文を置き換えますか？置き換え後は Ctrl+Z で取り消せます。",
+    "aiReplaced": "AI の結果で本文を置き換えました",
+    "aiInserted": "本文に挿入しました",
+    "aiCopyFailed": "コピーに失敗しました。テキストを選択して手動でコピーしてください",
+    "aiEmpty": "本文がまだ空です。何か書いてから AI に頼みましょう"
   },
   "articleDetail": {
     "loading": "読み込み中...",
@@ -1619,7 +1686,15 @@
     "typeMoment": "タイムライン",
     "typeAlbum": "アルバム",
     "typeEvent": "記念日",
-    "typeMessage": "メッセージ"
+    "typeMessage": "メッセージ",
+    "aiTitle": "AI 意味検索",
+    "aiDesc": "思い出をひとことで説明すると、AI が一番近い日記を探します。",
+    "aiPlaceholder": "例：海で見たあの夕日",
+    "aiSearch": "AI 検索",
+    "aiSearching": "AI 検索中...",
+    "aiIndexed": "{count} 件の日記を索引済み",
+    "aiScore": "類似度 {score}%",
+    "aiNoResults": "似た日記は見つかりませんでした。"
   },
   "timelineView": {
     "tabAriaLabel": "思い出モジュールナビゲーション",

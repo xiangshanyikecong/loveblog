@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.data.remote.dto.AnnualReportResponse
 import com.lovejournal.app.data.remote.dto.CottageMonthlyReportResponse
+import com.lovejournal.app.data.repository.AiFeatures
+import com.lovejournal.app.data.repository.AiRepository
 import com.lovejournal.app.data.repository.ReportRepository
 import com.lovejournal.app.ui.components.UiText
 import com.lovejournal.app.ui.components.toUiText
@@ -43,11 +45,17 @@ data class ReportUiState(
     val annualLoading: Boolean = false,
     val annual: AnnualReportResponse? = null,
     val annualError: UiText? = null,
+    // ---- AI 月报文案（status.enabled 且具备 monthly_report 特性时显示）----
+    val aiEnabled: Boolean = false,
+    val aiLoading: Boolean = false,
+    val aiText: String? = null,
+    val aiError: UiText? = null,
 )
 
 @HiltViewModel
 class ReportViewModel @Inject constructor(
     private val repository: ReportRepository,
+    private val aiRepository: AiRepository,
 ) : ViewModel() {
 
     private val today = LocalDate.now()
@@ -57,6 +65,28 @@ class ReportViewModel @Inject constructor(
     init {
         refresh()
         loadAnnual(today.year)
+        viewModelScope.launch {
+            aiRepository.status().onSuccess {
+                _state.value = _state.value.copy(aiEnabled = it.enabled && it.features.contains(AiFeatures.MONTHLY_REPORT))
+            }
+        }
+    }
+
+    /** AI 按当前选中月份生成一段月报文案。 */
+    fun generateAiText() {
+        val current = _state.value
+        if (current.aiLoading) return
+        _state.value = current.copy(aiLoading = true, aiError = null)
+        viewModelScope.launch {
+            aiRepository.monthlyReport(current.year, current.month).fold(
+                onSuccess = { _state.value = _state.value.copy(aiLoading = false, aiText = it.text) },
+                onFailure = { _state.value = _state.value.copy(aiLoading = false, aiError = it.toUiText()) },
+            )
+        }
+    }
+
+    fun dismissAiText() {
+        _state.value = _state.value.copy(aiText = null, aiError = null)
     }
 
     /** 恋爱年报（对齐网页端 /reports/annual）。 */

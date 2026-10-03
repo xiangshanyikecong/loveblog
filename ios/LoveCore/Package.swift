@@ -29,6 +29,7 @@ let package = Package(
     platforms: [
         .iOS(.v17),
         .macOS(.v14),
+        .watchOS(.v10),
     ],
     products: [
         .library(name: "LoveCore", targets: ["LoveCore"]),

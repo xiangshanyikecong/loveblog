@@ -39,10 +39,36 @@ final class QuestionsViewModel {
     var error: String?
     var saving = false
 
+    /// AI question candidates (visible only when the instance advertises it).
+    private(set) var aiStatus: AIDTOs.Status?
+    var aiCandidates: [String] = []
+    var aiLoading = false
+    var aiError: String?
+
     private let api: LoveAPIClient
 
     init(api: LoveAPIClient) {
         self.api = api
+    }
+
+    func loadAIStatusIfNeeded() async {
+        guard aiStatus == nil else { return }
+        aiStatus = try? await api.aiStatus()
+    }
+
+    /// `POST /ai/questions/generate` — candidates only; picking one just
+    /// prefills the create input, nothing is created automatically.
+    func generateQuestions() async {
+        guard !aiLoading else { return }
+        aiLoading = true
+        aiError = nil
+        do {
+            let response = try await api.aiGenerateQuestions(count: 3)
+            aiCandidates = response.questions
+        } catch {
+            aiError = AIFeature.message(for: error)
+        }
+        aiLoading = false
     }
 
     func refresh() async {
@@ -112,6 +138,7 @@ struct CottageQuestionsView: View {
     @State private var promptDraft = ""
     @State private var answerDraft = ""
     @State private var editingAnswer = false
+    @State private var aiSheetPresented = false
 
     var body: some View {
         Group {
@@ -127,7 +154,10 @@ struct CottageQuestionsView: View {
         .onAppear {
             if model == nil {
                 model = QuestionsViewModel(api: environment.api)
-                Task { await model?.refresh() }
+                Task {
+                    await model?.refresh()
+                    await model?.loadAIStatusIfNeeded()
+                }
             }
         }
     }
@@ -153,6 +183,12 @@ struct CottageQuestionsView: View {
             .padding(16)
         }
         .refreshable { await model.refresh() }
+        .sheet(isPresented: $aiSheetPresented) {
+            AIQuestionCandidatesSheet(candidates: model.aiCandidates) { picked in
+                promptDraft = picked
+                aiSheetPresented = false
+            }
+        }
     }
 
     // MARK: State 1 — no question today yet
@@ -174,6 +210,19 @@ struct CottageQuestionsView: View {
                     if await model.create(prompt: prompt) {
                         promptDraft = ""
                     }
+                }
+            }
+            if model.aiStatus?.supports(AIDTOs.Feature.questionGenerate) == true {
+                LoveSecondaryButton(titleKey: "cottage.questions.ai.button", loading: model.aiLoading) {
+                    Task {
+                        await model.generateQuestions()
+                        if !model.aiCandidates.isEmpty {
+                            aiSheetPresented = true
+                        }
+                    }
+                }
+                if let aiError = model.aiError {
+                    LoveErrorBanner(message: aiError)
                 }
             }
         }
@@ -315,6 +364,68 @@ struct CottageQuestionsView: View {
                             editingAnswer = false
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - AI question candidates
+
+/// Candidate list from `POST /ai/questions/generate`. Picking one only fills
+/// the create input on the parent screen — nothing is submitted here.
+private struct AIQuestionCandidatesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let candidates: [String]
+    let onPick: (String) -> Void
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if candidates.isEmpty {
+                    LoveEmptyState(
+                        systemImage: "sparkles",
+                        titleKey: "cottage.questions.ai.empty",
+                        messageKey: "cottage.questions.ai.hint"
+                    )
+                } else {
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            Text("cottage.questions.ai.hint")
+                                .font(.footnote)
+                                .foregroundStyle(LoveTheme.secondaryText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            ForEach(Array(candidates.enumerated()), id: \.offset) { _, question in
+                                Button {
+                                    onPick(question)
+                                } label: {
+                                    LoveSoftCard {
+                                        HStack(alignment: .top, spacing: 10) {
+                                            Image(systemName: "sparkle")
+                                                .font(.footnote)
+                                                .foregroundStyle(LoveTheme.primaryAccessible)
+                                                .padding(.top, 2)
+                                            Text(question)
+                                                .font(.subheadline)
+                                                .foregroundStyle(LoveTheme.text)
+                                                .multilineTextAlignment(.leading)
+                                            Spacer(minLength: 0)
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(16)
+                    }
+                }
+            }
+            .loveScreenBackground()
+            .navigationTitle("cottage.questions.ai.title")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("common.cancel") { dismiss() }
                 }
             }
         }

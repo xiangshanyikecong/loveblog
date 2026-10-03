@@ -3,8 +3,8 @@
  * Copyright (C) 2026 Love Journal Contributors
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published
- * by the Free Software Foundation, version 3 of the License.
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.ui.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,10 +53,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.lovejournal.app.R
+import com.lovejournal.app.data.remote.dto.AiSemanticSearchResult
 import com.lovejournal.app.data.remote.dto.SearchResultItem
 import com.lovejournal.app.ui.components.LovePage
 import com.lovejournal.app.ui.components.asString
 import com.lovejournal.app.util.formatDate
+import java.util.Locale
 
 @Composable
 private fun typeLabel(type: String): String = when (type) {
@@ -67,7 +71,10 @@ private fun typeLabel(type: String): String = when (type) {
 }
 
 @Composable
-fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
+fun SearchScreen(
+    onOpenArticle: (String) -> Unit,
+    viewModel: SearchViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LovePage {
@@ -86,36 +93,112 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
             keyboardActions = KeyboardActions(onSearch = { viewModel.search() }),
             modifier = Modifier.fillMaxWidth(),
         )
+        if (state.aiEnabled) {
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                FilterChip(
+                    selected = state.aiMode,
+                    onClick = { viewModel.setAiMode(!state.aiMode) },
+                    label = { Text("✨ " + stringResource(R.string.ai_semantic_search)) },
+                )
+                if (state.aiMode && state.aiIndexedCount > 0) {
+                    Text(
+                        stringResource(R.string.ai_search_indexed, state.aiIndexedCount),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
         Spacer(Modifier.height(10.dp))
 
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            when {
-                state.loading ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-                state.error != null ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.search_failed, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
-                    }
-                !state.searched ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                state.items.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.search_no_results)) }
-                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item {
-                        Text(
-                            stringResource(R.string.search_total_results, state.total),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    items(state.items, key = { it.type + ":" + it.id }) { result ->
-                        SearchResultCard(result)
+            if (state.aiMode) {
+                AiSearchResults(state, onOpenArticle)
+            } else {
+                when {
+                    state.loading ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    state.error != null ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(stringResource(R.string.search_failed, state.error?.asString() ?: ""), color = MaterialTheme.colorScheme.error)
+                        }
+                    !state.searched ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(stringResource(R.string.search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    state.items.isEmpty() ->
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.search_no_results)) }
+                    else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        item {
+                            Text(
+                                stringResource(R.string.search_total_results, state.total),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        items(state.items, key = { it.type + ":" + it.id }) { result ->
+                            SearchResultCard(result)
+                        }
                     }
                 }
             }
         }
+        }
+    }
+}
+
+/** AI 语义搜索结果：标题 + 摘要 + 相似度，点击进入文章详情。 */
+@Composable
+private fun AiSearchResults(state: SearchUiState, onOpenArticle: (String) -> Unit) {
+    when {
+        state.aiLoading ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        state.aiError != null ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(state.aiError.asString(), color = MaterialTheme.colorScheme.error)
+            }
+        state.aiResults.isEmpty() ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.search_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(state.aiResults, key = { it.aid }) { result ->
+                AiResultCard(result, onOpenArticle)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AiResultCard(result: AiSemanticSearchResult, onOpenArticle: (String) -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth().clickable { onOpenArticle(result.aid) }) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    stringResource(R.string.search_type_article),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    stringResource(R.string.ai_search_score, String.format(Locale.US, "%.2f", result.score)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+            }
+            Text(result.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            result.snippet.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            result.updated_at?.let {
+                Text(formatDate(it), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+            }
         }
     }
 }

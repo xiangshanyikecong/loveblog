@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.lovejournal
   deploymentTarget:
     iOS: "17.0"
+    watchOS: "10.0"
   createIntermediateGroups: true
 
 # Language mode Swift 5 on the latest compiler: async/await, @Observable and
@@ -42,6 +43,9 @@ targets:
       - package: LoveCore
       # Embeds the home-screen widget extension into the app bundle.
       - target: LoveJournalWidget
+      # Embeds the companion watchOS app (which embeds its complication
+      # extension in turn).
+      - target: LoveWatch
     info:
       path: LoveJournal/Info.plist
       properties:
@@ -71,6 +75,10 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         GENERATE_INFOPLIST_FILE: "NO"
+        # Explicit on purpose: some XcodeGen versions (2.46) drop the
+        # implicit per-platform SDKROOT once watchOS targets exist, which
+        # collapses every destination to macOS.
+        SDKROOT: iphoneos
 
   LoveJournalWidget:
     type: app-extension
@@ -97,6 +105,73 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.widget
         SKIP_INSTALL: "YES"
         GENERATE_INFOPLIST_FILE: "NO"
+        SDKROOT: iphoneos
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+
+  # Companion watchOS app (single-target watch app, watchOS 10+): love days
+  # at a glance plus the tap/heartbeat actions. All networking stays on the
+  # phone (WCSession relay); complications live in LoveWatchWidget below.
+  LoveWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: LoveWatch
+    dependencies:
+      - package: LoveCore
+      - target: LoveWatchWidget
+    info:
+      path: LoveWatch/Info.plist
+      properties:
+        CFBundleDisplayName: 恋爱记
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.lovejournal.app.ios
+    entitlements:
+      # Shared with the complication extension so both processes read the
+      # same synced days snapshot.
+      path: LoveWatch/LoveWatch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.lovejournal.watchshared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.watchkitapp
+        SKIP_INSTALL: "YES"
+        GENERATE_INFOPLIST_FILE: "NO"
+        SDKROOT: watchos
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+        TARGETED_DEVICE_FAMILY: "4"
+
+  # Watch-face complications (love days) for the watch app above.
+  LoveWatchWidget:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: LoveWatchWidget
+    dependencies:
+      - package: LoveCore
+    info:
+      path: LoveWatchWidget/Info.plist
+      properties:
+        CFBundleDisplayName: 恋爱记
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: LoveWatchWidget/LoveWatchWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.lovejournal.watchshared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.watchkitapp.widget
+        SKIP_INSTALL: "YES"
+        GENERATE_INFOPLIST_FILE: "NO"
+        SDKROOT: watchos
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+        TARGETED_DEVICE_FAMILY: "4"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
 
   LoveJournalTests:
@@ -110,6 +185,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.tests
         GENERATE_INFOPLIST_FILE: "YES"
+        SDKROOT: iphoneos
         # Lets the test bundle resolve app-module symbols from the test
         # host binary at runtime instead of expecting them at link time.
         BUNDLE_LOADER: "$(TEST_HOST)"
@@ -125,6 +201,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.uitests
         GENERATE_INFOPLIST_FILE: "YES"
+        SDKROOT: iphoneos
         TEST_TARGET_NAME: LoveJournal
 
 schemes:
@@ -148,3 +225,9 @@ schemes:
       config: Debug
       targets:
         - LoveJournalUITests
+  LoveWatch:
+    build:
+      targets:
+        LoveWatch: all
+    run:
+      config: Debug

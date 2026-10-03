@@ -58,10 +58,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.lovejournal.app.R
 import com.lovejournal.app.ui.albums.AlbumsScreen
 import com.lovejournal.app.ui.admin.AdminToolsScreen
@@ -70,6 +72,7 @@ import com.lovejournal.app.ui.auth.AuthViewModel
 import com.lovejournal.app.ui.auth.LoginScreen
 import com.lovejournal.app.ui.cottage.CottageRoute
 import com.lovejournal.app.ui.cottage.CottageScreen
+import com.lovejournal.app.ui.cottage.achievements.AchievementsScreen
 import com.lovejournal.app.ui.cottage.chat.ChatScreen
 import com.lovejournal.app.ui.cottage.coupons.CouponScreen
 import com.lovejournal.app.ui.cottage.footprints.FootprintScreen
@@ -86,6 +89,7 @@ import com.lovejournal.app.ui.cottage.plans.PlanScreen
 import com.lovejournal.app.ui.cottage.questions.DailyQuestionScreen
 import com.lovejournal.app.ui.cottage.reminders.ReminderScreen
 import com.lovejournal.app.ui.cottage.reports.ReportScreen
+import com.lovejournal.app.ui.cottage.taps.TapScreen
 import com.lovejournal.app.ui.cottage.watch.WatchScreen
 import com.lovejournal.app.ui.cottage.vault.VaultScreen
 import com.lovejournal.app.ui.cottage.wishlist.WishlistScreen
@@ -174,6 +178,8 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
         CottageRoute.CANVAS -> stringResource(R.string.title_canvas)
         CottageRoute.CANVAS_GALLERY -> stringResource(R.string.title_canvas_gallery)
         CottageRoute.CANVAS_ARTWORK -> stringResource(R.string.title_canvas_artwork)
+        CottageRoute.TAPS -> stringResource(R.string.title_taps)
+        CottageRoute.ACHIEVEMENTS -> stringResource(R.string.title_achievements)
         MainRoute.SEARCH -> stringResource(R.string.title_search)
         MainRoute.NOTIFICATIONS -> stringResource(R.string.title_notifications)
         MainRoute.TIMELINE -> stringResource(R.string.title_timeline)
@@ -289,6 +295,13 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
             composable(Tab.Dashboard.route) { DashboardScreen() }
             composable(Tab.Events.route) { EventsScreen() }
             composable(Tab.Articles.route) { ArticlesScreen() }
+            // 带 aid 的文章直达入口（AI 语义搜索结果点击进入文章详情）。
+            composable(
+                "${Tab.Articles.route}?aid={aid}",
+                arguments = listOf(navArgument("aid") { type = NavType.StringType; nullable = true; defaultValue = null }),
+            ) { entry ->
+                ArticlesScreen(initialAid = entry.arguments?.getString("aid"))
+            }
             composable(Tab.Albums.route) { AlbumsScreen() }
             composable(Tab.Messages.route) { MessagesScreen() }
             composable(CottageRoute.HUB) {
@@ -309,7 +322,15 @@ fun LoveApp(authViewModel: AuthViewModel = hiltViewModel()) {
             composable(CottageRoute.VAULT) { VaultScreen() }
             composable(CottageRoute.PLANS) { PlanScreen() }
             composable(CottageRoute.CHECKINS) { CheckinScreen() }
-            composable(MainRoute.SEARCH) { SearchScreen() }
+            composable(CottageRoute.TAPS) { TapScreen() }
+            composable(CottageRoute.ACHIEVEMENTS) { AchievementsScreen() }
+            composable(MainRoute.SEARCH) {
+                SearchScreen(
+                    onOpenArticle = { aid ->
+                        navController.navigate("${Tab.Articles.route}?aid=$aid") { launchSingleTop = true }
+                    },
+                )
+            }
             composable(MainRoute.NOTIFICATIONS) { NotificationScreen() }
             composable(MainRoute.TIMELINE) { TimelineScreen() }
             composable(MainRoute.CAPSULES) { CapsuleScreen() }

@@ -37,7 +37,19 @@
         <span v-if="hasUnsavedChanges" class="unsaved-indicator">{{ t('articleEditor.unsaved') }}</span>
         <span v-else-if="lastSaved" class="saved-indicator">{{ t('articleEditor.saved') }}</span>
         <span v-if="saveError" class="save-error" role="alert">{{ saveError }}</span>
-        
+
+        <div v-if="aiPolishEnabled" class="ai-assist-group" role="group" :aria-label="t('articleEditor.aiGroup')">
+          <button class="btn-secondary ai-btn" :disabled="aiBusy" @click="runAi('polish')">
+            <span class="icon">✨</span> {{ t('articleEditor.aiPolish') }}
+          </button>
+          <button class="btn-secondary ai-btn" :disabled="aiBusy" @click="runAi('continue')">
+            <span class="icon">✍️</span> {{ t('articleEditor.aiContinue') }}
+          </button>
+          <button class="btn-secondary ai-btn" :disabled="aiBusy" @click="runAi('proofread')">
+            <span class="icon">🔍</span> {{ t('articleEditor.aiProofread') }}
+          </button>
+        </div>
+
         <button class="btn-secondary" @click="showSettingsModal = true">
           <span class="icon">⚙️</span> {{ t('articleEditor.settings') }}
         </button>
@@ -224,6 +236,41 @@
         </div>
       </div>
     </div>
+
+    <!-- AI 助手面板：润色 / 续写 / 校对 -->
+    <div v-if="showAiPanel" class="modal-overlay" @click.self="closeAiPanel">
+      <div class="modal-content ai-panel">
+        <div class="modal-header">
+          <h3>{{ t('articleEditor.aiPanelTitle', { action: aiActionLabel }) }}</h3>
+          <button class="btn-icon" :aria-label="t('common.cancel')" @click="closeAiPanel">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p v-if="aiBusy" class="ai-status">{{ t('articleEditor.aiWorking') }}</p>
+          <textarea
+            v-else
+            v-model="aiResult"
+            class="input ai-output"
+            rows="12"
+            readonly
+            :aria-label="t('articleEditor.aiOutputLabel')"
+          ></textarea>
+          <p v-if="aiError" class="ai-error" role="alert">{{ aiError }}</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" :disabled="aiBusy || !aiResult" @click="copyAiResult">
+            {{ t('common.copy') }}
+          </button>
+          <button class="btn-secondary" :disabled="aiBusy || !aiResult" @click="insertAiResult">
+            {{ t('articleEditor.aiInsert') }}
+          </button>
+          <button class="btn-primary" :disabled="aiBusy || !aiResult" @click="replaceAiResult">
+            {{ t('articleEditor.aiReplace') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -232,10 +279,10 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from "vue-i18n";
 import RichTextEditor from '../components/RichTextEditor.vue';
-import { createArticle, fetchArticle, resolveApiUrl, resolveAssetUrl, updateArticle, uploadFile } from '../lib/api';
+import { aiPolishArticle, createArticle, fetchArticle, fetchAiStatus, resolveApiUrl, resolveAssetUrl, updateArticle, uploadFile } from '../lib/api';
 import { confirmDialog, alertDialog, choiceDialog } from '../lib/dialog';
 import { editorRouteKey, isCurrentEditorSave } from '../utils/editorSave';
-import { parseTags } from '../utils/helpers';
+import { parseTags, parseError } from '../utils/helpers';
 
 const route = useRoute();
 const router = useRouter();
@@ -249,6 +296,21 @@ const hasUnsavedChanges = ref(false);
 const lastSaved = ref(null);
 const saveError = ref('');
 const editorMode = ref('wysiwyg'); // wysiwyg, ir, sv
+
+// AI 辅助（润色 / 续写 / 校对）：仅在 /ai/status 启用且支持 article_polish 时展示
+const AI_ACTION_KEYS = {
+  polish: 'articleEditor.aiPolish',
+  continue: 'articleEditor.aiContinue',
+  proofread: 'articleEditor.aiProofread'
+};
+const aiPolishEnabled = ref(false);
+const aiBusy = ref(false);
+const showAiPanel = ref(false);
+const aiMode = ref('polish');
+const aiResult = ref('');
+const aiError = ref('');
+
+const aiActionLabel = computed(() => t(AI_ACTION_KEYS[aiMode.value] || AI_ACTION_KEYS.polish));
 
 // Tracks the article version that the current editor buffer was last known
 // to match. Used as the `If-Match` value on save so the server can reject
@@ -611,6 +673,86 @@ function handleUpload(result) {
   }
 }
 
+// ── AI 辅助（润色 / 续写 / 校对）──────────────────────────────────────────
+async function loadAiStatus() {
+  try {
+    const status = await fetchAiStatus();
+    aiPolishEnabled.value = Boolean(
+      status?.enabled && (status?.features || []).includes('article_polish')
+    );
+  } catch (_) {
+    // 未配置 / 网络失败 → 隐藏入口
+    aiPolishEnabled.value = false;
+  }
+}
+
+function isAiUnavailableError(error) {
+  const status = error?.response?.status;
+  return !status || status === 503;
+}
+
+function closeAiPanel() {
+  if (aiBusy.value) return;
+  showAiPanel.value = false;
+  aiResult.value = '';
+  aiError.value = '';
+}
+
+async function runAi(mode) {
+  if (aiBusy.value) return;
+  const content = editorRef.value?.getValue() || article.value.content || '';
+  if (!content.trim()) {
+    await alertDialog(t('articleEditor.aiEmpty'));
+    return;
+  }
+  aiMode.value = mode;
+  showAiPanel.value = true;
+  aiBusy.value = true;
+  aiResult.value = '';
+  aiError.value = '';
+  try {
+    const data = await aiPolishArticle(content, mode);
+    aiResult.value = (data.text || '').trim();
+    if (!aiResult.value) {
+      aiError.value = t('aiFeature.unavailable');
+    }
+  } catch (error) {
+    aiError.value = isAiUnavailableError(error) ? t('aiFeature.unavailable') : parseError(error);
+  } finally {
+    aiBusy.value = false;
+  }
+}
+
+async function copyAiResult() {
+  if (!aiResult.value) return;
+  try {
+    await navigator.clipboard.writeText(aiResult.value);
+    await alertDialog(t('common.copied'));
+  } catch (_) {
+    await alertDialog(t('articleEditor.aiCopyFailed'));
+  }
+}
+
+async function insertAiResult() {
+  if (!aiResult.value) return;
+  editorRef.value?.insertValue(`\n\n${aiResult.value}\n`);
+  article.value.content = editorRef.value?.getValue() || article.value.content;
+  markAsModified();
+  closeAiPanel();
+  await alertDialog(t('articleEditor.aiInserted'));
+}
+
+async function replaceAiResult() {
+  if (!aiResult.value) return;
+  const confirmed = await confirmDialog(t('articleEditor.aiReplaceConfirm'), { danger: true });
+  if (!confirmed) return;
+  editorRef.value?.setValue(aiResult.value);
+  article.value.content = aiResult.value;
+  markAsModified();
+  closeAiPanel();
+  await alertDialog(t('articleEditor.aiReplaced'));
+}
+
 // 标记为已修改
 function markAsModified() {
   editRevision += 1;
@@ -657,6 +799,7 @@ function handleKeyDown(e) {
 
 onMounted(() => {
   loadArticle();
+  loadAiStatus();
   startAutoSave();
   window.addEventListener('beforeunload', handleBeforeUnload);
   window.addEventListener('keydown', handleKeyDown);
@@ -816,6 +959,49 @@ watch(() => route.params.aid, () => {
 .save-error {
   color: #b91c1c;
   font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* AI 辅助（润色 / 续写 / 校对） */
+.ai-assist-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem;
+  border-radius: 8px;
+  background: rgba(143, 155, 255, 0.1);
+}
+
+.ai-btn {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.82rem;
+  background: #fff;
+}
+
+.ai-panel {
+  max-width: 680px;
+}
+
+.ai-status {
+  margin: 0;
+  padding: 2rem 0;
+  text-align: center;
+  color: #8f9bff;
+  font-weight: 600;
+}
+
+.ai-output {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+  line-height: 1.7;
+  font-family: inherit;
+}
+
+.ai-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.85rem;
   font-weight: 600;
 }
 

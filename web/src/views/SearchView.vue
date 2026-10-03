@@ -73,6 +73,44 @@
       </form>
     </article>
 
+    <!-- AI 语义搜索：仅在 /ai/status 启用且支持 semantic_search 时显示 -->
+    <article v-if="aiSearchEnabled" class="glass-card section-block ai-search-card">
+      <div class="section-header">
+        <h2>{{ t('search.aiTitle') }} <span class="ai-search-badge" aria-hidden="true">AI</span></h2>
+      </div>
+      <p class="ai-search-desc">{{ t('search.aiDesc') }}</p>
+
+      <form class="ai-search-form" @submit.prevent="runAiSearch">
+        <input v-model.trim="aiQuery" class="input" maxlength="120" :placeholder="t('search.aiPlaceholder')" />
+        <button class="btn-primary" type="submit" :disabled="aiLoading || !aiQuery">
+          {{ aiLoading ? t('search.aiSearching') : t('search.aiSearch') }}
+        </button>
+      </form>
+
+      <div v-if="aiError" class="ai-search-error" role="alert">{{ aiError }}</div>
+
+      <template v-else-if="aiResults.length">
+        <p class="ai-search-meta">{{ t('search.aiIndexed', { count: aiIndexedCount }) }}</p>
+        <ul class="entity-list search-results">
+          <li v-for="item in aiResults" :key="item.aid" class="entity-item search-result">
+            <div class="result-main">
+              <div class="entity-top">
+                <p class="entity-title">{{ item.title || t('search.typeArticle') }}</p>
+                <div class="entity-tags">
+                  <span class="pill pill--type">{{ t('search.typeArticle') }}</span>
+                  <span class="pill ai-score-pill">{{ t('search.aiScore', { score: scorePercent(item.score) }) }}</span>
+                </div>
+              </div>
+              <p class="entity-desc result-snippet">{{ item.snippet || t('search.noSnippet') }}</p>
+              <p class="result-meta">{{ formatDate(item.updated_at) }}</p>
+            </div>
+            <router-link class="text-btn result-link" :to="`/articles/${item.aid}`">{{ t('search.view') }}</router-link>
+          </li>
+        </ul>
+      </template>
+      <p v-else-if="aiSearched && !aiLoading" class="muted">{{ t('search.aiNoResults') }}</p>
+    </article>
+
     <article class="glass-card section-block">
       <div class="section-header">
         <h2>{{ t('search.resultsTitle') }}</h2>
@@ -114,7 +152,7 @@
 <script setup>
 import { computed, inject, onMounted, reactive, ref } from "vue";
 import ModuleTabs from "../components/ModuleTabs.vue";
-import { fetchSearch } from "../lib/api";
+import { aiSearchArticles, fetchAiStatus, fetchSearch } from "../lib/api";
 import { parseError } from "../utils/helpers";
 import { useI18n } from "vue-i18n";
 
@@ -156,6 +194,15 @@ const total = ref(0);
 const page = ref(1);
 const pageSize = 20;
 const loading = ref(false);
+
+// AI 语义搜索（按 /ai/status 显隐）
+const aiSearchEnabled = ref(false);
+const aiQuery = ref("");
+const aiLoading = ref(false);
+const aiSearched = ref(false);
+const aiResults = ref([]);
+const aiIndexedCount = ref(0);
+const aiError = ref("");
 
 const hasMore = computed(() => results.value.length < total.value);
 
@@ -214,8 +261,46 @@ function loadMore() {
   runSearch(page.value + 1);
 }
 
+// ── AI 语义搜索 ───────────────────────────────────────────────────────────
+async function loadAiStatus() {
+  try {
+    const status = await fetchAiStatus();
+    aiSearchEnabled.value = Boolean(
+      status?.enabled && (status?.features || []).includes("semantic_search")
+    );
+  } catch (_) {
+    // AI 未配置或网络失败 → 隐藏入口
+    aiSearchEnabled.value = false;
+  }
+}
+
+function scorePercent(score) {
+  const value = Math.round((Number(score) || 0) * 100);
+  return Math.min(100, Math.max(0, value));
+}
+
+async function runAiSearch() {
+  if (aiLoading.value || !aiQuery.value) return;
+  aiLoading.value = true;
+  aiSearched.value = true;
+  aiError.value = "";
+  try {
+    const data = await aiSearchArticles(aiQuery.value, 5);
+    aiResults.value = data.results || [];
+    aiIndexedCount.value = data.indexed_count || 0;
+  } catch (error) {
+    aiResults.value = [];
+    aiIndexedCount.value = 0;
+    const status = error?.response?.status;
+    aiError.value = !status || status === 503 ? t("aiFeature.unavailable") : parseError(error);
+  } finally {
+    aiLoading.value = false;
+  }
+}
+
 onMounted(() => {
   runSearch();
+  loadAiStatus();
 });
 </script>
 
@@ -281,6 +366,59 @@ onMounted(() => {
   font-size: 0.82rem;
 }
 
+/* AI 语义搜索 */
+.ai-search-card {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ai-search-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #ff8ab5, #8f9bff);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+.ai-search-desc {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.ai-search-form {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.ai-search-form .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-search-error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ai-search-meta {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.77rem;
+}
+
+.ai-score-pill {
+  background: #fdf2f8;
+  color: #be185d;
+}
+
 .search-result {
   display: flex;
   align-items: flex-start;
@@ -344,6 +482,10 @@ onMounted(() => {
 
   .search-field--wide {
     grid-column: span 1;
+  }
+
+  .ai-search-form {
+    flex-direction: column;
   }
 
   .search-result {

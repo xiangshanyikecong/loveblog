@@ -15,6 +15,7 @@
 
 from app.models.album import Album, AlbumMedia
 from app.models.article import Article, ArticleBlock
+from app.models.article_embedding import ArticleEmbedding
 from app.models.audit_log import AuditLog
 from app.models.canvas_artwork import CanvasArtwork, CanvasArtworkCollaborator
 from app.models.capsule import Capsule
@@ -27,6 +28,7 @@ from app.models.content_visibility import ContentVisibility
 from app.models.content_version import ContentVersion
 from app.models.cottage_plan import CottagePlan
 from app.models.cottage_reminder import CottageReminder
+from app.models.cottage_tap import CottageTap
 from app.models.coupon import Coupon
 from app.models.daily_question import DailyQuestion, DailyQuestionAnswer
 from app.models.event import Event
@@ -58,6 +60,7 @@ __all__ = [
     "ContentVersion",
     "CottagePlan",
     "CottageReminder",
+    "CottageTap",
     "Coupon",
     "DailyQuestion",
     "DailyQuestionAnswer",
@@ -70,6 +73,7 @@ __all__ = [
     "ListenLocalTrack",
     "Article",
     "ArticleBlock",
+    "ArticleEmbedding",
     "AuditLog",
     "Album",
     "AlbumMedia",

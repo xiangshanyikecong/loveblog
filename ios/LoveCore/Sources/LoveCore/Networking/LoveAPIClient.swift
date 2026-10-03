@@ -216,6 +216,63 @@ public final class LoveAPIClient {
         return try Self.decode(WriteDTOs.UploadResult.self, from: data)
     }
 
+    // MARK: - Cottage achievements & taps
+
+    public func achievements() async throws -> AchievementDTOs.Achievements {
+        try await request(AchievementDTOs.Achievements.self, "GET", "/cottage/achievements")
+    }
+
+    /// `POST /cottage/taps` — "tap" | "heartbeat". 404 = no partner,
+    /// 429 = rate limited.
+    public func sendTap(kind: String) async throws -> TapDTOs.Tap {
+        try await request(
+            TapDTOs.Tap.self, "POST", "/cottage/taps",
+            body: TapDTOs.TapCreate(kind: kind)
+        )
+    }
+
+    public func recentTaps(limit: Int = 20) async throws -> TapDTOs.TapList {
+        try await request(
+            TapDTOs.TapList.self, "GET", "/cottage/taps/recent",
+            query: [URLQueryItem(name: "limit", value: String(limit))]
+        )
+    }
+
+    // MARK: - AI assist
+
+    public func aiStatus() async throws -> AIDTOs.Status {
+        try await request(AIDTOs.Status.self, "GET", "/ai/status")
+    }
+
+    /// `mode`: polish | continue | proofread.
+    public func aiPolishArticle(content: String, mode: String) async throws -> AIDTOs.PolishResponse {
+        try await request(
+            AIDTOs.PolishResponse.self, "POST", "/ai/article/polish",
+            body: AIDTOs.PolishRequest(content: content, mode: mode)
+        )
+    }
+
+    public func aiSemanticSearch(query: String, topK: Int = 5) async throws -> AIDTOs.SemanticSearchResponse {
+        try await request(
+            AIDTOs.SemanticSearchResponse.self, "POST", "/ai/article/search",
+            body: AIDTOs.SemanticSearchRequest(query: query, topK: topK)
+        )
+    }
+
+    public func aiMonthlyReport(year: Int, month: Int) async throws -> AIDTOs.MonthlyReportResponse {
+        try await request(
+            AIDTOs.MonthlyReportResponse.self, "POST", "/ai/report/monthly",
+            body: AIDTOs.MonthlyReportRequest(year: year, month: month)
+        )
+    }
+
+    public func aiGenerateQuestions(count: Int = 3) async throws -> AIDTOs.QuestionsResponse {
+        try await request(
+            AIDTOs.QuestionsResponse.self, "POST", "/ai/questions/generate",
+            body: AIDTOs.QuestionsRequest(count: count)
+        )
+    }
+
     // MARK: - Plumbing
 
     /// Builds the absolute request URL from the configured API base and a

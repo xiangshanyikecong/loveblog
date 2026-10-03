@@ -1464,6 +1464,23 @@ export async function fetchFootprints() {
   return data; // { cities, total_cities, total_checkins, recent }
 }
 
+// ── Cottage achievements & level (情侣成就/等级) ─────────────────────────────
+export async function fetchCottageAchievements() {
+  const { data } = await api.get("/v1/cottage/achievements");
+  return data; // { generated_at, stats, level, badges }
+}
+
+// ── Cottage taps (轻触回应·敲一敲/心跳) ───────────────────────────────────────
+export async function sendCottageTap(kind = "tap") {
+  const { data } = await api.post("/v1/cottage/taps", { kind });
+  return data; // TapResponse
+}
+
+export async function fetchRecentCottageTaps(limit = 20) {
+  const { data } = await api.get("/v1/cottage/taps/recent", { params: { limit } });
+  return data; // { items, total_kept }
+}
+
 // ── Listen library: liked tracks ("我喜欢") ────────────────────────────────────
 export async function fetchLikedTracks({ limit = 100, offset = 0 } = {}) {
   const { data } = await api.get("/v1/cottage/listen/liked", { params: { limit, offset } });
@@ -1551,6 +1568,32 @@ export async function fetchOnThisDay(date = null) {
 export async function fetchAnnualReport(year) {
   const { data } = await api.get("/v1/reports/annual", { params: { year } });
   return data; // AnnualReportResponse
+}
+
+// ── AI assist (AI 辅助；后端未配置模型时全部返回 503) ──────────────────────────
+export async function fetchAiStatus() {
+  const { data } = await api.get("/v1/ai/status");
+  return data; // { enabled, chat_model, embedding_model, features }
+}
+
+export async function aiPolishArticle(content, mode = "polish") {
+  const { data } = await api.post("/v1/ai/article/polish", { content, mode });
+  return data; // { text }
+}
+
+export async function aiSearchArticles(query, topK = 5) {
+  const { data } = await api.post("/v1/ai/article/search", { query, top_k: topK });
+  return data; // { query, results, indexed_count }
+}
+
+export async function aiMonthlyReport(year, month) {
+  const { data } = await api.post("/v1/ai/report/monthly", { year, month });
+  return data; // { year, month, text }
+}
+
+export async function aiGenerateQuestions(count = 3) {
+  const { data } = await api.post("/v1/ai/questions/generate", { count });
+  return data; // { questions }
 }
 
 // ── Storage usage panel (存储空间统计) ─────────────────────────────────────────

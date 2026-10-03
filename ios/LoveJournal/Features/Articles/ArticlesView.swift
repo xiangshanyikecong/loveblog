@@ -199,7 +199,7 @@ struct ArticlesView: View {
             .padding(20)
         }
         .sheet(isPresented: $editorPresented) {
-            ArticleEditorSheet(editing: nil, saving: model.saving) { draft in
+            ArticleEditorSheet(editing: nil, saving: model.saving, api: environment.api) { draft in
                 await model.create(draft)
             }
         }
@@ -259,6 +259,8 @@ struct ArticleEditorSheet: View {
     /// nil = create a new article.
     let editing: ArticleEditorDraft?
     let saving: Bool
+    /// API client for the optional AI assist menu (polish/continue/proofread).
+    let api: LoveAPIClient
     let onSave: (ArticleEditorDraft) async -> String?
 
     private enum VisibilityChoice: String, CaseIterable, Identifiable {
@@ -275,6 +277,10 @@ struct ArticleEditorSheet: View {
     @State private var isPublished = false
     @State private var visibilityChoice = VisibilityChoice.open
     @State private var error: String?
+    @State private var ai: AIStatusModel?
+    @State private var aiResult: String?
+    @State private var aiLoading = false
+    @State private var aiError: String?
 
     var body: some View {
         NavigationStack {
@@ -293,6 +299,21 @@ struct ArticleEditorSheet: View {
                             axis: .vertical
                         )
                         .lineLimit(6...14)
+                    }
+                    if aiLoading {
+                        HStack(spacing: 8) {
+                            ProgressView().tint(LoveTheme.primaryAccessible)
+                            Text("ai.generating")
+                                .font(.footnote)
+                                .foregroundStyle(LoveTheme.secondaryText)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    if let aiResult {
+                        aiResultPanel(aiResult)
+                    }
+                    if let aiError {
+                        LoveErrorBanner(message: aiError)
                     }
                     LoveField(labelKey: .init(m2: "articles.editor.tags")) {
                         TextField(M2L10n.value("articles.editor.tags"), text: $tagsText)
@@ -325,10 +346,42 @@ struct ArticleEditorSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(M2L10n.value("common.cancel")) { dismiss() }
                 }
+                if ai?.supports(AIDTOs.Feature.articlePolish) == true {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button {
+                                runAI(mode: "polish")
+                            } label: {
+                                Label("ai.polish", systemImage: "wand.and.stars")
+                            }
+                            Button {
+                                runAI(mode: "continue")
+                            } label: {
+                                Label("ai.continue", systemImage: "text.insert")
+                            }
+                            Button {
+                                runAI(mode: "proofread")
+                            } label: {
+                                Label("ai.proofread", systemImage: "checkmark.circle")
+                            }
+                        } label: {
+                            if aiLoading {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "wand.and.stars")
+                            }
+                        }
+                        .disabled(aiLoading)
+                    }
+                }
             }
         }
         .presentationDetents([.large])
         .onAppear {
+            if ai == nil {
+                ai = AIStatusModel(api: api)
+                Task { await ai?.loadIfNeeded() }
+            }
             if let editing {
                 title = editing.title
                 excerpt = editing.excerpt
@@ -337,6 +390,79 @@ struct ArticleEditorSheet: View {
                 isPublished = editing.isPublished
                 visibilityChoice = VisibilityChoice(rawValue: editing.visibility) ?? .open
             }
+        }
+    }
+
+    // MARK: AI assist
+
+    /// AI suggestion panel: the generated text plus replace / append / cancel.
+    private func aiResultPanel(_ result: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            LoveSectionTitle(textKey: "ai.result.title")
+            ScrollView {
+                Text(result)
+                    .font(.footnote)
+                    .foregroundStyle(LoveTheme.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 160)
+            HStack(spacing: 8) {
+                Button {
+                    bodyText = result
+                    clearAI()
+                } label: {
+                    Text("ai.replace")
+                        .font(.footnote.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(LoveTheme.primaryAccessible)
+                Button {
+                    bodyText = bodyText.isEmpty ? result : bodyText + "\n\n" + result
+                    clearAI()
+                } label: {
+                    Text("ai.append")
+                        .font(.footnote.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                Button {
+                    clearAI()
+                } label: {
+                    Text("common.cancel")
+                        .font(.footnote)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(12)
+        .background(LoveTheme.background.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func clearAI() {
+        aiResult = nil
+        aiError = nil
+    }
+
+    private func runAI(mode: String) {
+        let content = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !content.isEmpty else {
+            aiError = String(localized: "ai.need.content")
+            return
+        }
+        aiLoading = true
+        aiError = nil
+        aiResult = nil
+        let client = api
+        Task {
+            do {
+                let response = try await client.aiPolishArticle(content: content, mode: mode)
+                aiResult = response.text
+            } catch {
+                aiError = AIFeature.message(for: error)
+            }
+            aiLoading = false
         }
     }
 
@@ -593,7 +719,8 @@ struct ArticleDetailView: View {
         .sheet(isPresented: $editorPresented) {
             ArticleEditorSheet(
                 editing: model.detail.map(ArticleEditorDraft.init(detail:)),
-                saving: model.saving
+                saving: model.saving,
+                api: environment.api
             ) { draft in
                 await model.update(draft)
             }

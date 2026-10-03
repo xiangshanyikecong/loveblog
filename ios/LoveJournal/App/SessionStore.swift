@@ -83,7 +83,9 @@ final class SessionStore {
 
     func logout() async {
         // Best effort: even a failed network call must clear local state, or
-        // the app would come back logged in.
+        // the app would come back logged in. The offline outbox survives the
+        // logout (Android parity): its scope claim decides at the next login
+        // whether the queued mutations still belong to whoever signs in.
         try? await api.requestVoid("POST", "/auth/logout")
         clearLocalSession()
         state = .loggedOut

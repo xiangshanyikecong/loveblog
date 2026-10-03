@@ -33,6 +33,7 @@ private let cottageFeatures: [CottageFeature] = [
     CottageFeature(emoji: "📍", titleKey: "cottage.feature.checkin", subtitleKey: "cottage.feature.checkin.sub", route: .checkin),
     CottageFeature(emoji: "💝", titleKey: "cottage.feature.wishes", subtitleKey: "cottage.feature.wishes.sub", route: .wishes),
     CottageFeature(emoji: "💌", titleKey: "cottage.feature.questions", subtitleKey: "cottage.feature.questions.sub", route: .questions),
+    CottageFeature(emoji: "🏆", titleKey: "cottage.feature.achievements", subtitleKey: "cottage.feature.achievements.sub", route: .achievements),
     CottageFeature(emoji: "📺", titleKey: "cottage.feature.watch", subtitleKey: "cottage.feature.watch.sub", route: .watch),
     CottageFeature(emoji: "🎮", titleKey: "cottage.feature.games", subtitleKey: "cottage.feature.games.sub", route: .games),
     CottageFeature(emoji: "🎧", titleKey: "cottage.feature.listen", subtitleKey: "cottage.feature.listen.sub", route: .listen),
@@ -47,30 +48,46 @@ private let cottageFeatures: [CottageFeature] = [
     CottageFeature(emoji: "💬", titleKey: "cottage.feature.messages", subtitleKey: "cottage.feature.messages.sub", route: .boardMessages),
 ]
 
-/// Cottage tab root: a 2-column grid of the couple's interactive modules.
+/// Cottage tab root: the tap/heartbeat banner on top of a 2-column grid of
+/// the couple's interactive modules.
 struct CottageHubView: View {
+    @Environment(AppEnvironment.self) private var environment
+    @State private var tapsModel: CottageTapsModel?
+
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12),
     ]
 
+    private var myUid: String? {
+        if case .loggedIn(let profile) = environment.session.state {
+            return profile.uid
+        }
+        return nil
+    }
+
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("cottage.title")
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(LoveTheme.text)
-                    Text("cottage.subtitle")
-                        .font(.footnote)
-                        .foregroundStyle(LoveTheme.secondaryText)
+            VStack(spacing: 12) {
+                if let tapsModel {
+                    CottageTapsCard(model: tapsModel, myUid: myUid)
                 }
-                .gridCellColumns(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 4)
+                LazyVGrid(columns: columns, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("cottage.title")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(LoveTheme.text)
+                        Text("cottage.subtitle")
+                            .font(.footnote)
+                            .foregroundStyle(LoveTheme.secondaryText)
+                    }
+                    .gridCellColumns(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 4)
 
-                ForEach(Array(cottageFeatures.enumerated()), id: \.offset) { _, feature in
-                    featureCard(feature)
+                    ForEach(Array(cottageFeatures.enumerated()), id: \.offset) { _, feature in
+                        featureCard(feature)
+                    }
                 }
             }
             .padding(16)
@@ -78,6 +95,16 @@ struct CottageHubView: View {
         .loveScreenBackground()
         .navigationTitle("tab.cottage")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if tapsModel == nil {
+                let model = CottageTapsModel(api: environment.api)
+                model.onNewTaps = { taps, uid in
+                    environment.watchBridge.ingest(taps: taps, myUid: uid)
+                }
+                tapsModel = model
+            }
+            Task { await tapsModel?.refresh(myUid: myUid) }
+        }
     }
 
     @ViewBuilder

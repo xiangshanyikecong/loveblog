@@ -28,11 +28,13 @@ final class AppEnvironment {
     let api: LoveAPIClient
     let session: SessionStore
     let outbox: OutboxSyncer
+    let watchBridge: PhoneWatchBridge
 
     init() {
         api = LoveAPIClient(baseURLProvider: { ServerSettings.apiBase })
         session = SessionStore(api: api)
-        outbox = OutboxSyncer(api: api)
+        outbox = OutboxSyncer(api: api, session: session)
+        watchBridge = PhoneWatchBridge(api: api, session: session)
         api.onSessionExpired = { [weak session] in
             Task { @MainActor in session?.markSessionExpired() }
         }
@@ -54,18 +56,31 @@ struct LoveJournalApp: App {
 
 struct RootView: View {
     @Environment(AppEnvironment.self) private var environment
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        switch environment.session.state {
-        case .restoring:
-            LaunchPlaceholderView()
-        case .loggedOut:
-            LoginView()
-        case .loggedIn:
-            MainTabView()
-                // Entering the main UI means a (fresh) session: replay
-                // anything the previous session left queued offline.
-                .onAppear { environment.outbox.drainIfNeeded() }
+        Group {
+            switch environment.session.state {
+            case .restoring:
+                LaunchPlaceholderView()
+            case .loggedOut:
+                LoginView()
+            case .loggedIn:
+                MainTabView()
+                    // Entering the main UI means a (fresh) session: replay
+                    // anything the previous session left queued offline, and
+                    // check once for partner taps the watch should feel.
+                    .onAppear {
+                        environment.outbox.drainIfNeeded()
+                        Task { await environment.watchBridge.pollPartnerTaps() }
+                    }
+            }
+        }
+        // Returning to the foreground is the cheap poll cadence for taps
+        // (the server keeps no push channel for them).
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await environment.watchBridge.pollPartnerTaps() }
         }
     }
 }

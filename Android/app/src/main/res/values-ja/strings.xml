@@ -45,6 +45,8 @@
     <string name="title_recycle_bin">ゴミ箱</string>
     <string name="title_messages_board">メッセージボード</string>
     <string name="title_in_game">対局中</string>
+    <string name="title_taps">タッチシグナル</string>
+    <string name="title_achievements">カップル実績</string>
 
     <!-- ==================== Top Bar Actions ==================== -->
     <string name="action_back">戻る</string>
@@ -179,6 +181,7 @@
     <string name="notification_channel_messages">メッセージ</string>
     <string name="notification_channel_moods">気分チェック</string>
     <string name="notification_channel_events">記念日リマインダー</string>
+    <string name="notification_channel_taps">タッチシグナル</string>
 
     <!-- ==================== Cottage Hub ==================== -->
     <string name="cottage_hub_title">二人だけの小さな世界</string>
@@ -215,6 +218,10 @@
     <string name="cottage_feature_period_sub">思いやりケア</string>
     <string name="cottage_feature_vault">プライベート空間</string>
     <string name="cottage_feature_vault_sub">エンドツーエンド暗号化</string>
+    <string name="cottage_feature_taps">タッチ</string>
+    <string name="cottage_feature_taps_sub">ノック·ハートビート</string>
+    <string name="cottage_feature_achievements">実績</string>
+    <string name="cottage_feature_achievements_sub">レベル·バッジ</string>
 
     <!-- ==================== Chat ==================== -->
     <string name="chat_partner_default">相手</string>
@@ -1075,4 +1082,69 @@
     <string name="canvas_msg_saved_timeline">タイムラインに保存しました</string>
     <string name="canvas_msg_save_failed_with">保存に失敗しました：%1$s</string>
     <string name="canvas_default_title">二人で描いた絵</string>
+
+    <!-- ==================== 小屋·タッチシグナル (cottage taps) ==================== -->
+    <string name="tap_section_title">恋しくなったらタッチ</string>
+    <string name="tap_section_subtitle">ノックやハートビートで、すぐ気持ちを届けよう</string>
+    <string name="tap_action_tap">ノック</string>
+    <string name="tap_action_heartbeat">ハートビート</string>
+    <string name="tap_sending">送信中…</string>
+    <string name="tap_sent_tap">ノックを送りました 💗</string>
+    <string name="tap_sent_heartbeat">ハートビートが届きました 💓</string>
+    <string name="tap_error_no_partner">パートナーのアカウントがまだないため、タッチは利用できません</string>
+    <string name="tap_error_too_fast">送信が多すぎます。少し休んでからまた試してください</string>
+    <string name="tap_recent_title">最近のタッチ</string>
+    <string name="tap_recent_empty">まだ記録がありません。ノックしてみましょう</string>
+    <string name="tap_total_kept">全 %1$d 件のタッチを保存中</string>
+    <string name="tap_log_tap">%1$s が %2$s をノックしました</string>
+    <string name="tap_log_heartbeat">%1$s が %2$s にハートビートを送りました</string>
+
+    <!-- ==================== 小屋·カップル実績 (cottage achievements) ==================== -->
+    <string name="achievement_level_badge">Lv.%1$d</string>
+    <string name="achievement_points">%1$d ポイント</string>
+    <string name="achievement_next_level">次のレベル「%1$s」まであと %2$d ポイント · 進捗 %3$d%%</string>
+    <string name="achievement_max_level">最高レベル到達。二人ともすごい 💛</string>
+    <string name="achievement_stats_title">二人のあゆみ</string>
+    <string name="achievement_badges_title">バッジコレクション</string>
+    <string name="achievement_tier_none">未解放</string>
+    <string name="achievement_tier_bronze">ブロンズ</string>
+    <string name="achievement_tier_silver">シルバー</string>
+    <string name="achievement_tier_gold">ゴールド</string>
+    <string name="achievement_badge_progress">%1$d / %2$d</string>
+    <string name="achievement_no_data">実績データはまだありません</string>
+    <string name="achievement_stat_love_days">交際日数</string>
+    <string name="achievement_stat_articles">日記記事</string>
+    <string name="achievement_stat_albums">アルバム</string>
+    <string name="achievement_stat_album_media">写真と動画</string>
+    <string name="achievement_stat_moments">モーメント</string>
+    <string name="achievement_stat_capsules">タイムカプセル</string>
+    <string name="achievement_stat_checkins">チェックイン</string>
+    <string name="achievement_stat_checkin_streak">連続チェックイン</string>
+    <string name="achievement_stat_moods">気分記録</string>
+    <string name="achievement_stat_mood_streak">連続気分記録</string>
+    <string name="achievement_stat_chat_messages">チャット数</string>
+    <string name="achievement_stat_games_played">対戦回数</string>
+    <string name="achievement_stat_wishes_total">願い事</string>
+    <string name="achievement_stat_wishes_completed">叶えた願い事</string>
+    <string name="achievement_stat_songs_played">再生した曲数</string>
+
+    <!-- ==================== AI 機能 (ai) ==================== -->
+    <string name="ai_error_unavailable">AI が未設定か、一時的に利用できません</string>
+    <string name="ai_assistant_title">AI アシスタント</string>
+    <string name="ai_polish">推敲</string>
+    <string name="ai_continue">続けて書く</string>
+    <string name="ai_proofread">校正</string>
+    <string name="ai_polish_empty_content">本文を書いてから AI アシスタントを使ってください</string>
+    <string name="ai_result_replace">置き換える</string>
+    <string name="ai_result_append">追記する</string>
+    <string name="ai_semantic_search">AI 意味検索</string>
+    <string name="ai_search_indexed">%1$d 件の記事を索引済み</string>
+    <string name="ai_search_score">類似度 %1$s</string>
+    <string name="ai_report_title">AI 月報コピー</string>
+    <string name="ai_report_button">AI コピー</string>
+    <string name="ai_copy">コピー</string>
+    <string name="ai_copied">コピーしました</string>
+    <string name="ai_generate_questions">AI お題</string>
+    <string name="ai_generating">AI 生成中…</string>
+    <string name="ai_question_candidate">候補のお題</string>
 </resources>

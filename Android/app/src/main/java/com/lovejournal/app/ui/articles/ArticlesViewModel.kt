@@ -26,6 +26,8 @@ import com.lovejournal.app.data.remote.dto.ArticleBlockRequest
 import com.lovejournal.app.data.remote.dto.ArticleCreateRequest
 import com.lovejournal.app.data.remote.dto.ArticleSummary
 import com.lovejournal.app.data.remote.dto.ContentVersion
+import com.lovejournal.app.data.repository.AiFeatures
+import com.lovejournal.app.data.repository.AiRepository
 import com.lovejournal.app.data.repository.ArticlesRepository
 import com.lovejournal.app.ui.components.UiText
 import com.lovejournal.app.ui.components.toUiText
@@ -47,11 +49,16 @@ data class ArticlesUiState(
     val saving: Boolean = false,
     val versions: List<ContentVersion> = emptyList(),
     val message: UiText? = null,
+    // ---- AI 润色/续写/校对（status.enabled 且具备 article_polish 特性时显示）----
+    val aiEnabled: Boolean = false,
+    val aiPolishing: Boolean = false,
+    val aiResult: String? = null,
 )
 
 @HiltViewModel
 class ArticlesViewModel @Inject constructor(
     private val repository: ArticlesRepository,
+    private val aiRepository: AiRepository,
     private val serverConfig: ServerConfig,
 ) : ViewModel() {
 
@@ -60,6 +67,11 @@ class ArticlesViewModel @Inject constructor(
 
     init {
         refresh()
+        viewModelScope.launch {
+            aiRepository.status().onSuccess {
+                _state.value = _state.value.copy(aiEnabled = it.enabled && it.features.contains(AiFeatures.ARTICLE_POLISH))
+            }
+        }
     }
 
     fun refresh() {
@@ -174,6 +186,25 @@ class ArticlesViewModel @Inject constructor(
     }
 
     fun clearMessage() { _state.value = _state.value.copy(message = null) }
+
+    /** AI 处理正文：mode = polish | continue | proofread。结果存 aiResult 由编辑器展示。 */
+    fun aiPolish(content: String, mode: String) {
+        if (content.isBlank()) {
+            _state.value = _state.value.copy(message = uiText(R.string.ai_polish_empty_content))
+            return
+        }
+        _state.value = _state.value.copy(aiPolishing = true)
+        viewModelScope.launch {
+            aiRepository.polish(content.trim(), mode).fold(
+                onSuccess = { _state.value = _state.value.copy(aiPolishing = false, aiResult = it.text) },
+                onFailure = { _state.value = _state.value.copy(aiPolishing = false, message = it.toUiText()) },
+            )
+        }
+    }
+
+    fun dismissAiResult() {
+        _state.value = _state.value.copy(aiResult = null)
+    }
 
     fun mediaUrl(path: String?): String? = serverConfig.mediaUrl(path)
 

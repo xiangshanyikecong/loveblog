@@ -18,8 +18,9 @@
 
 package com.lovejournal.app.ui.timeline
 
+import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -27,9 +28,11 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.cachedIn
 import com.lovejournal.app.R
+import com.lovejournal.app.data.ConnectivityMonitor
 import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.repository.TimelineRepository
 import com.lovejournal.app.data.repository.UploadRepository
+import com.lovejournal.app.sync.SyncScheduler
 import com.lovejournal.app.ui.components.UiText
 import com.lovejournal.app.ui.components.toUiText
 import com.lovejournal.app.ui.components.uiText
@@ -61,9 +64,11 @@ data class TimelineUiState(
 
 @HiltViewModel
 class TimelineViewModel @Inject constructor(
+    application: Application,
     private val repository: TimelineRepository,
     private val uploadRepository: UploadRepository,
-) : ViewModel() {
+    private val connectivity: ConnectivityMonitor,
+) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(TimelineUiState())
     val state: StateFlow<TimelineUiState> = _state.asStateFlow()
@@ -155,16 +160,25 @@ class TimelineViewModel @Inject constructor(
                     },
                 )
             }
-            repository.post(content.trim(), visibility, mediaUrls).fold(
+            repository.postOfflineAware(content.trim(), visibility, mediaUrls).fold(
                 onSuccess = {
                     _state.value = _state.value.copy(posting = false)
                     _message.value = uiText(R.string.msg_published)
                     onDone()
                     refreshMoments()
                 },
-                onFailure = {
-                    _state.value = _state.value.copy(posting = false)
-                    _message.value = uiText(R.string.msg_publish_failed)
+                onFailure = { e ->
+                    if (!connectivity.isOnline()) {
+                        // 离线：请求已由仓库暂存进同步队列，联网后由
+                        // SyncWorker 自动补发，这里按成功收尾避免重复提交。
+                        _state.value = _state.value.copy(posting = false)
+                        _message.value = uiText(R.string.messages_msg_offline_saved)
+                        onDone()
+                        SyncScheduler.requestSyncNow(getApplication())
+                    } else {
+                        _state.value = _state.value.copy(posting = false)
+                        _message.value = e.toUiText()
+                    }
                 },
             )
         }

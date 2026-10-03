@@ -75,6 +75,9 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 - **心愿单**：`/v1/cottage/wishes` —— 两人想一起做的事，可勾选完成
 - **每日一问**：`/v1/cottage/questions` —— 双方盲答，答完后互相揭晓
 - **共同计划 / 提醒**：`/v1/cottage/plans`、`/v1/cottage/reminders`
+- **成就 / 等级**：`/v1/cottage/achievements` —— 基于两人全部活动数据（文章、相册、报备 / 心情连续天数、游戏对局、心愿完成、一起听歌、恋爱天数等）无状态计算的情侣等级（初识 → 白首不离，8 级）与 11 枚三档（铜 / 银 / 金）徽章
+- **轻触回应**：`/v1/cottage/taps` —— 一键向对方设备发送「敲一敲 / 心跳」，走通知通道分发（Web Push / FCM），Watch 与手机端可触觉回应；限流 60 次 / 小时
+- **AI 辅助（可选自托管 LLM）**：`/v1/ai` —— 日记润色 / 续写 / 校对、跨文章语义搜索（向量缓存在库）、月报 AI 文案、每日一问智能出题。默认关闭；配置 `AI_BASE_URL` 指向任意 OpenAI 兼容自托管服务（Ollama / vLLM / LM Studio 等）后开启，不绑定第三方 SaaS，未配置时所有端点 503 降级
 - **一起玩**：`/v1/cottage/games/*`（含 WebSocket）—— 五子棋、井字棋、黑白棋、记忆翻牌、连连看；你画我猜为独立模块 `/v1/cottage/draw`（含 WebSocket）。实时对局 + 战绩统计（持久化到数据库）+ 跨游戏战绩聚合页 `CottageGamesStatsView`（每位 partner 的胜 / 负 / 平局一目了然）
 
 > **依赖 Redis**：一起听、一起看、悄悄话、一起玩等实时模块的状态保存在 Redis。本地开发需启动 Redis（见下方「本地开发启动」）；无 Redis 时这些功能会降级为不可用（HTTP 503 / WebSocket 断开），不会拖垮其余模块。
@@ -125,6 +128,9 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 | 每日一问 | `/v1/cottage/questions` |
 | 共同计划 | `/v1/cottage/plans` |
 | 小屋提醒 | `/v1/cottage/reminders` |
+| 成就 / 等级 | `/v1/cottage/achievements` |
+| 轻触回应 | `/v1/cottage/taps` |
+| AI 辅助（可选） | `/v1/ai`（status / article polish / article search / report monthly / questions generate） |
 | 一起玩 | `/v1/cottage/games/{game}`（REST + WebSocket；`gomoku` / `tictactoe` / `reversi` / `memory` / `linklink`） |
 | 你画我猜 | `/v1/cottage/draw`（REST + WebSocket） |
 | 协作画布 | `/v1/cottage/canvas`（REST + WebSocket） |
@@ -248,8 +254,8 @@ npm run dev
 ## 多端客户端
 
 - **Web**：主端，本仓库 `web/`
-- **iOS**：SwiftUI 客户端，本仓库 `ios/`（与 Android 对齐的核心功能已全部交付：Dashboard、文章编辑（ETag / If-Match 并发控制）、上传管线、评论、胶囊、相册、纪念日、留言板、时间线、搜索、通知中心 + 小屋：E2EE 悄悄话（与 Web/Android 互通）、心情、报备、心愿、每日一问、一起听、一起看、五子棋 / 井字棋 / 黑白棋 / 记忆翻牌 / 连连看、你画我猜、协作画板、兑换券、账本、提醒、计划 + 生理期关怀、足迹、月报年报、客户端加密保险箱、回收站、隐私中心、安全中心（TOTP / 登录设备）+ 离线 outbox（报备 / 心愿 / 心情 / 留言 / 碎碎念 / 悄悄话离线暂存、`Idempotency-Key` 幂等重放、联网自动补发）与「在一起天数」桌面小组件（WidgetKit + App Group 镜像，天数按恋爱起点周年时刻翻转）；APNs 推送待补。纯逻辑下沉到 `LoveCore` Swift 包并有契约回归单测，CI 在 GitHub Actions macOS runner 上构建验证），详见 `ios/README.md`
-- **Android**：Kotlin + Jetpack Compose 客户端，`Android/`（覆盖文章 / 相册 / 留言 / 纪念日 / 时间线 / 回忆 / 评论 / 版本历史 / 胶囊 / 搜索 / 通知 / 回收站 + 小屋：聊天、收藏、撤回、置顶语录、媒体面板、心情、签到、心愿、每日一问 + 一起听、一起看、五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜 + 兑换券、提醒、计划、情侣账本、恋爱月报、足迹地图、生理期关怀 + 客户端加密保险箱 + 系统健康 / 存储统计 / 审计日志 / 安全用户 / 备份与自动同步 + 离线队列、Cookie 会话、FCM、桌面小组件、相机/相册上传 + App 内初始化引导与伴侣账号开通 + 头像上传），详见 `Android/README.md`。
+- **iOS**：SwiftUI 客户端，本仓库 `ios/`（与 Android 对齐的核心功能已全部交付：Dashboard、文章编辑（ETag / If-Match 并发控制）、上传管线、评论、胶囊、相册、纪念日、留言板、时间线、搜索、通知中心 + 小屋：E2EE 悄悄话（与 Web/Android 互通）、心情、报备、心愿、每日一问、一起听、一起看、五子棋 / 井字棋 / 黑白棋 / 记忆翻牌 / 连连看、你画我猜、协作画板、兑换券、账本、提醒、计划 + 生理期关怀、足迹、月报年报、客户端加密保险箱、回收站、隐私中心、安全中心（TOTP / 登录设备）+ 离线 outbox（报备 / 心愿 / 心情 / 留言 / 碎碎念 / 悄悄话离线暂存、`Idempotency-Key` 幂等重放、联网自动补发）与「在一起天数」桌面小组件（WidgetKit + App Group 镜像，天数按恋爱起点周年时刻翻转）+ **Apple Watch 伴侣应用**（恋爱天数表盘复杂功能 + 「敲一敲 / 心跳」轻触回应，经 WatchConnectivity 由 iPhone 代发、收到对方轻触时手表触觉震动）；APNs 推送待补。纯逻辑下沉到 `LoveCore` Swift 包并有契约回归单测，CI 在 GitHub Actions macOS runner 上构建验证），详见 `ios/README.md`
+- **Android**：Kotlin + Jetpack Compose 客户端，`Android/`（覆盖文章 / 相册 / 留言 / 纪念日 / 时间线 / 回忆 / 评论 / 版本历史 / 胶囊 / 搜索 / 通知 / 回收站 + 小屋：聊天、收藏、撤回、置顶语录、媒体面板、心情、签到、心愿、每日一问 + 一起听、一起看、五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜 + 兑换券、提醒、计划、情侣账本、恋爱月报、足迹地图、生理期关怀 + 成就 / 情侣等级、轻触回应（FCM 到达震动）+ AI 辅助（润色 / 语义搜索 / 月报文案 / 每日出题）+ 客户端加密保险箱 + 系统健康 / 存储统计 / 审计日志 / 安全用户 / 备份与自动同步 + 离线队列、Cookie 会话、FCM、桌面小组件、相机/相册上传 + App 内初始化引导与伴侣账号开通 + 头像上传），详见 `Android/README.md`。
 
 ## 工程约定
 

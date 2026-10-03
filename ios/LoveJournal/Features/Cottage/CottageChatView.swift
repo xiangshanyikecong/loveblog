@@ -296,7 +296,9 @@ final class ChatViewModel {
 
     // MARK: History
 
-    private func loadHistory() async {
+    /// Public for the outbox flush observer: a replayed `chat.send` only
+    /// lands in the local list via a history refetch.
+    func loadHistory() async {
         do {
             let page = try await api.request(
                 CottageDTOs.ChatHistory.self, "GET", "/cottage/chat/messages",
@@ -657,6 +659,12 @@ struct CottageChatView: View {
                 let viewModel = ChatViewModel(api: environment.api, selfUid: uid, outbox: environment.outbox)
                 model = viewModel
                 viewModel.start()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .outboxDidFlush)) { note in
+            let actions = note.userInfo?["actions"] as? [String] ?? []
+            if actions.contains(OutboxActions.chatSend) {
+                Task { await model?.loadHistory() }
             }
         }
         .onDisappear { model?.stop() }

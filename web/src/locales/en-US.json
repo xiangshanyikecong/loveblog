@@ -102,6 +102,9 @@
     "genericError": "Operation failed, please try again later",
     "genericRetryError": "Operation failed, please check and try again"
   },
+  "aiFeature": {
+    "unavailable": "AI is not configured or temporarily unavailable"
+  },
   "auth": {
     "logoutSuccess": "Logged out",
     "logoutPartialFail": "Local resources stopped, but server session logout failed, please check your network",
@@ -228,6 +231,7 @@
       "watch": { "title": "Watch Together", "desc": "Play the same video in sync and watch together." },
       "games": { "title": "Play Together", "desc": "Gomoku, Tic-tac-toe, Reversi — invite them for a game." },
       "reports": { "title": "Monthly Report", "desc": "See your cottage interactions this month." },
+      "achievements": { "title": "Love Achievements", "desc": "Unlock badges and see your couple level." },
       "calendar": { "title": "Shared Calendar", "desc": "Anniversaries, moods, check-ins, and plans at a glance." },
       "ledger": { "title": "Couple's Ledger", "desc": "Track expenses together and see who owes whom." },
       "footprints": { "title": "Footprint Map", "desc": "Look back at the cities we've visited together." },
@@ -506,7 +510,10 @@
     "sealedHint": "The answer is still in the envelope, waiting for both of you to finish.",
     "createdToast": "Today's question has been added to the cottage",
     "revealedToast": "Answers revealed!",
-    "savedToast": "Answer saved"
+    "savedToast": "Answer saved",
+    "aiGenerate": "AI Questions",
+    "aiGenerating": "AI generating…",
+    "aiPickHint": "Tap a question to fill the box below, then create it:"
   },
   "cottageLedger": {
     "title": "Couple's Ledger",
@@ -1155,7 +1162,53 @@
     "statWishesCompleted": "Wishes Fulfilled",
     "kindWish": "Wish",
     "kindPlan": "Plan",
-    "kindQuestion": "Q&A"
+    "kindQuestion": "Q&A",
+    "aiNarrative": "AI Narrative",
+    "aiGenerating": "AI writing…"
+  },
+  "cottageAchievements": {
+    "title": "Love Achievements",
+    "subtitle": "Every badge and level from your journey together.",
+    "back": "Back to Cottage",
+    "loading": "Loading...",
+    "loadFailed": "Failed to load achievements",
+    "points": "{n} love points",
+    "nextLevel": "{points} points to “{title}”",
+    "maxLevel": "Top level reached — keep being sweet!",
+    "statsTitle": "Key Stats",
+    "badgesTitle": "Achievement Badges",
+    "badgesCount": "{done} / {total} unlocked",
+    "badgeProgress": "{current} / {target}",
+    "achieved": "Achieved",
+    "tierBronze": "Bronze",
+    "tierSilver": "Silver",
+    "tierGold": "Gold",
+    "emptyBadges": "No badges yet — spend more time in the cottage!",
+    "statLoveDays": "Days together",
+    "statCheckinStreak": "Check-in streak (days)",
+    "statMoodStreak": "Mood streak (days)",
+    "statArticles": "Journal entries",
+    "statAlbums": "Albums",
+    "statMoments": "Moments",
+    "statCapsules": "Time capsules",
+    "statChatMessages": "Whispers",
+    "statWishesCompleted": "Wishes fulfilled",
+    "statGames": "Games played"
+  },
+  "cottageTaps": {
+    "title": "Tap Replies",
+    "desc": "One gentle tap lets their phone know you're thinking of them.",
+    "tap": "Tap",
+    "heartbeat": "Heartbeat",
+    "sentTap": "Tapped {name} — they'll know right away~",
+    "sentHeartbeat": "Heartbeat sent to {name} 💓",
+    "noPartner": "No partner account yet — invite them first",
+    "tooFast": "That's a little too fast, take a breath before tapping again~",
+    "recentTitle": "Recent Taps",
+    "keptCount": "{n} kept",
+    "recordTap": "{from} tapped {to}",
+    "recordHeartbeat": "{from} sent {to} a heartbeat",
+    "empty": "No taps yet — give one a try~"
   },
   "cottageFootprints": {
     "title": "Footprint Map",
@@ -1260,7 +1313,21 @@
     "uploadFailed": "Upload failed",
     "imageUploadFailed": "Image upload failed",
     "leaveWithUnsaved": "You have unsaved changes. Are you sure you want to leave?",
-    "imageAlt": "Image"
+    "imageAlt": "Image",
+    "aiGroup": "AI assist",
+    "aiPolish": "Polish",
+    "aiContinue": "Continue",
+    "aiProofread": "Proofread",
+    "aiPanelTitle": "AI {action} result",
+    "aiWorking": "AI is thinking…",
+    "aiOutputLabel": "AI output",
+    "aiInsert": "Insert into body",
+    "aiReplace": "Replace body",
+    "aiReplaceConfirm": "Replace the current body with the AI result? You can undo with Ctrl+Z afterwards.",
+    "aiReplaced": "Body replaced with the AI result",
+    "aiInserted": "Inserted into the body",
+    "aiCopyFailed": "Copy failed — please select and copy the text manually",
+    "aiEmpty": "The body is still empty — write something first, then let AI help"
   },
   "cottageChat": {
     "backToCottage": "Back to cottage",
@@ -2248,7 +2315,15 @@
     "typeMoment": "Timeline",
     "typeAlbum": "Albums",
     "typeEvent": "Anniversary",
-    "typeMessage": "Messages"
+    "typeMessage": "Messages",
+    "aiTitle": "AI Semantic Search",
+    "aiDesc": "Describe a memory in one sentence and AI finds the closest diary entries.",
+    "aiPlaceholder": "e.g. that sunset by the sea",
+    "aiSearch": "AI Search",
+    "aiSearching": "AI searching...",
+    "aiIndexed": "{count} entries indexed",
+    "aiScore": "{score}% similar",
+    "aiNoResults": "No similar diary entries found."
   },
   "timelineView": {
     "tabAriaLabel": "Memories module navigation",

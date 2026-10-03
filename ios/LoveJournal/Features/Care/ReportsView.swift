@@ -17,6 +17,7 @@
 
 import Observation
 import SwiftUI
+import UIKit
 
 import LoveCore
 
@@ -33,6 +34,12 @@ final class ReportsViewModel {
     private(set) var monthly: CareDTOs.MonthlyReport?
     private(set) var annual: CareDTOs.AnnualReport?
 
+    /// AI monthly copy (visible only when the instance advertises it).
+    private(set) var aiStatus: AIDTOs.Status?
+    var aiText: String?
+    var aiLoading = false
+    var aiError: String?
+
     let currentYear: Int
 
     private let api: LoveAPIClient
@@ -44,6 +51,11 @@ final class ReportsViewModel {
 
     var availableYears: [Int] {
         Array((currentYear - 4)...max(currentYear - 4, currentYear)).reversed()
+    }
+
+    func loadAIStatusIfNeeded() async {
+        guard aiStatus == nil else { return }
+        aiStatus = try? await api.aiStatus()
     }
 
     func loadMonthly(year: Int, month: Int, force: Bool = false) async {
@@ -87,6 +99,20 @@ final class ReportsViewModel {
         }
         annualLoading = false
     }
+
+    /// `POST /ai/report/monthly` — AI-written summary for the selected month.
+    func generateAICopy(year: Int, month: Int) async {
+        guard !aiLoading else { return }
+        aiLoading = true
+        aiError = nil
+        do {
+            let response = try await api.aiMonthlyReport(year: year, month: month)
+            aiText = response.text
+        } catch {
+            aiError = AIFeature.message(for: error)
+        }
+        aiLoading = false
+    }
 }
 
 // MARK: - Reports screen
@@ -109,6 +135,7 @@ struct ReportsView: View {
     @State private var year = Calendar.current.component(.year, from: Date())
     @State private var month = Calendar.current.component(.month, from: Date())
     @State private var series: ChartSeries = .articles
+    @State private var aiCopied = false
 
     private var taskKey: String {
         "\(tab == .monthly ? "monthly" : "annual")/\(year)/\(month)"
@@ -136,6 +163,9 @@ struct ReportsView: View {
             case .annual:
                 await model.loadAnnual(year: year)
             }
+        }
+        .task {
+            await model?.loadAIStatusIfNeeded()
         }
     }
 
@@ -229,6 +259,9 @@ struct ReportsView: View {
             }
         } else if let report = model.monthly {
             monthlyStatsGrid(report.stats)
+            if model.aiStatus?.supports(AIDTOs.Feature.monthlyReport) == true {
+                aiCopySection(model)
+            }
             if !report.topMoods.isEmpty {
                 moodsCard(report.topMoods)
             }
@@ -241,6 +274,57 @@ struct ReportsView: View {
                     ForEach(report.highlights) { highlight in
                         highlightCard(highlight)
                     }
+                }
+            }
+        }
+    }
+
+    // MARK: AI monthly copy
+
+    private func aiCopySection(_ model: ReportsViewModel) -> some View {
+        LoveSoftCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    LoveSectionTitle(textKey: "ai.report.card.title")
+                    Spacer()
+                    if let text = model.aiText {
+                        Button {
+                            UIPasteboard.general.string = text
+                            aiCopied = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+                                aiCopied = false
+                            }
+                        } label: {
+                            Label(
+                                aiCopied ? String(localized: "common.copied") : String(localized: "common.copy"),
+                                systemImage: aiCopied ? "checkmark" : "doc.on.doc"
+                            )
+                            .font(.caption.weight(.semibold))
+                        }
+                        .foregroundStyle(LoveTheme.primaryAccessible)
+                    }
+                }
+                if model.aiLoading {
+                    HStack(spacing: 8) {
+                        ProgressView().tint(LoveTheme.primaryAccessible)
+                        Text("ai.generating")
+                            .font(.footnote)
+                            .foregroundStyle(LoveTheme.secondaryText)
+                    }
+                }
+                if let text = model.aiText {
+                    Text(text)
+                        .font(.footnote)
+                        .foregroundStyle(LoveTheme.text)
+                        .lineSpacing(4)
+                }
+                if let aiError = model.aiError {
+                    LoveErrorBanner(message: aiError)
+                }
+                LoveSecondaryButton(titleKey: "ai.report.button", loading: model.aiLoading) {
+                    let targetYear = year
+                    let targetMonth = month
+                    Task { await model.generateAICopy(year: targetYear, month: targetMonth) }
                 }
             }
         }

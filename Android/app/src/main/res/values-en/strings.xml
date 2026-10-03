@@ -45,6 +45,8 @@
     <string name="title_recycle_bin">Recycle Bin</string>
     <string name="title_messages_board">Message Board</string>
     <string name="title_in_game">In Game</string>
+    <string name="title_taps">Tap Signals</string>
+    <string name="title_achievements">Couple Achievements</string>
 
     <!-- ==================== Top Bar Actions ==================== -->
     <string name="action_back">Back</string>
@@ -179,6 +181,7 @@
     <string name="notification_channel_messages">Messages</string>
     <string name="notification_channel_moods">Mood Check-ins</string>
     <string name="notification_channel_events">Anniversary Reminders</string>
+    <string name="notification_channel_taps">Tap Signals</string>
 
     <!-- ==================== Cottage Hub ==================== -->
     <string name="cottage_hub_title">A little world just for the two of you</string>
@@ -215,6 +218,10 @@
     <string name="cottage_feature_period_sub">Thoughtful care</string>
     <string name="cottage_feature_vault">Private Vault</string>
     <string name="cottage_feature_vault_sub">End-to-end encrypted</string>
+    <string name="cottage_feature_taps">Taps</string>
+    <string name="cottage_feature_taps_sub">Knock · Heartbeat</string>
+    <string name="cottage_feature_achievements">Achievements</string>
+    <string name="cottage_feature_achievements_sub">Levels · Badges</string>
 
     <!-- ==================== Chat ==================== -->
     <string name="chat_partner_default">Partner</string>
@@ -1075,4 +1082,69 @@
     <string name="canvas_msg_saved_timeline">Saved to timeline</string>
     <string name="canvas_msg_save_failed_with">Save failed: %1$s</string>
     <string name="canvas_default_title">What we drew together</string>
+
+    <!-- ==================== Cottage Taps ==================== -->
+    <string name="tap_section_title">A tap says it all</string>
+    <string name="tap_section_subtitle">Send a knock or a heartbeat and let TA feel it right away</string>
+    <string name="tap_action_tap">Knock</string>
+    <string name="tap_action_heartbeat">Heartbeat</string>
+    <string name="tap_sending">Sending…</string>
+    <string name="tap_sent_tap">Knocked TA 💗</string>
+    <string name="tap_sent_heartbeat">Heartbeat delivered 💓</string>
+    <string name="tap_error_no_partner">No partner account yet, taps are unavailable for now</string>
+    <string name="tap_error_too_fast">Sending taps too often, take a short break first</string>
+    <string name="tap_recent_title">Recent taps</string>
+    <string name="tap_recent_empty">No taps yet — go knock on TA</string>
+    <string name="tap_total_kept">%1$d taps kept in total</string>
+    <string name="tap_log_tap">%1$s knocked %2$s</string>
+    <string name="tap_log_heartbeat">%1$s sent a heartbeat to %2$s</string>
+
+    <!-- ==================== Cottage Achievements ==================== -->
+    <string name="achievement_level_badge">Lv.%1$d</string>
+    <string name="achievement_points">%1$d points</string>
+    <string name="achievement_next_level">%2$d more points to reach “%1$s” · %3$d%% there</string>
+    <string name="achievement_max_level">Max level reached — you two are amazing 💛</string>
+    <string name="achievement_stats_title">Our journey together</string>
+    <string name="achievement_badges_title">Badge wall</string>
+    <string name="achievement_tier_none">Locked</string>
+    <string name="achievement_tier_bronze">Bronze</string>
+    <string name="achievement_tier_silver">Silver</string>
+    <string name="achievement_tier_gold">Gold</string>
+    <string name="achievement_badge_progress">%1$d / %2$d</string>
+    <string name="achievement_no_data">No achievement data yet</string>
+    <string name="achievement_stat_love_days">Days together</string>
+    <string name="achievement_stat_articles">Journal articles</string>
+    <string name="achievement_stat_albums">Albums</string>
+    <string name="achievement_stat_album_media">Photos &amp; videos</string>
+    <string name="achievement_stat_moments">Moments</string>
+    <string name="achievement_stat_capsules">Time capsules</string>
+    <string name="achievement_stat_checkins">Check-ins</string>
+    <string name="achievement_stat_checkin_streak">Check-in streak</string>
+    <string name="achievement_stat_moods">Mood check-ins</string>
+    <string name="achievement_stat_mood_streak">Mood streak</string>
+    <string name="achievement_stat_chat_messages">Chat messages</string>
+    <string name="achievement_stat_games_played">Games played</string>
+    <string name="achievement_stat_wishes_total">Wishes</string>
+    <string name="achievement_stat_wishes_completed">Wishes completed</string>
+    <string name="achievement_stat_songs_played">Songs played</string>
+
+    <!-- ==================== AI Features ==================== -->
+    <string name="ai_error_unavailable">AI is not configured or temporarily unavailable</string>
+    <string name="ai_assistant_title">AI Assistant</string>
+    <string name="ai_polish">Polish</string>
+    <string name="ai_continue">Continue</string>
+    <string name="ai_proofread">Proofread</string>
+    <string name="ai_polish_empty_content">Write some content first, then use the AI assistant</string>
+    <string name="ai_result_replace">Replace</string>
+    <string name="ai_result_append">Append</string>
+    <string name="ai_semantic_search">AI semantic search</string>
+    <string name="ai_search_indexed">%1$d articles indexed</string>
+    <string name="ai_search_score">Similarity %1$s</string>
+    <string name="ai_report_title">AI monthly copywriting</string>
+    <string name="ai_report_button">AI copy</string>
+    <string name="ai_copy">Copy</string>
+    <string name="ai_copied">Copied</string>
+    <string name="ai_generate_questions">AI questions</string>
+    <string name="ai_generating">AI generating…</string>
+    <string name="ai_question_candidate">Candidate question</string>
 </resources>

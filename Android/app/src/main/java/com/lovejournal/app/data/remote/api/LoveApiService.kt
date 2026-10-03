@@ -160,6 +160,19 @@ import com.lovejournal.app.data.remote.dto.SiteSettingResponse
 import com.lovejournal.app.data.remote.dto.SiteSettingUpdateRequest
 import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.remote.dto.TimelineListResponse
+import com.lovejournal.app.data.remote.dto.AchievementsResponse
+import com.lovejournal.app.data.remote.dto.AiMonthlyReportRequest
+import com.lovejournal.app.data.remote.dto.AiMonthlyReportResponse
+import com.lovejournal.app.data.remote.dto.AiPolishRequest
+import com.lovejournal.app.data.remote.dto.AiPolishResponse
+import com.lovejournal.app.data.remote.dto.AiQuestionsRequest
+import com.lovejournal.app.data.remote.dto.AiQuestionsResponse
+import com.lovejournal.app.data.remote.dto.AiSemanticSearchRequest
+import com.lovejournal.app.data.remote.dto.AiSemanticSearchResponse
+import com.lovejournal.app.data.remote.dto.AiStatusResponse
+import com.lovejournal.app.data.remote.dto.TapCreateRequest
+import com.lovejournal.app.data.remote.dto.TapListResponse
+import com.lovejournal.app.data.remote.dto.TapResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -750,6 +763,38 @@ interface LoveApiService {
 
     @GET("cottage/footprints")
     suspend fun footprints(): FootprintResponse
+
+    // ---- 小屋·情侣成就 (cottage achievements) ----
+
+    @GET("cottage/achievements")
+    suspend fun achievements(): AchievementsResponse
+
+    // ---- 小屋·轻触回应 (cottage taps) ----
+
+    // 201 成功；404 无伴侣账号；429 超过 60 次/小时限频。
+    @POST("cottage/taps")
+    suspend fun sendTap(@Body body: TapCreateRequest): TapResponse
+
+    @GET("cottage/taps/recent")
+    suspend fun recentTaps(@Query("limit") limit: Int = 20): TapListResponse
+
+    // ---- AI 能力 (ai) ----
+    // 未配置模型时 status 返回 enabled=false，各功能接口返回 503。
+
+    @GET("ai/status")
+    suspend fun aiStatus(): AiStatusResponse
+
+    @POST("ai/article/polish")
+    suspend fun aiPolish(@Body body: AiPolishRequest): AiPolishResponse
+
+    @POST("ai/article/search")
+    suspend fun aiSearch(@Body body: AiSemanticSearchRequest): AiSemanticSearchResponse
+
+    @POST("ai/report/monthly")
+    suspend fun aiMonthlyReport(@Body body: AiMonthlyReportRequest): AiMonthlyReportResponse
+
+    @POST("ai/questions/generate")
+    suspend fun aiGenerateQuestions(@Body body: AiQuestionsRequest): AiQuestionsResponse
 
     // ---- 主端·通知中心 (notifications) ----
 

@@ -96,8 +96,14 @@
 | 一起玩 | 五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜和画布作品 |
 | 报表 / 日历 | 汇总互动和重要日期，帮助回顾共同活动 |
 | 兑换券 / 账本 | 管理可兑换的情侣券和共同收支记录 |
+| 成就 / 等级 | 基于两人活动数据自动计算情侣等级与徽章（铜 / 银 / 金三档），无需手动打卡 |
+| 轻触回应 | 一键向对方发送「敲一敲 / 心跳」，经通知通道到达对方手机 / 手表 |
 | 生理期关怀 / 足迹 | 记录周期信息和共同去过的地点 |
 | 保险箱 | 保存双方的私密条目，使用客户端侧加密协议 |
+
+#### AI 辅助（可选，默认关闭）
+
+后端支持接入自托管的 OpenAI 兼容大模型（如 Ollama、vLLM、LM Studio）提供四项能力：日记润色 / 续写 / 校对、跨文章语义搜索、恋爱月报 AI 文案、每日一问智能出题。在 `server/.env` 中设置 `AI_ENABLED=true`、`AI_BASE_URL`（例如 `http://ollama:11434/v1`）、`AI_CHAT_MODEL` 与 `AI_EMBEDDING_MODEL` 后开启；未配置时所有 `/v1/ai` 接口返回 503，三端界面自动隐藏 AI 入口，不影响其他功能。
 
 #### 一起听的使用流程
 
@@ -160,6 +166,7 @@ flowchart LR
 | 文章、相册、事件、时间线 | /v1/articles、/v1/albums、/v1/events、/v1/timeline |
 | 留言、胶囊、搜索、通知 | /v1/messages、/v1/capsules、/v1/search、/v1/notifications |
 | 小屋 | /v1/cottage/*、/v1/checkins、/v1/cottage/wishes |
+| 成就 / 轻触 / AI | /v1/cottage/achievements、/v1/cottage/taps、/v1/ai |
 | 上传、导出、设置 | /v1/uploads、/v1/export、/v1/settings |
 | 安全和维护 | /v1/security、/v1/privacy、/v1/audit-logs、/v1/recycle-bin |
 | 健康 | /health、/health/ready、/health/system、/health/system/history、/health/system/remediate |

@@ -17,6 +17,7 @@
 
 package com.lovejournal.app.ui.cottage.questions
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,7 @@ import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.DailyQuestionAnswerDto
 import com.lovejournal.app.data.remote.dto.DailyQuestionResponse
 import com.lovejournal.app.ui.components.LovePage
+import com.lovejournal.app.ui.components.UiText
 import com.lovejournal.app.ui.components.asString
 
 @Composable
@@ -75,6 +77,11 @@ fun DailyQuestionScreen(viewModel: DailyQuestionViewModel = hiltViewModel()) {
                 }
             state.question == null -> CreateQuestion(
                 submitting = state.submitting,
+                aiEnabled = state.aiEnabled,
+                aiLoading = state.aiLoading,
+                aiCandidates = state.aiCandidates,
+                aiError = state.aiError,
+                onGenerateAi = viewModel::generateAiQuestions,
                 onCreate = viewModel::createToday,
             )
             else -> QuestionContent(
@@ -88,7 +95,15 @@ fun DailyQuestionScreen(viewModel: DailyQuestionViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun CreateQuestion(submitting: Boolean, onCreate: (String) -> Unit) {
+private fun CreateQuestion(
+    submitting: Boolean,
+    aiEnabled: Boolean,
+    aiLoading: Boolean,
+    aiCandidates: List<String>,
+    aiError: UiText?,
+    onGenerateAi: () -> Unit,
+    onCreate: (String) -> Unit,
+) {
     var prompt by remember { mutableStateOf("") }
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -107,6 +122,28 @@ private fun CreateQuestion(submitting: Boolean, onCreate: (String) -> Unit) {
             enabled = !submitting,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.question_publish)) }
+
+        // AI 出题：生成候选问题，点选填入上方输入框（不自动创建）。
+        if (aiEnabled) {
+            Button(
+                onClick = onGenerateAi,
+                enabled = !aiLoading,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (aiLoading) stringResource(R.string.ai_generating) else "✨ " + stringResource(R.string.ai_generate_questions))
+            }
+            aiError?.let {
+                Text(it.asString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            aiCandidates.forEach { candidate ->
+                Card(modifier = Modifier.fillMaxWidth().clickable { prompt = candidate }) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(stringResource(R.string.ai_question_candidate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(candidate, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -67,6 +67,45 @@
       </div>
     </section>
 
+    <!-- 轻触回应：敲一敲 / 心跳 -->
+    <section class="glass-card section-block cottage-taps">
+      <div class="tap-head">
+        <div>
+          <h3>{{ t('cottageTaps.title') }}</h3>
+          <p>{{ t('cottageTaps.desc') }}</p>
+        </div>
+        <span v-if="totalKept > 0" class="tap-kept">{{ t('cottageTaps.keptCount', { n: totalKept }) }}</span>
+      </div>
+
+      <div class="tap-actions">
+        <button
+          v-for="action in tapActions"
+          :key="action.kind"
+          class="tap-btn"
+          :class="{ pulsing: tapPulse === action.kind }"
+          type="button"
+          :disabled="tapBusy"
+          @click="sendTap(action.kind)"
+        >
+          <span class="tap-ripple" aria-hidden="true"></span>
+          <span class="tap-btn-emoji">{{ action.emoji }}</span>
+          <span class="tap-btn-label">{{ action.label }}</span>
+        </button>
+      </div>
+
+      <div v-if="taps.length" class="tap-recent">
+        <h4>{{ t('cottageTaps.recentTitle') }}</h4>
+        <ul class="tap-list">
+          <li v-for="item in taps" :key="item.tid" class="tap-item">
+            <span class="tap-item-emoji" aria-hidden="true">{{ tapEmoji(item.kind) }}</span>
+            <p>{{ tapText(item) }}</p>
+            <small>{{ formatTapTime(item.created_at) }}</small>
+          </li>
+        </ul>
+      </div>
+      <p v-else class="empty-text">{{ t('cottageTaps.empty') }}</p>
+    </section>
+
     <!-- 回忆回顾：回到那一天 / 年度报告 -->
     <section class="cottage-module-group">
       <div class="cottage-modules">
@@ -139,7 +178,12 @@ import { computed, inject, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { cottageModules, cottageGroups } from "./modules";
-import { fetchChatState, sendPoke } from "../../lib/api";
+import {
+  fetchChatState,
+  fetchRecentCottageTaps,
+  sendCottageTap,
+  sendPoke
+} from "../../lib/api";
 import { createCottageSocket } from "../../lib/cottageChatWs";
 import { parseError } from "../../utils/helpers";
 
@@ -168,6 +212,18 @@ const partnerOnline = ref(false);
 const unread = ref(0);
 const pokeBusy = ref(false);
 const pokeFlash = ref(null);
+
+// 轻触回应（敲一敲 / 心跳）
+const TAP_EMOJI = { tap: "👋", heartbeat: "💓" };
+const taps = ref([]);
+const totalKept = ref(0);
+const tapBusy = ref(false);
+const tapPulse = ref("");
+
+const tapActions = computed(() => [
+  { kind: "tap", emoji: TAP_EMOJI.tap, label: t("cottageTaps.tap") },
+  { kind: "heartbeat", emoji: TAP_EMOJI.heartbeat, label: t("cottageTaps.heartbeat") }
+]);
 
 let socket = null;
 let pokeFlashTimer = null;
@@ -198,6 +254,58 @@ async function poke(kind) {
     setTimeout(() => {
       pokeBusy.value = false;
     }, 600);
+  }
+}
+
+// ── 轻触回应（敲一敲 / 心跳）──────────────────────────────────────────────
+function tapEmoji(kind) {
+  return TAP_EMOJI[kind] || TAP_EMOJI.tap;
+}
+
+function tapText(item) {
+  const key = item.kind === "heartbeat" ? "cottageTaps.recordHeartbeat" : "cottageTaps.recordTap";
+  return t(key, { from: item.from_nickname || "Ta", to: item.to_nickname || "Ta" });
+}
+
+function formatTapTime(raw) {
+  if (!raw) return "";
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleString(undefined, { hour12: false });
+}
+
+async function loadTaps() {
+  try {
+    const data = await fetchRecentCottageTaps(10);
+    taps.value = data.items || [];
+    totalKept.value = data.total_kept || 0;
+  } catch (_) {
+    /* 静默失败：不阻塞 Hub 页其余内容 */
+  }
+}
+
+async function sendTap(kind) {
+  if (tapBusy.value) return;
+  tapBusy.value = true;
+  tapPulse.value = kind;
+  try {
+    const tap = await sendCottageTap(kind);
+    const key = kind === "heartbeat" ? "cottageTaps.sentHeartbeat" : "cottageTaps.sentTap";
+    showMessage(t(key, { name: tap?.to_nickname || partnerName.value || "Ta" }));
+    loadTaps();
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status === 404) {
+      showMessage(t("cottageTaps.noPartner"));
+    } else if (status === 429) {
+      showMessage(t("cottageTaps.tooFast"));
+    } else {
+      showMessage(parseError(error));
+    }
+  } finally {
+    setTimeout(() => {
+      tapBusy.value = false;
+      tapPulse.value = "";
+    }, 650);
   }
 }
 
@@ -244,6 +352,7 @@ onMounted(async () => {
     /* ignore */
   }
   socket = createCottageSocket({ onEvent: handleEvent });
+  loadTaps();
 });
 
 onBeforeUnmount(() => {
@@ -376,6 +485,141 @@ onBeforeUnmount(() => {
 .link-poke:disabled { opacity: 0.55; cursor: not-allowed; }
 .link-poke-emoji { font-size: 1.15rem; line-height: 1; }
 .link-poke-label { font-size: 0.8rem; color: #3d4665; }
+
+/* 轻触回应（敲一敲 / 心跳） */
+.cottage-taps {
+  display: grid;
+  gap: 0.85rem;
+}
+.tap-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.tap-head h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: #2f3754;
+}
+.tap-head p {
+  margin: 0.2rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.tap-kept {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  background: rgba(143, 155, 255, 0.12);
+  color: #6366f1;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.tap-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.7rem;
+}
+.tap-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 182, 205, 0.55);
+  background: linear-gradient(135deg, rgba(255, 224, 238, 0.85), rgba(232, 234, 255, 0.75));
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.tap-btn:hover { transform: translateY(-2px); }
+.tap-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.tap-btn-emoji {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+.tap-btn-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2f3754;
+}
+.tap-btn.pulsing .tap-btn-emoji {
+  animation: tap-heartbeat 0.65s ease;
+}
+.tap-ripple {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 138, 181, 0.65);
+  opacity: 0;
+  pointer-events: none;
+}
+.tap-btn.pulsing .tap-ripple {
+  animation: tap-ripple 0.65s ease-out;
+}
+@keyframes tap-heartbeat {
+  0% { transform: scale(1); }
+  18% { transform: scale(1.35); }
+  36% { transform: scale(1); }
+  54% { transform: scale(1.22); }
+  72% { transform: scale(1); }
+}
+@keyframes tap-ripple {
+  0% { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(9); opacity: 0; }
+}
+.tap-recent h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  color: #2f3754;
+}
+.tap-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+.tap-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 12px;
+  border: 1px solid rgba(203, 213, 225, 0.45);
+  background: rgba(255, 255, 255, 0.62);
+  padding: 0.5rem 0.7rem;
+}
+.tap-item-emoji {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 138, 181, 0.14);
+  flex: 0 0 auto;
+}
+.tap-item p {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  color: #3d4665;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+.tap-item small {
+  flex: 0 0 auto;
+  color: var(--text-soft);
+  font-size: 0.72rem;
+}
 
 /* Module groups */
 .cottage-module-group {

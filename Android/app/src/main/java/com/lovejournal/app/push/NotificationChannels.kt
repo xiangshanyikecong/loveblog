@@ -27,6 +27,7 @@ object NotificationChannels {
     const val MESSAGES = "love_messages"
     const val MOODS = "love_moods"
     const val EVENTS = "love_events"
+    const val TAPS = "love_taps"
 
     fun register(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -40,10 +41,17 @@ object NotificationChannels {
         manager.createNotificationChannel(
             NotificationChannel(EVENTS, context.getString(R.string.notification_channel_events), NotificationManager.IMPORTANCE_DEFAULT),
         )
+        // 轻触回应（cottage.tap）：高优先级 + 震动，让「敲一敲/心跳」有实感。
+        val taps = NotificationChannel(TAPS, context.getString(R.string.notification_channel_taps), NotificationManager.IMPORTANCE_HIGH).apply {
+            enableVibration(true)
+            vibrationPattern = longArrayOf(0, 60, 80, 60)
+        }
+        manager.createNotificationChannel(taps)
     }
 
     fun channelForType(type: String?): String = when {
         type == null -> MESSAGES
+        type.startsWith("cottage.tap") -> TAPS
         type.startsWith("mood") -> MOODS
         type.startsWith("event") -> EVENTS
         else -> MESSAGES

@@ -171,6 +171,12 @@ struct MessagesView: View {
                 Task { await model?.refresh() }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .outboxDidFlush)) { note in
+            let actions = note.userInfo?["actions"] as? [String] ?? []
+            if actions.contains(OutboxActions.messageCreate) {
+                Task { await model?.refresh() }
+            }
+        }
     }
 
     private func content(_ model: MessagesViewModel) -> some View {

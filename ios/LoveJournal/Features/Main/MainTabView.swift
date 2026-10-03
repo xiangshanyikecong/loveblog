@@ -34,6 +34,7 @@ enum CottageRoute: Hashable {
     case checkin
     case wishes
     case questions
+    case achievements
     case listen
     case watch
     case games
@@ -112,6 +113,7 @@ private struct RoutedScreen<Content: View>: View {
                     case .checkin: CottageCheckInView()
                     case .wishes: CottageWishesView()
                     case .questions: CottageQuestionsView()
+                    case .achievements: AchievementsView()
                     case .listen: CottageListenView()
                     case .watch: CottageWatchView()
                     case .games: CottageGamesView()

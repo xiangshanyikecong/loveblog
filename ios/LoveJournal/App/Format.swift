@@ -50,4 +50,17 @@ enum Format {
     static func todayString() -> String {
         dateFormatter.string(from: Date())
     }
+
+    /// `2 小时前` style relative time (cottage taps, activity rows).
+    static func relative(_ date: Date, relativeTo now: Date = Date()) -> String {
+        let seconds = now.timeIntervalSince(date)
+        if seconds < 60 { return String(localized: "format.relative.now") }
+        let minutes = Int(seconds / 60)
+        if minutes < 60 { return String(localized: "format.relative.minutes \(minutes)") }
+        let hours = minutes / 60
+        if hours < 24 { return String(localized: "format.relative.hours \(hours)") }
+        let days = hours / 24
+        if days < 30 { return String(localized: "format.relative.days \(days)") }
+        return Self.date(date)
+    }
 }

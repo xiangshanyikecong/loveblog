@@ -22,7 +22,18 @@
         <h2>{{ t('cottageReports.title') }}</h2>
         <p>{{ t('cottageReports.subtitle') }}</p>
       </div>
-      <router-link to="/cottage" class="reports-back">{{ t('cottageReports.back') }}</router-link>
+      <div class="reports-header-actions">
+        <button
+          v-if="aiReportEnabled"
+          class="ai-report-btn"
+          type="button"
+          :disabled="aiBusy"
+          @click="runAiReport"
+        >
+          {{ aiBusy ? t('cottageReports.aiGenerating') : t('cottageReports.aiNarrative') }}
+        </button>
+        <router-link to="/cottage" class="reports-back">{{ t('cottageReports.back') }}</router-link>
+      </div>
     </header>
 
     <section class="glass-card section-block report-controls">
@@ -34,6 +45,15 @@
     <section v-if="loading" class="glass-card section-block empty-text">{{ t('cottageReports.loading') }}</section>
 
     <template v-else-if="report">
+      <!-- AI 月报文案：引用块展示，可复制 -->
+      <section v-if="aiText" class="glass-card section-block ai-narrative">
+        <div class="ai-narrative-head">
+          <span class="ai-narrative-badge">✨ {{ t('cottageReports.aiNarrative') }}</span>
+          <button class="ghost-btn" type="button" @click="copyAiText">{{ t('common.copy') }}</button>
+        </div>
+        <blockquote class="ai-narrative-quote">{{ aiText }}</blockquote>
+      </section>
+
       <section class="report-summary">
         <article v-for="card in statCards" :key="card.key" class="glass-card report-stat">
           <span>{{ card.value }}</span>
@@ -75,7 +95,7 @@
 <script setup>
 import { computed, inject, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { fetchCottageMonthlyReport } from "../../../lib/api";
+import { aiMonthlyReport, fetchAiStatus, fetchCottageMonthlyReport } from "../../../lib/api";
 import { parseError } from "../../../utils/helpers";
 
 const { t } = useI18n();
@@ -85,6 +105,11 @@ const now = new Date();
 const monthInput = ref(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
 const report = ref(null);
 const loading = ref(true);
+
+// AI 月报文案（按 /ai/status 显隐）
+const aiReportEnabled = ref(false);
+const aiBusy = ref(false);
+const aiText = ref("");
 
 const statCards = computed(() => {
   const stats = report.value?.stats || {};
@@ -128,6 +153,7 @@ async function load() {
   const { year, month } = parseMonth();
   if (!year || !month) return;
   loading.value = true;
+  aiText.value = "";
   try {
     report.value = await fetchCottageMonthlyReport(year, month);
   } catch (error) {
@@ -137,7 +163,53 @@ async function load() {
   }
 }
 
-onMounted(load);
+// ── AI 月报文案 ───────────────────────────────────────────────────────────
+async function loadAiStatus() {
+  try {
+    const status = await fetchAiStatus();
+    aiReportEnabled.value = Boolean(
+      status?.enabled && (status?.features || []).includes("monthly_report")
+    );
+  } catch (_) {
+    // AI 未配置或网络失败 → 隐藏入口
+    aiReportEnabled.value = false;
+  }
+}
+
+async function runAiReport() {
+  if (aiBusy.value) return;
+  const { year, month } = parseMonth();
+  if (!year || !month) return;
+  aiBusy.value = true;
+  aiText.value = "";
+  try {
+    const data = await aiMonthlyReport(year, month);
+    aiText.value = (data.text || "").trim();
+    if (!aiText.value) {
+      showMessage(t("aiFeature.unavailable"));
+    }
+  } catch (error) {
+    const status = error?.response?.status;
+    showMessage(!status || status === 503 ? t("aiFeature.unavailable") : parseError(error));
+  } finally {
+    aiBusy.value = false;
+  }
+}
+
+async function copyAiText() {
+  if (!aiText.value) return;
+  try {
+    await navigator.clipboard.writeText(aiText.value);
+    showMessage(t("common.copied"));
+  } catch (_) {
+    showMessage(t("privacyCenter.clipboardDenied"));
+  }
+}
+
+onMounted(() => {
+  load();
+  loadAiStatus();
+});
 </script>
 
 <style scoped>
@@ -169,6 +241,66 @@ onMounted(load);
   gap: 0.65rem;
   align-items: center;
   justify-content: center;
+}
+
+/* 头部操作区 + AI 文案按钮 */
+.reports-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.ai-report-btn {
+  min-height: 36px;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 182, 205, 0.55);
+  background: linear-gradient(120deg, #ffe0ee, #e8eaff);
+  color: #2f3754;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.ai-report-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(255, 138, 181, 0.25);
+}
+.ai-report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* AI 文案引用块 */
+.ai-narrative {
+  display: grid;
+  gap: 0.7rem;
+}
+.ai-narrative-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.ai-narrative-badge {
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  background: linear-gradient(120deg, rgba(255, 138, 181, 0.18), rgba(143, 155, 255, 0.18));
+  color: #8a6b7c;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.ai-narrative-quote {
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  border-left: 4px solid #ff8ab5;
+  border-radius: 0 14px 14px 0;
+  background: linear-gradient(135deg, rgba(255, 224, 238, 0.6), rgba(232, 234, 255, 0.5));
+  color: #3d4665;
+  font-size: 0.92rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .month-btn {
   width: 42px;

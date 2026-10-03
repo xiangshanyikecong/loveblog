@@ -249,6 +249,7 @@ onBeforeUnmount(() => {
 defineExpose({
   getValue: () => vditor?.getValue() || '',
   setValue: (value) => vditor?.setValue(value || ''),
+  insertValue: (value) => vditor?.insertValue(value || ''),
   focus: () => vditor?.focus(),
   blur: () => vditor?.blur(),
   disabled: () => vditor?.disabled(),

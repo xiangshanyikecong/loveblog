@@ -40,16 +40,25 @@ extension Notification.Name {
 
 /// Drains the offline outbox (M6): replays queued mutations over the live API
 /// with their original `Idempotency-Key`, mirroring Android's WorkManager
-/// setup in spirit — triggers are connectivity recovery, app activation and
-/// immediately after enqueue (which also covers post-login drains: MainTabView
-/// appears right after login).
+/// setup in spirit — triggers are connectivity recovery, app activation,
+/// immediately after enqueue, and a timer armed for the earliest retry
+/// backoff (Android's periodic worker equivalent).
+///
+/// Only a live session may replay (Android's `SyncEngine` login gate): the
+/// queue is bound to the current `server|uid` scope before every drain, so
+/// another account's leftovers are wiped instead of replayed into the wrong
+/// account, and logged-out drains never fire 401 loops. Like Android, the
+/// queue survives logout/expiry — the scope claim decides at the next login
+/// whether the items still belong to whoever just signed in.
 @MainActor
 final class OutboxSyncer {
     private let store: OutboxStore
     private let api: LoveAPIClient
+    private let session: SessionStore
     private let monitor = NWPathMonitor()
     private var draining = false
     private var hadConnectivity = true
+    private var retryTask: Task<Void, Never>?
 
     /// REST route per action. The payload is already the encoded request
     /// body, so replay needs no DTO knowledge — contract drift is impossible.
@@ -62,8 +71,9 @@ final class OutboxSyncer {
         OutboxActions.chatSend: ("POST", "/cottage/chat/messages"),
     ]
 
-    init(api: LoveAPIClient) {
+    init(api: LoveAPIClient, session: SessionStore) {
         self.api = api
+        self.session = session
         store = OutboxStore(fileURL: Self.defaultFileURL())
 
         monitor.pathUpdateHandler = { [weak self] path in
@@ -93,11 +103,20 @@ final class OutboxSyncer {
     /// the caller's live attempt already used, so a replay after an ambiguous
     /// timeout cannot duplicate the write server-side.
     func enqueue(action: String, payload: Data, idempotencyKey: String) {
+        if let scope = currentScope() {
+            store.claim(scope: scope)
+        }
         store.enqueue(action: action, payload: payload, idempotencyKey: idempotencyKey)
         drainIfNeeded()
     }
 
     func drainIfNeeded() {
+        // Without a live session every replay would 401 — and a leftover
+        // queue from another account could even write into the wrong user.
+        guard let scope = currentScope() else { return }
+        // Bind the queue to this account first (wipes another owner's
+        // leftovers), then replay what is actually ours.
+        store.claim(scope: scope)
         guard !draining, store.pendingCount() > 0 else { return }
         draining = true
         Task { [weak self] in
@@ -109,7 +128,7 @@ final class OutboxSyncer {
         defer { draining = false }
         let result = await store.drain { [api] item in
             guard let route = Self.routes[item.action] else {
-                // Unknown actions stay queued with diagnostics (Android
+                // Unknown actions dead-letter with diagnostics (Android
                 // parity) instead of being silently discarded.
                 throw APIError.decoding("未知离线操作: \(item.action)")
             }
@@ -120,12 +139,40 @@ final class OutboxSyncer {
                 headers: ["Idempotency-Key": item.idempotencyKey]
             )
         }
+        // Backoff in progress: without a timer a retryable item would sit
+        // until the next activation/connectivity change. Android leans on its
+        // 15-minute periodic worker for this; iOS arms a one-shot wake-up at
+        // the earliest due date instead.
+        scheduleRetryIfNeeded()
         guard !result.flushedActions.isEmpty else { return }
         NotificationCenter.default.post(
             name: .outboxDidFlush,
             object: nil,
             userInfo: ["actions": result.flushedActions]
         )
+    }
+
+    /// Wakes the drain exactly when the earliest backing-off item comes due;
+    /// re-arms on every call so an earlier due date always wins.
+    private func scheduleRetryIfNeeded() {
+        retryTask?.cancel()
+        guard let due = store.nextDueDate() else {
+            retryTask = nil
+            return
+        }
+        let delay = max(0, due.timeIntervalSinceNow)
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            self?.drainIfNeeded()
+        }
+    }
+
+    /// `server|uid`, mirroring Android's `ServerConfig.dataScope`. Nil unless
+    /// a session is live — that nil is the drain gate.
+    private func currentScope() -> String? {
+        guard case .loggedIn(let profile) = session.state else { return nil }
+        return "\(ServerSettings.apiBase)|\(profile.uid)"
     }
 
     private static func defaultFileURL() -> URL {

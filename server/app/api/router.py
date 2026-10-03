@@ -65,6 +65,9 @@ from app.api.v1.cottage_draw import router as cottage_draw_router
 from app.api.v1.cottage_draw_ws import router as cottage_draw_ws_router
 from app.api.v1.recycle_bin import router as recycle_bin_router
 from app.api.v1.wishes import router as wishes_router
+from app.api.v1.cottage_achievements import router as cottage_achievements_router
+from app.api.v1.cottage_taps import router as cottage_taps_router
+from app.api.v1.ai import router as ai_router
 
 
 api_router = APIRouter()
@@ -118,3 +121,6 @@ api_router.include_router(recycle_bin_router, prefix="/v1")
 api_router.include_router(storage_router, prefix="/v1")
 api_router.include_router(totp_router, prefix="/v1")
 api_router.include_router(devices_router, prefix="/v1")
+api_router.include_router(cottage_achievements_router, prefix="/v1")
+api_router.include_router(cottage_taps_router, prefix="/v1")
+api_router.include_router(ai_router, prefix="/v1")

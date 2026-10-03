@@ -21,6 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lovejournal.app.R
 import com.lovejournal.app.data.remote.dto.DailyQuestionResponse
+import com.lovejournal.app.data.repository.AiFeatures
+import com.lovejournal.app.data.repository.AiRepository
 import com.lovejournal.app.data.repository.DailyQuestionRepository
 import com.lovejournal.app.ui.components.UiText
 import com.lovejournal.app.ui.components.toUiText
@@ -37,11 +39,17 @@ data class DailyQuestionUiState(
     val question: DailyQuestionResponse? = null,
     val error: UiText? = null,
     val submitting: Boolean = false,
+    // ---- AI 出题（status.enabled 且具备 question_generate 特性时显示）----
+    val aiEnabled: Boolean = false,
+    val aiLoading: Boolean = false,
+    val aiCandidates: List<String> = emptyList(),
+    val aiError: UiText? = null,
 )
 
 @HiltViewModel
 class DailyQuestionViewModel @Inject constructor(
     private val repository: DailyQuestionRepository,
+    private val aiRepository: AiRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DailyQuestionUiState())
@@ -52,6 +60,23 @@ class DailyQuestionViewModel @Inject constructor(
 
     init {
         refresh()
+        viewModelScope.launch {
+            aiRepository.status().onSuccess {
+                _state.value = _state.value.copy(aiEnabled = it.enabled && it.features.contains(AiFeatures.QUESTION_GENERATE))
+            }
+        }
+    }
+
+    /** AI 生成候选问题列表；点选后由 UI 填入新建输入框（不自动创建）。 */
+    fun generateAiQuestions() {
+        if (_state.value.aiLoading) return
+        _state.value = _state.value.copy(aiLoading = true, aiError = null)
+        viewModelScope.launch {
+            aiRepository.generateQuestions().fold(
+                onSuccess = { _state.value = _state.value.copy(aiLoading = false, aiCandidates = it.questions) },
+                onFailure = { _state.value = _state.value.copy(aiLoading = false, aiError = it.toUiText()) },
+            )
+        }
     }
 
     fun refresh() {

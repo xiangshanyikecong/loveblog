@@ -19,25 +19,42 @@ package com.lovejournal.app.data.repository
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import androidx.room.withTransaction
 import com.lovejournal.app.R
+import com.lovejournal.app.data.local.LoveDatabase
+import com.lovejournal.app.data.local.dao.SyncQueueDao
+import com.lovejournal.app.data.local.entity.SyncQueueEntity
+import com.lovejournal.app.data.prefs.SessionManager
+import com.lovejournal.app.data.remote.ServerConfig
 import com.lovejournal.app.data.remote.api.LoveApiService
 import com.lovejournal.app.data.remote.dto.CommentCreateRequest
 import com.lovejournal.app.data.remote.dto.MomentCreateRequest
 import com.lovejournal.app.data.remote.dto.MomentResponse
 import com.lovejournal.app.data.remote.dto.TimelineListResponse
+import com.lovejournal.app.sync.SyncActions
 import com.lovejournal.app.ui.components.UiTextException
 import com.lovejournal.app.ui.components.uiText
+import kotlinx.coroutines.flow.first
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * 主端·时间线。动态流（含评论树展示）。本期支持列表 / 发动态（图片先经
  * [UploadRepository.uploadTimelineImage] 上传，URL 随 [MomentCreateRequest.media_urls] 提交）/
- * 评论（支持通过 parent_cid 回复）/ 删除 / 往年今日回忆（只读）；语音上传仍需后续补。网络直连。
+ * 评论（支持通过 parent_cid 回复）/ 删除 / 往年今日回忆（只读）；语音上传仍需后续补。
+ * [postOfflineAware] 在失败时把请求暂存进 SyncQueue，联网后由 SyncWorker 自动补发。
  */
 @Singleton
 class TimelineRepository @Inject constructor(
     private val api: LoveApiService,
+    private val db: LoveDatabase,
+    private val syncQueueDao: SyncQueueDao,
+    private val session: SessionManager,
+    private val serverConfig: ServerConfig,
+    private val json: Json,
 ) {
     suspend fun list(page: Int = 1): Result<TimelineListResponse> =
         runCatching { api.timeline(page = page) }
@@ -57,16 +74,43 @@ class TimelineRepository @Inject constructor(
     /** 往年今日的动态（回忆视图数据源）。 */
     suspend fun memories(): Result<List<MomentResponse>> = runCatching { api.timelineMemories() }
 
-    suspend fun post(
+    /**
+     * 离线感知的发动态：先用一次性 UUID 幂等键尝试直连；一旦失败（含
+     * 离线），把请求原样序列化进 SyncQueue（action =
+     * [SyncActions.MOMENT_CREATE]，localRef/idempotencyKey 均为该键），
+     * SyncWorker 联网后用同一载荷补发。无论入队与否都返回
+     * [Result.failure]，由 UI 依据连接状态决定展示「已离线暂存」还是
+     * 原始错误。
+     *
+     * 无本地 Room 行需要对账 —— 服务端权威副本经正常刷新回流。
+     */
+    suspend fun postOfflineAware(
         content: String,
         visibility: String,
         mediaUrls: List<String> = emptyList(),
-    ): Result<Unit> = runCatching {
-        api.createMoment(
-            idempotencyKey = null,
-            body = MomentCreateRequest(content = content, media_urls = mediaUrls, visibility = visibility),
-        )
-        Unit
+    ): Result<Unit> {
+        val key = UUID.randomUUID().toString()
+        val req = MomentCreateRequest(content = content, media_urls = mediaUrls, visibility = visibility)
+        return try {
+            api.createMoment(idempotencyKey = key, body = req)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            val uid = session.sessionFlow.first().uid
+                ?: return Result.failure(UiTextException(uiText(R.string.msg_session_expired)))
+            val scope = serverConfig.dataScope(uid)
+            db.withTransaction {
+                syncQueueDao.enqueue(
+                    SyncQueueEntity(
+                        action = SyncActions.MOMENT_CREATE,
+                        payload = json.encodeToString(req),
+                        localRef = key,
+                        scope = scope,
+                        idempotencyKey = key,
+                    ),
+                )
+            }
+            Result.failure(e)
+        }
     }
 
     /** 发表评论；[parentCid] 非空表示回复某条评论。 */

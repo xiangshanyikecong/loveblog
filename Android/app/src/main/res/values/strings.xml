@@ -45,6 +45,8 @@
     <string name="title_recycle_bin">回收站</string>
     <string name="title_messages_board">留言板</string>
     <string name="title_in_game">对局中</string>
+    <string name="title_taps">轻触回应</string>
+    <string name="title_achievements">情侣成就</string>
 
     <!-- ==================== Top Bar Actions ==================== -->
     <string name="action_back">返回</string>
@@ -179,6 +181,7 @@
     <string name="notification_channel_messages">留言</string>
     <string name="notification_channel_moods">心情打卡</string>
     <string name="notification_channel_events">纪念日提醒</string>
+    <string name="notification_channel_taps">轻触回应</string>
 
     <!-- ==================== Cottage Hub ==================== -->
     <string name="cottage_hub_title">只属于你们俩的小天地</string>
@@ -215,6 +218,10 @@
     <string name="cottage_feature_period_sub">贴心关怀</string>
     <string name="cottage_feature_vault">私密空间</string>
     <string name="cottage_feature_vault_sub">端到端加密</string>
+    <string name="cottage_feature_taps">轻触</string>
+    <string name="cottage_feature_taps_sub">敲一敲·心跳</string>
+    <string name="cottage_feature_achievements">成就</string>
+    <string name="cottage_feature_achievements_sub">等级·徽章</string>
 
     <!-- ==================== Chat ==================== -->
     <string name="chat_partner_default">TA</string>
@@ -1075,4 +1082,69 @@
     <string name="canvas_msg_saved_timeline">已保存到时间轴</string>
     <string name="canvas_msg_save_failed_with">保存失败：%1$s</string>
     <string name="canvas_default_title">我们一起画的</string>
+
+    <!-- ==================== 小屋·轻触回应 (cottage taps) ==================== -->
+    <string name="tap_section_title">想念就轻触一下</string>
+    <string name="tap_section_subtitle">敲一敲或发一次心跳，让 TA 第一时间感受到</string>
+    <string name="tap_action_tap">敲一敲</string>
+    <string name="tap_action_heartbeat">心跳</string>
+    <string name="tap_sending">发送中…</string>
+    <string name="tap_sent_tap">已敲一敲 TA 💗</string>
+    <string name="tap_sent_heartbeat">心跳已送达 💓</string>
+    <string name="tap_error_no_partner">还没有伴侣账号，暂时无法轻触</string>
+    <string name="tap_error_too_fast">轻触发送太频繁，休息一下再试试</string>
+    <string name="tap_recent_title">最近轻触</string>
+    <string name="tap_recent_empty">还没有轻触记录，去敲一敲 TA 吧</string>
+    <string name="tap_total_kept">共保留 %1$d 条轻触记录</string>
+    <string name="tap_log_tap">%1$s 敲了敲 %2$s</string>
+    <string name="tap_log_heartbeat">%1$s 向 %2$s 发送了心跳</string>
+
+    <!-- ==================== 小屋·情侣成就 (cottage achievements) ==================== -->
+    <string name="achievement_level_badge">Lv.%1$d</string>
+    <string name="achievement_points">%1$d 积分</string>
+    <string name="achievement_next_level">下一等级「%1$s」还需 %2$d 积分 · 已完成 %3$d%%</string>
+    <string name="achievement_max_level">已达最高等级，你们太棒了 💛</string>
+    <string name="achievement_stats_title">我们的共同足迹</string>
+    <string name="achievement_badges_title">徽章墙</string>
+    <string name="achievement_tier_none">未解锁</string>
+    <string name="achievement_tier_bronze">青铜</string>
+    <string name="achievement_tier_silver">白银</string>
+    <string name="achievement_tier_gold">黄金</string>
+    <string name="achievement_badge_progress">%1$d / %2$d</string>
+    <string name="achievement_no_data">暂无成就数据</string>
+    <string name="achievement_stat_love_days">相恋天数</string>
+    <string name="achievement_stat_articles">日记文章</string>
+    <string name="achievement_stat_albums">相册</string>
+    <string name="achievement_stat_album_media">照片视频</string>
+    <string name="achievement_stat_moments">动态</string>
+    <string name="achievement_stat_capsules">时光胶囊</string>
+    <string name="achievement_stat_checkins">报备签到</string>
+    <string name="achievement_stat_checkin_streak">连续报备</string>
+    <string name="achievement_stat_moods">心情打卡</string>
+    <string name="achievement_stat_mood_streak">连续心情</string>
+    <string name="achievement_stat_chat_messages">私语条数</string>
+    <string name="achievement_stat_games_played">同局次数</string>
+    <string name="achievement_stat_wishes_total">心愿总数</string>
+    <string name="achievement_stat_wishes_completed">达成心愿</string>
+    <string name="achievement_stat_songs_played">听歌次数</string>
+
+    <!-- ==================== AI 能力 (ai) ==================== -->
+    <string name="ai_error_unavailable">AI 未配置或暂不可用</string>
+    <string name="ai_assistant_title">AI 助手</string>
+    <string name="ai_polish">润色</string>
+    <string name="ai_continue">续写</string>
+    <string name="ai_proofread">校对</string>
+    <string name="ai_polish_empty_content">请先写下正文，再使用 AI 助手</string>
+    <string name="ai_result_replace">替换</string>
+    <string name="ai_result_append">追加</string>
+    <string name="ai_semantic_search">AI 语义搜索</string>
+    <string name="ai_search_indexed">已索引 %1$d 篇</string>
+    <string name="ai_search_score">相似度 %1$s</string>
+    <string name="ai_report_title">AI 月报文案</string>
+    <string name="ai_report_button">AI 文案</string>
+    <string name="ai_copy">复制</string>
+    <string name="ai_copied">已复制</string>
+    <string name="ai_generate_questions">AI 出题</string>
+    <string name="ai_generating">AI 生成中…</string>
+    <string name="ai_question_candidate">候选问题</string>
 </resources>

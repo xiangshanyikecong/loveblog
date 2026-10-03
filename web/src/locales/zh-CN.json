@@ -102,6 +102,9 @@
     "genericError": "操作没有完成，请稍后再试",
     "genericRetryError": "操作没有完成，请检查后再试"
   },
+  "aiFeature": {
+    "unavailable": "AI 未配置或暂不可用"
+  },
   "auth": {
     "logoutSuccess": "已退出登录",
     "logoutPartialFail": "本机资源已停止，但服务端会话注销失败，请检查网络",
@@ -228,6 +231,7 @@
       "watch": { "title": "一起看", "desc": "同步播放同一部影片，一起追剧。" },
       "games": { "title": "一起玩", "desc": "五子棋、井字棋、黑白棋，约 Ta 来一局。" },
       "reports": { "title": "恋爱月报", "desc": "看看这个月在小屋里的互动。" },
+      "achievements": { "title": "恋爱成就", "desc": "解锁徽章，看看我们的情侣等级。" },
       "calendar": { "title": "共享日历", "desc": "纪念日、心情、报备、计划一目了然。" },
       "ledger": { "title": "情侣账本", "desc": "一起记账，算清谁欠谁。" },
       "footprints": { "title": "足迹地图", "desc": "回顾我们一起去过的城市。" },
@@ -506,7 +510,10 @@
     "sealedHint": "答案还在信封里，等两个人都写完。",
     "createdToast": "今日问题已放进小屋",
     "revealedToast": "答案揭晓啦",
-    "savedToast": "答案已保存"
+    "savedToast": "答案已保存",
+    "aiGenerate": "AI 出题",
+    "aiGenerating": "AI 出题中…",
+    "aiPickHint": "点击问题即可填入下方输入框，确认后再创建："
   },
   "cottageLedger": {
     "title": "情侣账本",
@@ -1155,7 +1162,53 @@
     "statWishesCompleted": "实现心愿",
     "kindWish": "心愿",
     "kindPlan": "计划",
-    "kindQuestion": "问答"
+    "kindQuestion": "问答",
+    "aiNarrative": "AI 文案",
+    "aiGenerating": "AI 撰写中…"
+  },
+  "cottageAchievements": {
+    "title": "恋爱成就",
+    "subtitle": "我们一路走来的每一枚徽章和等级。",
+    "back": "返回小屋",
+    "loading": "加载中...",
+    "loadFailed": "成就暂时加载失败",
+    "points": "恋爱积分 {n}",
+    "nextLevel": "距离「{title}」还差 {points} 分",
+    "maxLevel": "已达最高等级，继续甜蜜下去吧！",
+    "statsTitle": "关键统计",
+    "badgesTitle": "成就徽章",
+    "badgesCount": "已解锁 {done} / {total}",
+    "badgeProgress": "{current} / {target}",
+    "achieved": "已达成",
+    "tierBronze": "铜",
+    "tierSilver": "银",
+    "tierGold": "金",
+    "emptyBadges": "还没有成就徽章，去小屋里多互动吧。",
+    "statLoveDays": "在一起(天)",
+    "statCheckinStreak": "连续报备(天)",
+    "statMoodStreak": "连续心情(天)",
+    "statArticles": "日记",
+    "statAlbums": "相册",
+    "statMoments": "碎碎念",
+    "statCapsules": "时间胶囊",
+    "statChatMessages": "悄悄话",
+    "statWishesCompleted": "实现心愿",
+    "statGames": "一起玩(局)"
+  },
+  "cottageTaps": {
+    "title": "轻触回应",
+    "desc": "轻轻一按，Ta 的手机马上就知道你在想 Ta。",
+    "tap": "敲一敲",
+    "heartbeat": "心跳",
+    "sentTap": "已敲了敲 {name}，Ta 马上就会知道～",
+    "sentHeartbeat": "心跳已经传给 {name} 了 💓",
+    "noPartner": "还没有另一半账号，先邀请 Ta 加入吧",
+    "tooFast": "发送得太快啦，休息一下再轻触～",
+    "recentTitle": "最近轻触",
+    "keptCount": "共 {n} 条",
+    "recordTap": "{from} 敲了敲 {to}",
+    "recordHeartbeat": "{from} 给 {to} 发了心跳",
+    "empty": "还没有轻触记录，敲一下试试～"
   },
   "cottageFootprints": {
     "title": "足迹地图",
@@ -1745,7 +1798,21 @@
     "uploadFailed": "上传失败",
     "imageUploadFailed": "图片上传失败",
     "leaveWithUnsaved": "有未保存的更改，确定要离开吗？",
-    "imageAlt": "图片"
+    "imageAlt": "图片",
+    "aiGroup": "AI 辅助",
+    "aiPolish": "润色",
+    "aiContinue": "续写",
+    "aiProofread": "校对",
+    "aiPanelTitle": "AI {action}结果",
+    "aiWorking": "AI 正在思考…",
+    "aiOutputLabel": "AI 生成结果",
+    "aiInsert": "插入到正文",
+    "aiReplace": "替换正文",
+    "aiReplaceConfirm": "确定用 AI 结果替换当前正文吗？替换后可通过 Ctrl+Z 撤销。",
+    "aiReplaced": "已用 AI 结果替换正文",
+    "aiInserted": "已插入到正文",
+    "aiCopyFailed": "复制失败，请手动选择文本复制",
+    "aiEmpty": "正文还是空的，先写点什么再让 AI 帮忙吧"
   },
   "cottageChat": {
     "backToCottage": "返回小屋",
@@ -2248,7 +2315,15 @@
     "typeMoment": "时间轴",
     "typeAlbum": "相册",
     "typeEvent": "纪念日",
-    "typeMessage": "留言"
+    "typeMessage": "留言",
+    "aiTitle": "AI 语义搜索",
+    "aiDesc": "用一句话描述你的回忆，AI 从日记里找出最相似的那几篇。",
+    "aiPlaceholder": "例如：那次在海边看日落",
+    "aiSearch": "AI 搜索",
+    "aiSearching": "AI 搜索中...",
+    "aiIndexed": "已索引 {count} 篇日记",
+    "aiScore": "相似度 {score}%",
+    "aiNoResults": "没有找到相似的日记。"
   },
   "timelineView": {
     "tabAriaLabel": "回忆模块导航",

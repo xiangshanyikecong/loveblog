@@ -30,6 +30,9 @@ final class DashboardViewModel {
     var onThisDay: ContentDTOs.OnThisDay?
 
     private let api: LoveAPIClient
+    /// Optional sink (the phone-watch bridge) fed with each fresh payload so
+    /// the watch complications stay in sync with the server-side love clock.
+    var onDashboardFresh: ((ContentDTOs.Dashboard) -> Void)?
     /// Wall-clock seconds captured at fetch; the ticking card advances from it.
     private var clockBaseSeconds = 0
     private var clockFetchedAt = Date()
@@ -46,6 +49,7 @@ final class DashboardViewModel {
             error = nil
             clockBaseSeconds = clockSeconds(data.loveClock)
             clockFetchedAt = Date()
+            onDashboardFresh?(data)
             // Mirror the love clock into the app-group container for the home
             // screen widget (a separate process without its own session).
             WidgetSnapshot(baseSeconds: clockBaseSeconds, fetchedAt: clockFetchedAt).save()
@@ -95,6 +99,7 @@ struct DashboardView: View {
         .onAppear {
             if model == nil {
                 model = DashboardViewModel(api: environment.api)
+                model?.onDashboardFresh = { environment.watchBridge.syncFromDashboard($0) }
                 Task { await model?.refresh() }
             }
         }

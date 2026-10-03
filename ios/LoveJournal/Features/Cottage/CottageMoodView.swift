@@ -143,6 +143,12 @@ struct CottageMoodView: View {
                 Task { await model?.refresh() }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .outboxDidFlush)) { note in
+            let actions = note.userInfo?["actions"] as? [String] ?? []
+            if actions.contains(OutboxActions.moodUpsert) {
+                Task { await model?.refresh() }
+            }
+        }
     }
 
     private func content(_ model: MoodViewModel) -> some View {

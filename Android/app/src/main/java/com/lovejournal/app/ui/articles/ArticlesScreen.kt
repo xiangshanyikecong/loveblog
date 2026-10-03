@@ -49,10 +49,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,6 +65,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import com.lovejournal.app.R
@@ -75,11 +79,15 @@ import com.lovejournal.app.ui.theme.LovePeach
 import com.lovejournal.app.ui.theme.LoveRose
 
 @Composable
-fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
+fun ArticlesScreen(initialAid: String? = null, viewModel: ArticlesViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     BackHandler(state.detail != null) { viewModel.closeDetail() }
+    // 深链打开指定文章（AI 语义搜索结果点击进入）。
+    LaunchedEffect(initialAid) {
+        if (!initialAid.isNullOrBlank()) viewModel.open(initialAid)
+    }
 
     state.message?.let { message ->
         AlertDialog(onDismissRequest = viewModel::clearMessage, confirmButton = { TextButton(onClick = viewModel::clearMessage) { Text(stringResource(R.string.btn_confirm)) } }, text = { Text(message.asString()) })
@@ -91,9 +99,19 @@ fun ArticlesScreen(viewModel: ArticlesViewModel = hiltViewModel()) {
         confirmButton = { TextButton(onClick = { deleting = false; viewModel.deleteCurrent() }) { Text(stringResource(R.string.btn_delete)) } },
         dismissButton = { TextButton(onClick = { deleting = false }) { Text(stringResource(R.string.btn_cancel)) } },
     )
-    if (editing) ArticleEditor(state.detail, state.saving, onDismiss = { editing = false }, onSave = { title, excerpt, content, published, tags ->
-        viewModel.save(title, excerpt, content, published, tags); editing = false
-    })
+    if (editing) ArticleEditor(
+        detail = state.detail,
+        saving = state.saving,
+        aiEnabled = state.aiEnabled,
+        aiPolishing = state.aiPolishing,
+        aiResult = state.aiResult,
+        onAiPolish = viewModel::aiPolish,
+        onDismissAiResult = viewModel::dismissAiResult,
+        onDismiss = { editing = false },
+        onSave = { title, excerpt, content, published, tags ->
+            viewModel.save(title, excerpt, content, published, tags); editing = false
+        },
+    )
 
     Scaffold(
         floatingActionButton = {
@@ -224,6 +242,11 @@ private fun ArticleDetailContent(
 private fun ArticleEditor(
     detail: ArticleDetail?,
     saving: Boolean,
+    aiEnabled: Boolean,
+    aiPolishing: Boolean,
+    aiResult: String?,
+    onAiPolish: (String, String) -> Unit,
+    onDismissAiResult: () -> Unit,
     onDismiss: () -> Unit,
     onSave: (String, String, String, Boolean, String) -> Unit,
 ) {
@@ -241,6 +264,43 @@ private fun ArticleEditor(
             OutlinedTextField(content, { content = it }, label = { Text(stringResource(R.string.articles_content_label)) }, minLines = 5, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(tags, { tags = it }, label = { Text(stringResource(R.string.articles_tags_label)) }, modifier = Modifier.fillMaxWidth())
             Row { Checkbox(published, { published = it }); Text(stringResource(R.string.articles_publish_checkbox)) }
+            // AI 助手：润色/续写/校对正文，结果面板支持 替换/追加/取消。
+            if (aiEnabled) {
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(R.string.ai_assistant_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    if (aiPolishing) CircularProgressIndicator(modifier = Modifier.height(14.dp), strokeWidth = 2.dp)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { onAiPolish(content, "polish") }, enabled = !aiPolishing && content.isNotBlank()) { Text(stringResource(R.string.ai_polish)) }
+                    TextButton(onClick = { onAiPolish(content, "continue") }, enabled = !aiPolishing && content.isNotBlank()) { Text(stringResource(R.string.ai_continue)) }
+                    TextButton(onClick = { onAiPolish(content, "proofread") }, enabled = !aiPolishing && content.isNotBlank()) { Text(stringResource(R.string.ai_proofread)) }
+                }
+                aiResult?.let { result ->
+                    Card {
+                        Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                result,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 160.dp)
+                                    .verticalScroll(rememberScrollState()),
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                TextButton(onClick = { content = result; onDismissAiResult() }) { Text(stringResource(R.string.ai_result_replace)) }
+                                TextButton(onClick = {
+                                    content = if (content.isBlank()) result else "$content\n\n$result"
+                                    onDismissAiResult()
+                                }) { Text(stringResource(R.string.ai_result_append)) }
+                                TextButton(onClick = onDismissAiResult) { Text(stringResource(R.string.btn_cancel)) }
+                            }
+                        }
+                    }
+                }
+            }
         } },
         confirmButton = { Button(onClick = { onSave(title, excerpt, content, published, tags) }, enabled = !saving) { Text(stringResource(R.string.btn_save)) } },
         dismissButton = { OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } },

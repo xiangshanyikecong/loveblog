@@ -115,6 +115,20 @@ class Settings(BaseSettings):
     fcm_service_account_file: str = ""
     fcm_service_account_json: str = ""
 
+    # ── Optional self-hosted LLM (AI 辅助) ───────────────────────────────
+    # Disabled by default; enabling opts the node into article polish /
+    # continue, semantic article search, AI monthly report copy and AI
+    # daily-question suggestions. Speaks the OpenAI-compatible
+    # /chat/completions + /embeddings surface so any self-hosted runtime
+    # works (Ollama http://ollama:11434/v1, vLLM, LM Studio, one-api...).
+    # The API key is optional for local runtimes that don't enforce auth.
+    ai_enabled: bool = False
+    ai_base_url: str = ""
+    ai_api_key: str = ""
+    ai_chat_model: str = ""
+    ai_embedding_model: str = ""
+    ai_timeout_seconds: int = 60
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     @field_validator("cookie_secure", mode="before")

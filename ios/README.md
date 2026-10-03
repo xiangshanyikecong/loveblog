@@ -21,6 +21,8 @@ ios/
     Resources/                 # Localizable.xcstrings（zh-Hans/en/ja 三语）、Assets
   LoveJournalTests/            # App 层冒烟测试（模拟器）
   LoveWidget/                  # 桌面小组件扩展（在一起天数，WidgetKit）
+  LoveWatch/                   # watchOS 伴侣 App（天数 + 敲一敲 / 心跳，WCSession 中继）
+  LoveWatchWidget/             # 表盘复杂功能（accessoryCircular/Rectangular/Inline 天数）
 ```
 
 ## 里程碑
@@ -35,6 +37,7 @@ ios/
 | M5 | 五个小游戏、你画我猜、协作画板、兑换券、账本、提醒、计划 | ✅ |
 | M6 | 生理期、足迹地图、月报年报、保险箱、回收站、隐私中心、安全设置 | ✅ |
 | M6 收尾 | 离线 outbox、桌面小组件 | ✅ |
+| M8 | 成就 / 情侣等级、轻触回应、AI 辅助（润色 / 续写 / 校对、语义搜索、月报文案、AI 出题，由 `/v1/ai/status` 驱动显隐）、Apple Watch 伴侣应用（恋爱天数表盘复杂功能 + 敲一敲 / 心跳，WatchConnectivity 由 iPhone 代发） | ✅ |
 | M7 | APNs 推送（依赖服务端 provider 与付费开发者账号） | 🚧 |
 
 ## 已知差距（与 Android 对齐待办）

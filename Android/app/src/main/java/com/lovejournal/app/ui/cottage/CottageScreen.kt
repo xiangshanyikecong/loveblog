@@ -50,7 +50,7 @@ import com.lovejournal.app.ui.theme.LovePeach
 import com.lovejournal.app.ui.theme.LoveRose
 
 object CottageRoute {
-    const val HUB = "cottage"; const val CHAT = "cottage/chat"; const val MOOD = "cottage/mood"; const val WISHLIST = "cottage/wishlist"; const val QUESTIONS = "cottage/questions"; const val GAMES = "cottage/games"; const val WATCH = "cottage/watch"; const val LISTEN = "cottage/listen"; const val COUPONS = "cottage/coupons"; const val REMINDERS = "cottage/reminders"; const val LEDGER = "cottage/ledger"; const val PERIOD = "cottage/period"; const val REPORTS = "cottage/reports"; const val FOOTPRINTS = "cottage/footprints"; const val PLANS = "cottage/plans"; const val CHECKINS = "checkins"; const val VAULT = "cottage/vault"; const val CANVAS = "cottage/games/canvas"; const val CANVAS_GALLERY = "cottage/games/canvas/gallery"; const val CANVAS_ARTWORK = "cottage/games/canvas/gallery/artwork"
+    const val HUB = "cottage"; const val CHAT = "cottage/chat"; const val MOOD = "cottage/mood"; const val WISHLIST = "cottage/wishlist"; const val QUESTIONS = "cottage/questions"; const val GAMES = "cottage/games"; const val WATCH = "cottage/watch"; const val LISTEN = "cottage/listen"; const val COUPONS = "cottage/coupons"; const val REMINDERS = "cottage/reminders"; const val LEDGER = "cottage/ledger"; const val PERIOD = "cottage/period"; const val REPORTS = "cottage/reports"; const val FOOTPRINTS = "cottage/footprints"; const val PLANS = "cottage/plans"; const val CHECKINS = "checkins"; const val VAULT = "cottage/vault"; const val CANVAS = "cottage/games/canvas"; const val CANVAS_GALLERY = "cottage/games/canvas/gallery"; const val CANVAS_ARTWORK = "cottage/games/canvas/gallery/artwork"; const val TAPS = "cottage/taps"; const val ACHIEVEMENTS = "cottage/achievements"
 }
 
 private data class CottageFeature(val emoji: String, val titleRes: Int, val subtitleRes: Int, val route: String, val accent: Color)
@@ -63,6 +63,7 @@ private val features = listOf(
     CottageFeature("🗓️", R.string.cottage_feature_plans, R.string.cottage_feature_plans_sub, CottageRoute.PLANS, LoveLavender), CottageFeature("💰", R.string.cottage_feature_ledger, R.string.cottage_feature_ledger_sub, CottageRoute.LEDGER, LoveMint),
     CottageFeature("📊", R.string.cottage_feature_reports, R.string.cottage_feature_reports_sub, CottageRoute.REPORTS, LoveRose), CottageFeature("🗺️", R.string.cottage_feature_footprints, R.string.cottage_feature_footprints_sub, CottageRoute.FOOTPRINTS, LoveMint),
     CottageFeature("🌸", R.string.cottage_feature_period, R.string.cottage_feature_period_sub, CottageRoute.PERIOD, LovePeach), CottageFeature("🔐", R.string.cottage_feature_vault, R.string.cottage_feature_vault_sub, CottageRoute.VAULT, LoveLavender),
+    CottageFeature("👉", R.string.cottage_feature_taps, R.string.cottage_feature_taps_sub, CottageRoute.TAPS, LoveRose), CottageFeature("🏆", R.string.cottage_feature_achievements, R.string.cottage_feature_achievements_sub, CottageRoute.ACHIEVEMENTS, LoveMint),
 )
 
 @Composable

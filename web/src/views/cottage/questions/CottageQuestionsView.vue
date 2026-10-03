@@ -29,7 +29,35 @@
 
     <template v-else>
       <section v-if="!todayQuestion" class="glass-card section-block question-composer">
-        <h3>{{ t('cottageQuestions.composerTitle') }}</h3>
+        <div class="composer-head">
+          <h3>{{ t('cottageQuestions.composerTitle') }}</h3>
+          <button
+            v-if="aiQuestionEnabled"
+            class="ai-question-btn"
+            type="button"
+            :disabled="aiBusy"
+            @click="runAiQuestions"
+          >
+            {{ aiBusy ? t('cottageQuestions.aiGenerating') : t('cottageQuestions.aiGenerate') }}
+          </button>
+        </div>
+
+        <!-- AI 出题候选：点击填入输入框，不自动创建 -->
+        <div v-if="aiCandidates.length" class="ai-candidates">
+          <p class="ai-candidates-hint">{{ t('cottageQuestions.aiPickHint') }}</p>
+          <div class="ai-candidates-list">
+            <button
+              v-for="(question, index) in aiCandidates"
+              :key="`${index}-${question}`"
+              class="ai-candidate"
+              type="button"
+              @click="pickAiCandidate(question)"
+            >
+              {{ question }}
+            </button>
+          </div>
+        </div>
+
         <form class="question-form" @submit.prevent="submitQuestion">
           <textarea
             v-model="questionForm.prompt"
@@ -118,8 +146,10 @@
 import { computed, inject, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
+  aiGenerateQuestions,
   answerDailyQuestion,
   createDailyQuestion,
+  fetchAiStatus,
   fetchDailyQuestions,
   fetchTodayQuestion,
 } from "../../../lib/api";
@@ -138,6 +168,11 @@ const questionForm = reactive({
   question_date: localDateKey(),
 });
 const answerForm = reactive({ content: "" });
+
+// AI 出题（按 /ai/status 显隐）
+const aiQuestionEnabled = ref(false);
+const aiBusy = ref(false);
+const aiCandidates = ref([]);
 
 const myAnswer = computed(() =>
   (todayQuestion.value?.answers || []).find((answer) => answer.is_self)
@@ -202,7 +237,45 @@ async function submitAnswer() {
   }
 }
 
-onMounted(load);
+// ── AI 出题：生成候选问题，点击后填入输入框（不自动创建） ──────────────────
+async function loadAiStatus() {
+  try {
+    const status = await fetchAiStatus();
+    aiQuestionEnabled.value = Boolean(
+      status?.enabled && (status?.features || []).includes("question_generate")
+    );
+  } catch (_) {
+    // AI 未配置或网络失败 → 隐藏入口
+    aiQuestionEnabled.value = false;
+  }
+}
+
+async function runAiQuestions() {
+  if (aiBusy.value) return;
+  aiBusy.value = true;
+  aiCandidates.value = [];
+  try {
+    const data = await aiGenerateQuestions(3);
+    aiCandidates.value = (data.questions || []).slice(0, 3);
+    if (!aiCandidates.value.length) {
+      showMessage(t("aiFeature.unavailable"));
+    }
+  } catch (error) {
+    const status = error?.response?.status;
+    showMessage(!status || status === 503 ? t("aiFeature.unavailable") : parseError(error));
+  } finally {
+    aiBusy.value = false;
+  }
+}
+
+function pickAiCandidate(question) {
+  questionForm.prompt = String(question || "").trim().slice(0, 500);
+}
+
+onMounted(() => {
+  load();
+  loadAiStatus();
+});
 </script>
 
 <style scoped>
@@ -249,6 +322,67 @@ onMounted(load);
 .history-title h3 {
   margin: 0;
   color: #2f3754;
+}
+.composer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.composer-head h3 {
+  margin: 0;
+}
+.ai-question-btn {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 182, 205, 0.55);
+  background: linear-gradient(120deg, #ffe0ee, #e8eaff);
+  color: #2f3754;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.ai-question-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(255, 138, 181, 0.25);
+}
+.ai-question-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.ai-candidates {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+.ai-candidates-hint {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+}
+.ai-candidates-list {
+  display: grid;
+  gap: 0.45rem;
+}
+.ai-candidate {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 138, 181, 0.55);
+  background: rgba(255, 240, 246, 0.6);
+  color: #3d4665;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.ai-candidate:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 224, 238, 0.85);
 }
 .question-form,
 .answer-form {

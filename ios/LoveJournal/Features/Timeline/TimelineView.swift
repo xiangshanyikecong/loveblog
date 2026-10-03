@@ -207,6 +207,12 @@ struct TimelineScreenView: View {
                 Task { await model?.refresh() }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .outboxDidFlush)) { note in
+            let actions = note.userInfo?["actions"] as? [String] ?? []
+            if actions.contains(OutboxActions.momentCreate) {
+                Task { await model?.refresh() }
+            }
+        }
     }
 
     private func content(_ model: TimelineViewModel) -> some View {

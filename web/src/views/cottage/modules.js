@@ -128,6 +128,14 @@ export const cottageModules = [
     group: "our-records"
   },
   {
+    key: "achievements",
+    titleKey: "cottage.modules.achievements.title",
+    descKey: "cottage.modules.achievements.desc",
+    to: "/cottage/achievements",
+    icon: "🏆",
+    group: "our-records"
+  },
+  {
     key: "calendar",
     titleKey: "cottage.modules.calendar.title",
     descKey: "cottage.modules.calendar.desc",

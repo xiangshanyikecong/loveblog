@@ -189,6 +189,17 @@ const router = createRouter({
               meta: { requiresPartner: true }
             },
             {
+              path: "achievements",
+              name: "cottage-achievements",
+              component: () => import("../views/cottage/achievements/CottageAchievementsView.vue"),
+              meta: { requiresPartner: true }
+            },
+            {
+              // 轻触通知的落地链接：回到小屋首页的轻触卡片
+              path: "taps",
+              redirect: { name: "cottage" }
+            },
+            {
               path: "calendar",
               name: "cottage-calendar",
               component: () => import("../views/cottage/calendar/CottageCalendarView.vue"),
