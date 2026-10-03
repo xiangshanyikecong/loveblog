@@ -25,5 +25,8 @@
   },
   "dependencies": {
     "@neteasecloudmusicapienhanced/api": "^4.35.0"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.1"
   }
 }

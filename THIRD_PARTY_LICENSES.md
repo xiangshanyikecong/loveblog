@@ -684,7 +684,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | asynckit | 0.4.0 | MIT | Not declared | <https://github.com/alexindigo/asynckit> |
 | atomic-sleep | 1.0.0 | MIT | Not declared | <https://github.com/davidmarkclements/atomic-sleep> |
 | axios | 1.20.0 | MIT | Not declared | <https://github.com/axios/axios> |
-| basic-ftp | 5.3.1 | MIT | Not declared | <https://github.com/patrickjuchli/basic-ftp> |
+| basic-ftp | 6.2.1 | MIT | Not declared | <https://github.com/patrickjuchli/basic-ftp> |
 | body-parser | 1.20.8 | MIT | Not declared | expressjs/body-parser |
 | body-parser | 2.3.0 | MIT | Not declared | expressjs/body-parser |
 | busboy | 1.6.0 | MIT | <http://github.com/mscdex/busboy/raw/master/LICENSE> | <http://github.com/mscdex/busboy> |
@@ -4449,7 +4449,7 @@ SOFTWARE.
 
 ### Text 61
 
-Applies to: basic-ftp 5.3.1 (LICENSE.txt)
+Applies to: basic-ftp 6.2.1 (LICENSE.txt)
 
 ```text
 Copyright (c) 2019 Patrick Juchli

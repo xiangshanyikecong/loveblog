@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     修复；urllib3 2.7.0→2.8.0 消除 2 个 HIGH；296 项后端测试通过
     （`test_backup_state_storage` 1 项为本地环境路径差异，CI 上通过，
     与升级无关，已用降级对比验证）
+  - netease 镜像 node 依赖：get-uri 传递依赖 basic-ftp 5.3.1 存在 HIGH
+    CVE-2026-102990（恶意 Unix 目录列表 DoS）——npm `overrides` 升级至
+    6.2.1（该服务仅请求 http(s) URI，ftp 路径不可达，跨 major 覆盖安全）；
+    get-uri 与 api 主包加载冒烟通过
   - 依赖升级后重新生成各端第三方声明文件（此前声明落后于 lock 文件，
     本次一并追平：web 383 / server 82 / netease 291）
 
