@@ -1,7 +1,7 @@
 # 恋爱记（Love Journal）项目说明与使用手册
 
-> 适用版本：1.0.1  
-> 文档更新时间：2026-07-31  
+> 适用版本：1.0.4-beta.5  
+> 文档更新时间：2026-10-03  
 > 本文面向使用者、部署者和项目开发者，内容以当前仓库代码和配置为准。
 
 ## 1. 项目简介
@@ -15,7 +15,7 @@
 - 互动：通过报备、聊天、一起听、一起看和小游戏进行实时互动。
 - 私密：按公开、伴侣可见、加密等策略控制内容访问，并提供隐私中心和客户端加密保险箱。
 - 可维护：提供健康检查、审计日志、回收站、导出、自动备份和恢复能力。
-- 多端：Web 是主端，同时提供 Android 客户端；iOS 客户端不在本仓库的开源范围内。
+- 多端：Web 是主端，同时提供 Android 与 iOS 原生客户端（均在本仓库开源范围内）。
 
 这里的“Node”指一套独立部署的恋爱记实例，不是 Node.js 运行时。一个实例通常只服务一对情侣及其受控访客。
 
@@ -26,6 +26,7 @@
 | Web 前端 | web/ | Vue 3 主客户端，提供用户端、情侣小屋和管理后台 |
 | API 后端 | server/ | FastAPI 服务、数据模型、鉴权、上传、备份和 WebSocket |
 | Android 客户端 | Android/ | Kotlin + Jetpack Compose 原生客户端，支持离线队列和同步 |
+| iOS 客户端 | ios/ | SwiftUI 原生客户端，覆盖内容与小屋核心功能（含离线队列与桌面小组件；APNs 推送待补） |
 | 网易云适配服务 | netease-api/ | 为“一起听”提供歌曲检索、登录和取流能力，仅供内部后端访问 |
 | 反向代理 | nginx/ | 生产环境的 HTTPS、前端静态文件、API 和上传文件路由 |
 | 编排配置 | docker-compose.yml、docker-compose.prod.yml | 开发和生产服务编排 |
@@ -38,6 +39,7 @@
 - 状态与实时通信：Redis 7、WebSocket。
 - 前端：Vue 3、Vite、Vue Router、Tailwind CSS、Vditor。
 - Android：Kotlin、Jetpack Compose、Retrofit、Room、DataStore、WorkManager、Hilt。
+- iOS：SwiftUI、Swift Concurrency；协议层独立为 LoveCore Swift 包（Foundation only，零第三方运行时依赖）。
 - 生产入口：Nginx + HTTPS，应用服务通过 Docker 内部网络连接数据库、Redis 和网易云适配服务。
 
 ## 3. 功能说明

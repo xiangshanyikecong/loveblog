@@ -4,13 +4,13 @@
 Node，记录日记、相册、纪念日，并通过「报备」「一起听」等模块实时互动。仓库已从早期
 MVP 成长为前后端一体化、含多端客户端的完整应用。
 
-当前源码发布版本：`1.0.4-beta.4`。
+当前源码发布版本：`1.0.4-beta.5`。
 
 > **English**: Love Journal is a self-hosted private platform for couples — a journal +
 > blog + real-time interaction suite. Each couple deploys their own Node to record diaries,
 > photo albums, anniversaries, and interact in real time (check-ins, listen-together, and
-> more). Tech stack: FastAPI + Vue 3 + PostgreSQL + Redis, with Android (Kotlin) and web
-> clients. See [CONTRIBUTING.md](./CONTRIBUTING.md) to get involved.
+> more). Tech stack: FastAPI + Vue 3 + PostgreSQL + Redis, with iOS (SwiftUI), Android
+> (Kotlin) and web clients. See [CONTRIBUTING.md](./CONTRIBUTING.md) to get involved.
 
 ## 技术栈
 
@@ -20,7 +20,7 @@ MVP 成长为前后端一体化、含多端客户端的完整应用。
 - **实时**：WebSocket（「一起听」同步播放）
 - **富文本**：Vditor 编辑器
 - **第三方**：内置 `netease` 服务（NeteaseCloudMusicApi 维护分支，供「一起听」检索/取流）
-- **客户端**：Web（主端）、iOS（SwiftUI + LoveCore，详见 `ios/README.md`）[开发中，里程碑见 `ios/README.md`]、Android（Kotlin + Jetpack Compose，详见 `Android/README.md`）[尚属于开发中，未完成功能]
+- **客户端**：Web（主端）、iOS（SwiftUI + LoveCore，详见 `ios/README.md`）[核心功能已全部交付（含离线队列、桌面小组件）；APNs 推送待补，见 `ios/README.md` 已知差距]、Android（Kotlin + Jetpack Compose，详见 `Android/README.md`）[尚属于开发中，未完成功能]
 - **编排**：开发 `docker-compose.yml`；生产 `docker-compose.prod.yml`（含 nginx、PostgreSQL、Redis、netease）
 
 ## 功能总览
@@ -248,7 +248,7 @@ npm run dev
 ## 多端客户端
 
 - **Web**：主端，本仓库 `web/`
-- **iOS**：SwiftUI 客户端，本仓库 `ios/`（与 Android 对齐的全功能实现，按里程碑分期交付；纯逻辑下沉到 `LoveCore` Swift 包并有互通单测，CI 在 GitHub Actions macOS runner 上构建验证），详见 `ios/README.md`
+- **iOS**：SwiftUI 客户端，本仓库 `ios/`（与 Android 对齐的核心功能已全部交付：Dashboard、文章编辑（ETag / If-Match 并发控制）、上传管线、评论、胶囊、相册、纪念日、留言板、时间线、搜索、通知中心 + 小屋：E2EE 悄悄话（与 Web/Android 互通）、心情、报备、心愿、每日一问、一起听、一起看、五子棋 / 井字棋 / 黑白棋 / 记忆翻牌 / 连连看、你画我猜、协作画板、兑换券、账本、提醒、计划 + 生理期关怀、足迹、月报年报、客户端加密保险箱、回收站、隐私中心、安全中心（TOTP / 登录设备）+ 离线 outbox（报备 / 心愿 / 心情 / 留言 / 碎碎念 / 悄悄话离线暂存、`Idempotency-Key` 幂等重放、联网自动补发）与「在一起天数」桌面小组件（WidgetKit + App Group 镜像，天数按恋爱起点周年时刻翻转）；APNs 推送待补。纯逻辑下沉到 `LoveCore` Swift 包并有契约回归单测，CI 在 GitHub Actions macOS runner 上构建验证），详见 `ios/README.md`
 - **Android**：Kotlin + Jetpack Compose 客户端，`Android/`（覆盖文章 / 相册 / 留言 / 纪念日 / 时间线 / 回忆 / 评论 / 版本历史 / 胶囊 / 搜索 / 通知 / 回收站 + 小屋：聊天、收藏、撤回、置顶语录、媒体面板、心情、签到、心愿、每日一问 + 一起听、一起看、五子棋、井字棋、黑白棋、记忆翻牌、连连看、你画我猜 + 兑换券、提醒、计划、情侣账本、恋爱月报、足迹地图、生理期关怀 + 客户端加密保险箱 + 系统健康 / 存储统计 / 审计日志 / 安全用户 / 备份与自动同步 + 离线队列、Cookie 会话、FCM、桌面小组件、相机/相册上传 + App 内初始化引导与伴侣账号开通 + 头像上传），详见 `Android/README.md`。
 
 ## 工程约定

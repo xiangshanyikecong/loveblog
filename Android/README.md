@@ -93,4 +93,4 @@ Android 客户端现已与 FastAPI 服务端的 REST 能力完整对齐，并接
 - **首次初始化**：App 内 bootstrap 引导（初始化令牌 + 站点名 + 恋爱起始日），登录后可为另一半开通账号；设置页支持头像上传
 - **单元测试**：服务器地址归一化（直连 / 反代两种部署形态）、保险箱加密原语（PBKDF2 + AES-GCM）全覆盖
 
-仍依赖部署配置的能力：FCM 推送需要提供 `google-services.json`（见下方「推送」）；iOS 客户端不在本仓库范围。
+仍依赖部署配置的能力：FCM 推送需要提供 `google-services.json`（见下方「推送」）；iOS 客户端见本仓库 `ios/` 目录（`ios/README.md`）。
