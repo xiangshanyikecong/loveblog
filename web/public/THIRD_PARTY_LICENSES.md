@@ -58,7 +58,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | @nodelib/fs.walk | 1.2.8 | MIT | Not declared | <https://github.com/nodelib/nodelib/tree/master/packages/fs/fs.walk> |
 | @oxc-project/types | 0.139.0 | MIT | Not declared | <https://github.com/oxc-project/oxc> |
 | @rolldown/binding-android-arm64 | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.1.5.tgz> |
-| @rolldown/binding-darwin-arm64 | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.1.5.tgz> |
+| @rolldown/binding-darwin-arm64 | 1.1.5 | MIT | Not declared | <https://github.com/rolldown/rolldown> |
 | @rolldown/binding-darwin-x64 | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-darwin-x64/-/binding-darwin-x64-1.1.5.tgz> |
 | @rolldown/binding-freebsd-x64 | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-freebsd-x64/-/binding-freebsd-x64-1.1.5.tgz> |
 | @rolldown/binding-linux-arm-gnueabihf | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.1.5.tgz> |
@@ -71,7 +71,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | @rolldown/binding-openharmony-arm64 | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-openharmony-arm64/-/binding-openharmony-arm64-1.1.5.tgz> |
 | @rolldown/binding-wasm32-wasi | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-wasm32-wasi/-/binding-wasm32-wasi-1.1.5.tgz> |
 | @rolldown/binding-win32-arm64-msvc | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.1.5.tgz> |
-| @rolldown/binding-win32-x64-msvc | 1.1.5 | MIT | Not declared | <https://github.com/rolldown/rolldown> |
+| @rolldown/binding-win32-x64-msvc | 1.1.5 | MIT | Not declared | <https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.1.5.tgz> |
 | @rolldown/pluginutils | 1.0.1 | MIT | Not declared | <https://github.com/rolldown/plugins> |
 | @standard-schema/spec | 1.1.0 | MIT | Not declared | <https://github.com/standard-schema/standard-schema> |
 | @tybys/wasm-util | 0.10.3 | MIT | Not declared | <https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.10.3.tgz> |
@@ -81,13 +81,13 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | @types/json-schema | 7.0.15 | MIT | Not declared | <https://github.com/DefinitelyTyped/DefinitelyTyped> |
 | @types/trusted-types | 2.0.7 | MIT | Not declared | <https://github.com/DefinitelyTyped/DefinitelyTyped> |
 | @vitejs/plugin-vue | 6.0.8 | MIT | Not declared | <https://github.com/vitejs/vite-plugin-vue> |
-| @vitest/expect | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
-| @vitest/mocker | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
-| @vitest/pretty-format | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
-| @vitest/runner | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
-| @vitest/snapshot | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
-| @vitest/spy | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
-| @vitest/utils | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/expect | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/mocker | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/pretty-format | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/runner | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/snapshot | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/spy | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| @vitest/utils | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
 | @vue/compiler-core | 3.5.32 | MIT | Not declared | <https://github.com/vuejs/core> |
 | @vue/compiler-dom | 3.5.32 | MIT | Not declared | <https://github.com/vuejs/core> |
 | @vue/compiler-sfc | 3.5.32 | MIT | Not declared | <https://github.com/vuejs/core> |
@@ -114,26 +114,26 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | astral-regex | 2.0.0 | MIT | Not declared | kevva/astral-regex |
 | asynckit | 0.4.0 | MIT | Not declared | <https://github.com/alexindigo/asynckit> |
 | autoprefixer | 10.5.0 | MIT | Not declared | postcss/autoprefixer |
-| axios | 1.18.1 | MIT | Not declared | <https://github.com/axios/axios> |
+| axios | 1.20.0 | MIT | Not declared | <https://github.com/axios/axios> |
 | balanced-match | 1.0.2 | MIT | Not declared | <https://github.com/juliangruber/balanced-match> |
 | balanced-match | 2.0.0 | MIT | Not declared | <https://github.com/juliangruber/balanced-match> |
-| baseline-browser-mapping | 2.10.19 | Apache-2.0 | Not declared | <https://github.com/web-platform-dx/baseline-browser-mapping> |
+| baseline-browser-mapping | 2.11.27 | Apache-2.0 | Not declared | <https://github.com/web-platform-dx/baseline-browser-mapping> |
 | binary-extensions | 2.3.0 | MIT | Not declared | sindresorhus/binary-extensions |
 | boolbase | 1.0.0 | ISC | Not declared | <https://github.com/fb55/boolbase> |
-| brace-expansion | 1.1.16 | MIT | Not declared | <https://github.com/juliangruber/brace-expansion> |
+| brace-expansion | 1.1.21 | MIT | Not declared | <https://github.com/juliangruber/brace-expansion> |
 | braces | 3.0.3 | MIT | Not declared | micromatch/braces |
-| browserslist | 4.28.2 | MIT | Not declared | browserslist/browserslist |
+| browserslist | 4.29.3 | MIT | Not declared | browserslist/browserslist |
 | cacheable | 2.5.0 | MIT | Not declared | <https://github.com/jaredwray/cacheable> |
 | call-bind-apply-helpers | 1.0.2 | MIT | Not declared | <https://github.com/ljharb/call-bind-apply-helpers> |
 | callsites | 3.1.0 | MIT | Not declared | sindresorhus/callsites |
 | camelcase-css | 2.0.1 | MIT | Not declared | stevenvachon/camelcase-css |
-| caniuse-lite | 1.0.30001788 | CC-BY-4.0 | Not declared | browserslist/caniuse-lite |
-| chai | 6.2.2 | MIT | Not declared | <https://github.com/chaijs/chai> |
+| caniuse-lite | 1.0.30001814 | CC-BY-4.0 | Not declared | browserslist/caniuse-lite |
+| chai | 6.3.0 | MIT | Not declared | <https://github.com/chaijs/chai> |
 | chalk | 4.1.2 | MIT | Not declared | chalk/chalk |
 | chokidar | 3.6.0 | MIT | Not declared | <https://github.com/paulmillr/chokidar> |
 | color-convert | 2.0.1 | MIT | Not declared | Qix-/color-convert |
 | color-name | 1.1.4 | MIT | Not declared | <https://github.com/colorjs/color-name> |
-| colord | 2.9.3 | MIT | Not declared | omgovich/colord |
+| colord | 2.10.0 | MIT | Not declared | omgovich/colord |
 | combined-stream | 1.0.8 | MIT | Not declared | <https://github.com/felixge/node-combined-stream> |
 | commander | 4.1.1 | MIT | Not declared | <https://github.com/tj/commander.js> |
 | concat-map | 0.0.1 | MIT | Not declared | <https://github.com/substack/node-concat-map> |
@@ -155,10 +155,10 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | dom-serializer | 2.0.0 | MIT | Not declared | <https://github.com/cheeriojs/dom-serializer> |
 | domelementtype | 2.3.0 | BSD-2-Clause | Not declared | <https://github.com/fb55/domelementtype> |
 | domhandler | 5.0.3 | BSD-2-Clause | Not declared | <https://github.com/fb55/domhandler> |
-| dompurify | 3.4.12 | (MPL-2.0 OR Apache-2.0) | Not declared | <https://github.com/cure53/DOMPurify> |
+| dompurify | 3.4.16 | (MPL-2.0 OR Apache-2.0) | Not declared | <https://github.com/cure53/DOMPurify> |
 | domutils | 3.2.2 | BSD-2-Clause | Not declared | <https://github.com/fb55/domutils> |
 | dunder-proto | 1.0.1 | MIT | Not declared | <https://github.com/es-shims/dunder-proto> |
-| electron-to-chromium | 1.5.340 | ISC | Not declared | <https://github.com/Kilian/electron-to-chromium> |
+| electron-to-chromium | 1.5.444 | ISC | Not declared | <https://github.com/Kilian/electron-to-chromium> |
 | emoji-regex | 8.0.0 | MIT | Not declared | <https://github.com/mathiasbynens/emoji-regex> |
 | entities | 4.5.0 | BSD-2-Clause | Not declared | <https://github.com/fb55/entities> |
 | entities | 4.5.0 | BSD-2-Clause | Not declared | <https://github.com/fb55/entities> |
@@ -193,7 +193,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | fast-glob | 3.3.3 | MIT | Not declared | mrmlnc/fast-glob |
 | fast-json-stable-stringify | 2.1.0 | MIT | Not declared | <https://github.com/epoberezkin/fast-json-stable-stringify> |
 | fast-levenshtein | 2.0.6 | MIT | Not declared | <https://github.com/hiddentao/fast-levenshtein> |
-| fast-uri | 3.1.4 | BSD-3-Clause | Not declared | <https://github.com/fastify/fast-uri> |
+| fast-uri | 3.1.8 | BSD-3-Clause | Not declared | <https://github.com/fastify/fast-uri> |
 | fastest-levenshtein | 1.0.16 | MIT | Not declared | <https://github.com/ka-weihe/fastest-levenshtein> |
 | fastq | 1.20.1 | ISC | Not declared | <https://github.com/mcollina/fastq> |
 | fdir | 6.5.0 | MIT | Not declared | <https://github.com/thecodrr/fdir> |
@@ -207,7 +207,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | follow-redirects | 1.16.0 | MIT | Not declared | ssh://git@github.com/follow-redirects/follow-redirects |
 | form-data | 4.0.6 | MIT | Not declared | <https://github.com/form-data/form-data> |
 | fraction.js | 5.3.4 | MIT | Not declared | ssh://git@github.com/rawify/Fraction.js |
-| fsevents | 2.3.3 | MIT | Not declared | <https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz> |
+| fsevents | 2.3.3 | MIT | Not declared | <https://github.com/fsevents/fsevents> |
 | function-bind | 1.1.2 | MIT | Not declared | <https://github.com/Raynos/function-bind> |
 | get-intrinsic | 1.3.0 | MIT | Not declared | <https://github.com/ljharb/get-intrinsic> |
 | get-proto | 1.0.1 | MIT | Not declared | <https://github.com/ljharb/get-proto> |
@@ -249,7 +249,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | jiti | 1.21.7 | MIT | Not declared | unjs/jiti |
 | js-tokens | 4.0.0 | MIT | Not declared | lydell/js-tokens |
 | js-tokens | 9.0.1 | MIT | Not declared | lydell/js-tokens |
-| js-yaml | 4.3.0 | MIT | Not declared | nodeca/js-yaml |
+| js-yaml | 4.3.2 | MIT | Not declared | nodeca/js-yaml |
 | json-buffer | 3.0.1 | MIT | Not declared | <https://github.com/dominictarr/json-buffer> |
 | json-parse-even-better-errors | 2.3.1 | MIT | Not declared | <https://github.com/npm/json-parse-even-better-errors> |
 | json-schema-traverse | 0.4.1 | MIT | Not declared | <https://github.com/epoberezkin/json-schema-traverse> |
@@ -264,7 +264,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | levn | 0.4.1 | MIT | Not declared | <https://github.com/gkz/levn> |
 | lightningcss | 1.32.0 | MPL-2.0 | Not declared | <https://github.com/parcel-bundler/lightningcss> |
 | lightningcss-android-arm64 | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.32.0.tgz> |
-| lightningcss-darwin-arm64 | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.32.0.tgz> |
+| lightningcss-darwin-arm64 | 1.32.0 | MPL-2.0 | Not declared | <https://github.com/parcel-bundler/lightningcss> |
 | lightningcss-darwin-x64 | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.32.0.tgz> |
 | lightningcss-freebsd-x64 | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.32.0.tgz> |
 | lightningcss-linux-arm-gnueabihf | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.32.0.tgz> |
@@ -273,7 +273,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | lightningcss-linux-x64-gnu | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.32.0.tgz> |
 | lightningcss-linux-x64-musl | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.32.0.tgz> |
 | lightningcss-win32-arm64-msvc | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.32.0.tgz> |
-| lightningcss-win32-x64-msvc | 1.32.0 | MPL-2.0 | Not declared | <https://github.com/parcel-bundler/lightningcss> |
+| lightningcss-win32-x64-msvc | 1.32.0 | MPL-2.0 | Not declared | <https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.32.0.tgz> |
 | lilconfig | 3.1.3 | MIT | Not declared | <https://github.com/antonk52/lilconfig> |
 | lines-and-columns | 1.2.4 | MIT | Not declared | <https://github.com/eventualbuddha/lines-and-columns> |
 | locate-path | 6.0.0 | MIT | Not declared | sindresorhus/locate-path |
@@ -293,9 +293,9 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | minimatch | 3.1.5 | ISC | Not declared | <https://github.com/isaacs/minimatch> |
 | ms | 2.1.3 | MIT | Not declared | vercel/ms |
 | mz | 2.7.0 | MIT | Not declared | normalize/mz |
-| nanoid | 3.3.16 | MIT | Not declared | ai/nanoid |
+| nanoid | 3.3.18 | MIT | Not declared | ai/nanoid |
 | natural-compare | 1.4.0 | MIT | Not declared | <https://github.com/litejs/natural-compare-lite> |
-| node-releases | 2.0.37 | MIT | Not declared | <https://github.com/chicoxyzzy/node-releases> |
+| node-releases | 2.0.57 | MIT | Not declared | <https://github.com/chicoxyzzy/node-releases> |
 | normalize-path | 3.0.0 | MIT | Not declared | jonschlinkert/normalize-path |
 | nth-check | 2.1.1 | BSD-2-Clause | Not declared | <https://github.com/fb55/nth-check> |
 | object-assign | 4.1.1 | MIT | Not declared | sindresorhus/object-assign |
@@ -318,7 +318,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | picomatch | 4.0.5 | MIT | Not declared | micromatch/picomatch |
 | pify | 2.3.0 | MIT | Not declared | sindresorhus/pify |
 | pirates | 4.0.7 | MIT | Not declared | <https://github.com/danez/pirates> |
-| postcss | 8.5.19 | MIT | Not declared | postcss/postcss |
+| postcss | 8.5.26 | MIT | Not declared | postcss/postcss |
 | postcss-html | 1.8.1 | MIT | Not declared | <https://github.com/ota-meshi/postcss-html> |
 | postcss-import | 15.1.0 | MIT | Not declared | <https://github.com/postcss/postcss-import> |
 | postcss-js | 4.1.0 | MIT | Not declared | postcss/postcss-js |
@@ -327,7 +327,7 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | postcss-resolve-nested-selector | 0.1.6 | MIT | Not declared | <https://github.com/csstools/postcss-resolve-nested-selector> |
 | postcss-safe-parser | 6.0.0 | MIT | Not declared | postcss/postcss-safe-parser |
 | postcss-safe-parser | 7.0.1 | MIT | Not declared | postcss/postcss-safe-parser |
-| postcss-selector-parser | 6.1.2 | MIT | Not declared | postcss/postcss-selector-parser |
+| postcss-selector-parser | 6.1.4 | MIT | Not declared | <https://github.com/postcss/postcss-selector-parser> |
 | postcss-selector-parser | 7.1.4 | MIT | Not declared | <https://github.com/postcss/postcss-selector-parser> |
 | postcss-value-parser | 4.2.0 | MIT | Not declared | <https://github.com/TrySound/postcss-value-parser> |
 | prelude-ls | 1.2.1 | MIT | Not declared | <https://github.com/gkz/prelude-ls> |
@@ -371,18 +371,18 @@ AI-assisted compilation and review limitation: These notices were assembled with
 | tinybench | 2.9.0 | MIT | Not declared | tinylibs/tinybench |
 | tinyexec | 1.2.4 | MIT | Not declared | <https://github.com/tinylibs/tinyexec> |
 | tinyglobby | 0.2.17 | MIT | Not declared | <https://github.com/SuperchupuDev/tinyglobby> |
-| tinyrainbow | 3.1.0 | MIT | Not declared | <https://github.com/tinylibs/tinyrainbow> |
+| tinyrainbow | 3.2.0 | MIT | Not declared | <https://github.com/tinylibs/tinyrainbow> |
 | to-regex-range | 5.0.1 | MIT | Not declared | micromatch/to-regex-range |
 | ts-interface-checker | 0.1.13 | Apache-2.0 | Not declared | <https://github.com/gristlabs/ts-interface-checker> |
 | tslib | 2.8.1 | 0BSD | Not declared | <https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz> |
 | type-check | 0.4.0 | MIT | Not declared | <https://github.com/gkz/type-check> |
 | type-fest | 0.20.2 | (MIT OR CC0-1.0) | Not declared | sindresorhus/type-fest |
-| update-browserslist-db | 1.2.3 | MIT | Not declared | browserslist/update-db |
+| update-browserslist-db | 1.3.3 | MIT | Not declared | browserslist/update-db |
 | uri-js | 4.4.1 | BSD-2-Clause | Not declared | <http://github.com/garycourt/uri-js> |
 | util-deprecate | 1.0.2 | MIT | Not declared | <https://github.com/TooTallNate/util-deprecate> |
 | vditor | 3.11.2 | MIT | Not declared | <https://github.com/Vanessa219/vditor> |
 | vite | 8.1.5 | MIT | Not declared | <https://github.com/vitejs/vite> |
-| vitest | 4.1.10 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
+| vitest | 4.1.11 | MIT | Not declared | <https://github.com/vitest-dev/vitest> |
 | vue | 3.5.32 | MIT | Not declared | <https://github.com/vuejs/core> |
 | vue-eslint-parser | 9.4.3 | MIT | Not declared | <https://github.com/vuejs/vue-eslint-parser> |
 | vue-i18n | 9.14.5 | MIT | Not declared | <https://github.com/intlify/vue-i18n> |
@@ -657,7 +657,7 @@ SOFTWARE.
 
 ### Text 9
 
-Applies to: @eslint/config-array 0.21.2 (LICENSE); @eslint/config-helpers 0.4.2 (LICENSE); @eslint/core 0.17.0 (LICENSE); @eslint/object-schema 2.1.7 (LICENSE); @eslint/plugin-kit 0.4.1 (LICENSE); @humanfs/core 0.19.2 (LICENSE); @humanfs/node 0.16.8 (LICENSE); @humanwhocodes/module-importer 1.0.1 (LICENSE); @humanwhocodes/retry 0.4.3 (LICENSE); baseline-browser-mapping 2.10.19 (LICENSE.txt); diff-match-patch 1.0.5 (LICENSE); dompurify 3.4.12 (LICENSE)
+Applies to: @eslint/config-array 0.21.2 (LICENSE); @eslint/config-helpers 0.4.2 (LICENSE); @eslint/core 0.17.0 (LICENSE); @eslint/object-schema 2.1.7 (LICENSE); @eslint/plugin-kit 0.4.1 (LICENSE); @humanfs/core 0.19.2 (LICENSE); @humanfs/node 0.16.8 (LICENSE); @humanwhocodes/module-importer 1.0.1 (LICENSE); @humanwhocodes/retry 0.4.3 (LICENSE); baseline-browser-mapping 2.11.27 (LICENSE.txt); diff-match-patch 1.0.5 (LICENSE); dompurify 3.4.16 (LICENSE)
 
 ```text
 Apache License
@@ -1246,7 +1246,7 @@ SOFTWARE.
 
 ### Text 23
 
-Applies to: @vitest/expect 4.1.10 (LICENSE); @vitest/mocker 4.1.10 (LICENSE); @vitest/pretty-format 4.1.10 (LICENSE); @vitest/runner 4.1.10 (LICENSE); @vitest/snapshot 4.1.10 (LICENSE); @vitest/spy 4.1.10 (LICENSE); @vitest/utils 4.1.10 (LICENSE)
+Applies to: @vitest/expect 4.1.11 (LICENSE); @vitest/mocker 4.1.11 (LICENSE); @vitest/pretty-format 4.1.11 (LICENSE); @vitest/runner 4.1.11 (LICENSE); @vitest/snapshot 4.1.11 (LICENSE); @vitest/spy 4.1.11 (LICENSE); @vitest/utils 4.1.11 (LICENSE)
 
 ```text
 MIT License
@@ -1821,7 +1821,7 @@ SOFTWARE.
 
 ### Text 36
 
-Applies to: autoprefixer 10.5.0 (LICENSE); postcss 8.5.19 (LICENSE)
+Applies to: autoprefixer 10.5.0 (LICENSE); postcss 8.5.26 (LICENSE)
 
 ```text
 The MIT License (MIT)
@@ -1848,7 +1848,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### Text 37
 
-Applies to: axios 1.18.1 (LICENSE)
+Applies to: axios 1.20.0 (LICENSE)
 
 ```text
 # Copyright (c) 2014-present Matt Zabriskie & Collaborators
@@ -1907,7 +1907,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Text 40
 
-Applies to: brace-expansion 1.1.16 (LICENSE)
+Applies to: brace-expansion 1.1.21 (LICENSE)
 
 ```text
 MIT License
@@ -1963,7 +1963,7 @@ THE SOFTWARE.
 
 ### Text 42
 
-Applies to: browserslist 4.28.2 (LICENSE)
+Applies to: browserslist 4.29.3 (LICENSE)
 
 ```text
 The MIT License (MIT)
@@ -2046,7 +2046,7 @@ THE SOFTWARE.
 
 ### Text 45
 
-Applies to: caniuse-lite 1.0.30001788 (LICENSE)
+Applies to: caniuse-lite 1.0.30001814 (LICENSE)
 
 ```text
 Attribution 4.0 International
@@ -2448,7 +2448,7 @@ Creative Commons may be contacted at creativecommons.org.
 
 ### Text 46
 
-Applies to: chai 6.2.2 (LICENSE)
+Applies to: chai 6.3.0 (LICENSE)
 
 ```text
 MIT License
@@ -2546,7 +2546,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Text 50
 
-Applies to: colord 2.9.3 (LICENSE.md)
+Applies to: colord 2.10.0 (LICENSE.md)
 
 ```text
 MIT License
@@ -3162,7 +3162,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### Text 67
 
-Applies to: dompurify 3.4.12 (LICENSE-MPL)
+Applies to: dompurify 3.4.16 (LICENSE-MPL)
 
 ```text
 Mozilla Public License Version 2.0
@@ -3570,7 +3570,7 @@ SOFTWARE.
 
 ### Text 69
 
-Applies to: electron-to-chromium 1.5.340 (LICENSE)
+Applies to: electron-to-chromium 1.5.444 (LICENSE)
 
 ```text
 Copyright 2018 Kilian Valkhof
@@ -4368,7 +4368,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 ### Text 87
 
-Applies to: fast-uri 3.1.4 (LICENSE)
+Applies to: fast-uri 3.1.8 (LICENSE)
 
 ```text
 Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae
@@ -4624,6 +4624,35 @@ SOFTWARE.
 
 ### Text 97
 
+Applies to: fsevents 2.3.3 (LICENSE)
+
+```text
+MIT License
+-----------
+
+Copyright (C) 2010-2020 by Philipp Dunkel, Ben Noordhuis, Elan Shankar, Paul Miller
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+### Text 98
+
 Applies to: function-bind 1.1.2 (LICENSE)
 
 ```text
@@ -4648,7 +4677,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 98
+### Text 99
 
 Applies to: get-intrinsic 1.3.0 (LICENSE)
 
@@ -4676,7 +4705,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 99
+### Text 100
 
 Applies to: get-proto 1.0.1 (LICENSE)
 
@@ -4704,7 +4733,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 100
+### Text 101
 
 Applies to: glob-parent 5.1.2 (LICENSE); glob-parent 5.1.2 (LICENSE)
 
@@ -4726,7 +4755,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 101
+### Text 102
 
 Applies to: glob-parent 6.0.2 (LICENSE)
 
@@ -4748,7 +4777,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 102
+### Text 103
 
 Applies to: global-modules 2.0.0 (LICENSE); global-prefix 3.0.0 (LICENSE); to-regex-range 5.0.1 (LICENSE)
 
@@ -4776,7 +4805,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 103
+### Text 104
 
 Applies to: globjoin 0.1.4 (LICENSE)
 
@@ -4804,7 +4833,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 104
+### Text 105
 
 Applies to: gopd 1.2.0 (LICENSE)
 
@@ -4832,7 +4861,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 105
+### Text 106
 
 Applies to: has-symbols 1.1.0 (LICENSE)
 
@@ -4860,7 +4889,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 106
+### Text 107
 
 Applies to: has-tostringtag 1.0.2 (LICENSE)
 
@@ -4888,7 +4917,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 107
+### Text 108
 
 Applies to: hashery 1.5.1 (LICENSE)
 
@@ -4916,7 +4945,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 108
+### Text 109
 
 Applies to: hasown 2.0.4 (LICENSE)
 
@@ -4944,7 +4973,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 109
+### Text 110
 
 Applies to: hookified 1.15.1 (LICENSE); hookified 2.2.0 (LICENSE); qified 0.10.1 (LICENSE)
 
@@ -4970,7 +4999,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 110
+### Text 111
 
 Applies to: htmlparser2 8.0.2 (LICENSE)
 
@@ -4995,7 +5024,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 ```
 
-### Text 111
+### Text 112
 
 Applies to: ignore 5.3.2 (LICENSE-MIT); ignore 7.0.6 (LICENSE-MIT)
 
@@ -5023,7 +5052,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 112
+### Text 113
 
 Applies to: ini 1.3.8 (LICENSE); isexe 2.0.0 (LICENSE); minimatch 3.1.5 (LICENSE); semver 7.8.5 (LICENSE); which 1.3.1 (LICENSE); which 2.0.2 (LICENSE)
 
@@ -5045,7 +5074,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 113
+### Text 114
 
 Applies to: is-binary-path 2.1.0 (license)
 
@@ -5061,7 +5090,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 114
+### Text 115
 
 Applies to: is-core-module 2.16.1 (LICENSE)
 
@@ -5088,7 +5117,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 115
+### Text 116
 
 Applies to: is-extglob 2.1.1 (LICENSE); word-wrap 1.2.5 (LICENSE)
 
@@ -5116,7 +5145,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 116
+### Text 117
 
 Applies to: is-glob 4.0.3 (LICENSE); is-plain-object 5.0.0 (LICENSE); kind-of 6.0.3 (LICENSE)
 
@@ -5144,7 +5173,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 117
+### Text 118
 
 Applies to: jiti 1.21.7 (LICENSE); std-env 4.2.0 (LICENCE)
 
@@ -5172,7 +5201,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 118
+### Text 119
 
 Applies to: js-tokens 4.0.0 (LICENSE)
 
@@ -5200,7 +5229,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 119
+### Text 120
 
 Applies to: js-tokens 9.0.1 (LICENSE)
 
@@ -5228,9 +5257,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 120
+### Text 121
 
-Applies to: js-yaml 4.3.0 (LICENSE)
+Applies to: js-yaml 4.3.2 (LICENSE)
 
 ```text
 (The MIT License)
@@ -5256,7 +5285,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 121
+### Text 122
 
 Applies to: json-buffer 3.0.1 (LICENSE)
 
@@ -5285,7 +5314,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 122
+### Text 123
 
 Applies to: json-parse-even-better-errors 2.3.1 (LICENSE.md)
 
@@ -5317,7 +5346,7 @@ This library is a fork of 'better-json-errors' by Kat Marchán, extended and
 distributed under the terms of the MIT license above.
 ```
 
-### Text 123
+### Text 124
 
 Applies to: known-css-properties 0.37.0 (LICENSE)
 
@@ -5345,7 +5374,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 124
+### Text 125
 
 Applies to: levn 0.4.1 (LICENSE); optionator 0.9.4 (LICENSE); prelude-ls 1.2.1 (LICENSE); type-check 0.4.0 (LICENSE)
 
@@ -5374,9 +5403,9 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 125
+### Text 126
 
-Applies to: lightningcss 1.32.0 (LICENSE); lightningcss-win32-x64-msvc 1.32.0 (LICENSE)
+Applies to: lightningcss 1.32.0 (LICENSE); lightningcss-darwin-arm64 1.32.0 (LICENSE)
 
 ```text
 Mozilla Public License Version 2.0
@@ -5754,7 +5783,7 @@ This Source Code Form is "Incompatible With Secondary Licenses", as
 defined by the Mozilla Public License, v. 2.0.
 ```
 
-### Text 126
+### Text 127
 
 Applies to: lilconfig 3.1.3 (LICENSE)
 
@@ -5782,7 +5811,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 127
+### Text 128
 
 Applies to: lines-and-columns 1.2.4 (LICENSE)
 
@@ -5810,7 +5839,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 128
+### Text 129
 
 Applies to: lodash 4.18.1 (LICENSE); lodash.merge 4.6.2 (LICENSE)
 
@@ -5864,7 +5893,7 @@ licenses; we recommend you read them, as their terms may differ from the
 terms above.
 ```
 
-### Text 129
+### Text 130
 
 Applies to: lodash.truncate 4.4.2 (LICENSE)
 
@@ -5918,7 +5947,7 @@ licenses; we recommend you read them, as their terms may differ from the
 terms above.
 ```
 
-### Text 130
+### Text 131
 
 Applies to: magic-string 0.30.21 (LICENSE)
 
@@ -5932,7 +5961,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 131
+### Text 132
 
 Applies to: marked 18.0.2 (LICENSE.md)
 
@@ -5983,7 +6012,7 @@ Redistribution and use in source and binary forms, with or without modification,
 This software is provided by the copyright holders and contributors “as is” and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the copyright owner or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
 ```
 
-### Text 132
+### Text 133
 
 Applies to: mathml-tag-names 2.1.3 (license)
 
@@ -6012,7 +6041,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 133
+### Text 134
 
 Applies to: mdn-data 2.27.1 (LICENSE)
 
@@ -6135,7 +6164,7 @@ For more information, please see
 <http://creativecommons.org/publicdomain/zero/1.0/>
 ```
 
-### Text 134
+### Text 135
 
 Applies to: merge2 1.4.1 (LICENSE)
 
@@ -6163,7 +6192,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 135
+### Text 136
 
 Applies to: mime-db 1.52.0 (LICENSE)
 
@@ -6193,7 +6222,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 136
+### Text 137
 
 Applies to: mime-types 2.1.35 (LICENSE)
 
@@ -6223,7 +6252,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 137
+### Text 138
 
 Applies to: ms 2.1.3 (license.md)
 
@@ -6251,7 +6280,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 138
+### Text 139
 
 Applies to: mz 2.7.0 (LICENSE)
 
@@ -6279,9 +6308,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 139
+### Text 140
 
-Applies to: nanoid 3.3.16 (LICENSE)
+Applies to: nanoid 3.3.18 (LICENSE)
 
 ```text
 The MIT License (MIT)
@@ -6306,9 +6335,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 140
+### Text 141
 
-Applies to: node-releases 2.0.37 (LICENSE)
+Applies to: node-releases 2.0.57 (LICENSE)
 
 ```text
 The MIT License
@@ -6334,7 +6363,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 141
+### Text 142
 
 Applies to: normalize-path 3.0.0 (LICENSE)
 
@@ -6362,7 +6391,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 142
+### Text 143
 
 Applies to: object-assign 4.1.1 (license); pify 2.3.0 (license)
 
@@ -6390,7 +6419,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 143
+### Text 144
 
 Applies to: object-hash 3.0.0 (LICENSE)
 
@@ -6418,7 +6447,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 144
+### Text 145
 
 Applies to: obug 2.1.4 (LICENSE)
 
@@ -6448,7 +6477,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 145
+### Text 146
 
 Applies to: path-parse 1.0.7 (LICENSE)
 
@@ -6476,7 +6505,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 146
+### Text 147
 
 Applies to: pathe 2.0.3 (LICENSE)
 
@@ -6553,7 +6582,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 147
+### Text 148
 
 Applies to: picocolors 1.1.1 (LICENSE)
 
@@ -6575,7 +6604,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 148
+### Text 149
 
 Applies to: picomatch 2.3.2 (LICENSE); picomatch 4.0.4 (LICENSE); picomatch 4.0.5 (LICENSE); picomatch 4.0.5 (LICENSE)
 
@@ -6603,7 +6632,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 149
+### Text 150
 
 Applies to: pirates 4.0.7 (LICENSE)
 
@@ -6631,7 +6660,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 150
+### Text 151
 
 Applies to: postcss-html 1.8.1 (LICENSE)
 
@@ -6659,7 +6688,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 151
+### Text 152
 
 Applies to: postcss-import 15.1.0 (LICENSE)
 
@@ -6686,7 +6715,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 152
+### Text 153
 
 Applies to: postcss-js 4.1.0 (LICENSE)
 
@@ -6713,7 +6742,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 153
+### Text 154
 
 Applies to: postcss-load-config 6.0.1 (LICENSE)
 
@@ -6740,7 +6769,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 154
+### Text 155
 
 Applies to: postcss-nested 6.2.0 (LICENSE)
 
@@ -6767,7 +6796,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 155
+### Text 156
 
 Applies to: postcss-resolve-nested-selector 0.1.6 (LICENSE)
 
@@ -6796,7 +6825,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 156
+### Text 157
 
 Applies to: postcss-safe-parser 6.0.0 (LICENSE); postcss-safe-parser 7.0.1 (LICENSE)
 
@@ -6823,9 +6852,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 157
+### Text 158
 
-Applies to: postcss-selector-parser 6.1.2 (LICENSE-MIT); postcss-selector-parser 7.1.4 (LICENSE-MIT)
+Applies to: postcss-selector-parser 6.1.4 (LICENSE-MIT); postcss-selector-parser 7.1.4 (LICENSE-MIT)
 
 ```text
 Copyright (c) Ben Briggs <beneb.info@gmail.com> (http://beneb.info)
@@ -6852,7 +6881,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 158
+### Text 159
 
 Applies to: postcss-value-parser 4.2.0 (LICENSE)
 
@@ -6881,7 +6910,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 159
+### Text 160
 
 Applies to: prettier 3.9.6 (LICENSE)
 
@@ -6895,7 +6924,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 160
+### Text 161
 
 Applies to: proxy-from-env 2.1.0 (LICENSE)
 
@@ -6922,7 +6951,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 161
+### Text 162
 
 Applies to: queue-microtask 1.2.3 (LICENSE); run-parallel 1.2.0 (LICENSE)
 
@@ -6949,7 +6978,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 162
+### Text 163
 
 Applies to: read-cache 1.0.0 (LICENSE)
 
@@ -6976,7 +7005,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 163
+### Text 164
 
 Applies to: readdirp 3.6.0 (LICENSE)
 
@@ -7004,7 +7033,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 164
+### Text 165
 
 Applies to: require-from-string 2.0.2 (license)
 
@@ -7032,7 +7061,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 165
+### Text 166
 
 Applies to: resolve 1.22.12 (LICENSE)
 
@@ -7060,7 +7089,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 166
+### Text 167
 
 Applies to: reusify 1.1.0 (LICENSE)
 
@@ -7088,7 +7117,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 167
+### Text 168
 
 Applies to: rolldown 1.1.5 (LICENSE)
 
@@ -7120,7 +7149,7 @@ end of terms and conditions
 The licenses of externally maintained libraries from which parts of the Software is derived are listed [here](https://github.com/rolldown/rolldown/blob/main/THIRD-PARTY-LICENSE).
 ```
 
-### Text 168
+### Text 169
 
 Applies to: siginfo 2.0.0 (LICENSE)
 
@@ -7140,7 +7169,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 169
+### Text 170
 
 Applies to: signal-exit 4.1.0 (LICENSE.txt)
 
@@ -7163,7 +7192,7 @@ WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
 ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 170
+### Text 171
 
 Applies to: slice-ansi 4.0.0 (license)
 
@@ -7180,7 +7209,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 171
+### Text 172
 
 Applies to: source-map-js 1.2.1 (LICENSE)
 
@@ -7214,7 +7243,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### Text 172
+### Text 173
 
 Applies to: stylelint 16.26.1 (LICENSE)
 
@@ -7241,7 +7270,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 173
+### Text 174
 
 Applies to: sucrase 3.35.1 (LICENSE)
 
@@ -7269,7 +7298,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 174
+### Text 175
 
 Applies to: supports-hyperlinks 3.2.0 (license)
 
@@ -7286,7 +7315,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 175
+### Text 176
 
 Applies to: supports-preserve-symlinks-flag 1.0.0 (LICENSE)
 
@@ -7314,7 +7343,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 176
+### Text 177
 
 Applies to: svg-tags 1.0.0 (LICENSE)
 
@@ -7342,7 +7371,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 177
+### Text 178
 
 Applies to: table 6.9.0 (LICENSE)
 
@@ -7373,7 +7402,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### Text 178
+### Text 179
 
 Applies to: tailwindcss 3.4.19 (LICENSE)
 
@@ -7401,7 +7430,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 179
+### Text 180
 
 Applies to: thenify 3.3.1 (LICENSE)
 
@@ -7429,7 +7458,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 180
+### Text 181
 
 Applies to: thenify-all 1.6.0 (LICENSE)
 
@@ -7457,9 +7486,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 181
+### Text 182
 
-Applies to: tinybench 2.9.0 (LICENSE); tinyrainbow 3.1.0 (LICENCE)
+Applies to: tinybench 2.9.0 (LICENSE); tinyrainbow 3.2.0 (LICENCE)
 
 ```text
 MIT License
@@ -7485,7 +7514,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 182
+### Text 183
 
 Applies to: tinyexec 1.2.4 (LICENSE)
 
@@ -7513,7 +7542,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 183
+### Text 184
 
 Applies to: tinyglobby 0.2.17 (LICENSE)
 
@@ -7541,7 +7570,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 184
+### Text 185
 
 Applies to: type-fest 0.20.2 (license)
 
@@ -7557,14 +7586,14 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 185
+### Text 186
 
-Applies to: update-browserslist-db 1.2.3 (LICENSE)
+Applies to: update-browserslist-db 1.3.3 (LICENSE)
 
 ```text
 The MIT License (MIT)
 
-Copyright 2022 Andrey Sitnik <andrey@sitnik.ru> and other contributors
+Copyright 2022 Andrey Sitnik <andrey@sitnik.es> and other contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -7584,7 +7613,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 186
+### Text 187
 
 Applies to: uri-js 4.4.1 (LICENSE)
 
@@ -7602,7 +7631,7 @@ THIS SOFTWARE IS PROVIDED BY GARY COURT "AS IS" AND ANY EXPRESS OR IMPLIED WARRA
 The views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of Gary Court.
 ```
 
-### Text 187
+### Text 188
 
 Applies to: util-deprecate 1.0.2 (LICENSE)
 
@@ -7633,7 +7662,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 188
+### Text 189
 
 Applies to: vditor 3.11.2 (LICENSE)
 
@@ -7661,7 +7690,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 189
+### Text 190
 
 Applies to: vite 8.1.5 (LICENSE.md)
 
@@ -9955,9 +9984,9 @@ Repository: https://github.com/websockets/ws
 > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 190
+### Text 191
 
-Applies to: vitest 4.1.10 (LICENSE.md)
+Applies to: vitest 4.1.11 (LICENSE.md)
 
 ```text
 # Vitest core license
@@ -10773,7 +10802,7 @@ Repository: git+https://github.com/websockets/ws.git
 > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-### Text 191
+### Text 192
 
 Applies to: vue-eslint-parser 9.4.3 (LICENSE)
 
@@ -10801,7 +10830,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 192
+### Text 193
 
 Applies to: vue-router 4.6.4 (LICENSE)
 
@@ -10829,7 +10858,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Text 193
+### Text 194
 
 Applies to: why-is-node-running 2.3.0 (LICENSE)
 
@@ -10857,7 +10886,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### Text 194
+### Text 195
 
 Applies to: write-file-atomic 5.0.1 (LICENSE.md)
 
@@ -10869,7 +10898,7 @@ Permission to use, copy, modify, and/or distribute this software for any purpose
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### Text 195
+### Text 196
 
 Applies to: xml-name-validator 4.0.0 (LICENSE.txt)
 

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- CI 供应链门禁修复（自 10 月 1 日起所有分支连红的两个既有失败）：
+  - Web job `npm audit --omit=dev` 门禁：axios GHSA-542g-h47m-68v8（HTTP/2
+    DoS）与 dompurify GHSA-p98j-92pf-mc4p（DOM XSS）——`npm audit fix`
+    范围内升级（axios 1.20.0 / dompurify 3.4.16），审计清零
+  - backend 镜像 trivy 门禁：PyJWT 2.13.0 存在 6 个 CVE（含 CRITICAL
+    CVE-2026-102268 认证绕过，项目用其签发 JWT 会话）——升级 2.14.0 全部
+    修复；urllib3 2.7.0→2.8.0 消除 2 个 HIGH；296 项后端测试通过
+    （`test_backup_state_storage` 1 项为本地环境路径差异，CI 上通过，
+    与升级无关，已用降级对比验证）
+  - 依赖升级后重新生成各端第三方声明文件（此前声明落后于 lock 文件，
+    本次一并追平：web 383 / server 82 / netease 291）
+
 ### Added
 
 - iOS 客户端（SwiftUI，里程碑 M0 骨架）：新增 `ios/` 目录（此前 `ios/` 不随仓库分发）。
