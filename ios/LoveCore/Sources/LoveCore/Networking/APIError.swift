@@ -45,6 +45,15 @@ public enum APIError: Error, Equatable {
         return false
     }
 
+    /// Whether this failure is transport-level (offline, timeout, unreachable
+    /// host) — exactly the cases where an offline outbox should take over.
+    /// The write may still have landed (timeouts are ambiguous), which is why
+    /// replays must reuse the original idempotency key.
+    public var isTransport: Bool {
+        if case .transport = self { return true }
+        return false
+    }
+
     public var message: String {
         switch self {
         case .serverNotConfigured:

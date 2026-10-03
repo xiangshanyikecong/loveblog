@@ -31,10 +31,12 @@ final class MessagesViewModel {
     var selfUid: String?
 
     private let api: LoveAPIClient
+    private let outbox: OutboxSyncer
 
-    init(api: LoveAPIClient, selfUid: String?) {
+    init(api: LoveAPIClient, selfUid: String?, outbox: OutboxSyncer) {
         self.api = api
         self.selfUid = selfUid
+        self.outbox = outbox
     }
 
     /// Newest last (chat-like), tombstones filtered out.
@@ -66,17 +68,33 @@ final class MessagesViewModel {
         guard !text.isEmpty else { return }
         sending = true
         defer { sending = false }
+        // One key for the live attempt and any offline replay.
+        let idempotencyKey = UUID().uuidString
         do {
-            let key = UUID().uuidString
             let message = try await api.request(
                 ContentDTOs.Message.self,
                 "POST",
                 "/messages",
                 body: ContentDTOs.MessageCreate(content: text, isPublic: isPublic),
-                headers: ["Idempotency-Key": key]
+                headers: ["Idempotency-Key": idempotencyKey]
             )
             messages.append(message)
             status = "已发送"
+        } catch let error as APIError where error.isTransport {
+            guard
+                let payload = try? LoveAPIClient.encoder.encode(
+                    ContentDTOs.MessageCreate(content: text, isPublic: isPublic)
+                )
+            else {
+                status = error.message
+                return
+            }
+            outbox.enqueue(
+                action: OutboxActions.messageCreate,
+                payload: payload,
+                idempotencyKey: idempotencyKey
+            )
+            status = String(localized: "outbox.queued")
         } catch {
             status = (error as? APIError)?.message ?? "发送失败，请稍后重试"
         }
@@ -149,7 +167,7 @@ struct MessagesView: View {
                 } else {
                     uid = nil
                 }
-                model = MessagesViewModel(api: environment.api, selfUid: uid)
+                model = MessagesViewModel(api: environment.api, selfUid: uid, outbox: environment.outbox)
                 Task { await model?.refresh() }
             }
         }

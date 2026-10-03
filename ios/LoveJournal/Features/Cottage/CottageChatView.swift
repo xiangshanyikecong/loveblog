@@ -134,6 +134,7 @@ final class ChatViewModel {
     private var typingResetTask: Task<Void, Never>?
     private var toastTask: Task<Void, Never>?
     private let api: LoveAPIClient
+    private let outbox: OutboxSyncer
     private var socket: CottageSocket?
 
     private static let iso8601: ISO8601DateFormatter = {
@@ -142,9 +143,10 @@ final class ChatViewModel {
         return formatter
     }()
 
-    init(api: LoveAPIClient, selfUid: String?) {
+    init(api: LoveAPIClient, selfUid: String?, outbox: OutboxSyncer) {
         self.api = api
         self.selfUid = selfUid
+        self.outbox = outbox
     }
 
     // MARK: Lifecycle
@@ -400,15 +402,30 @@ final class ChatViewModel {
         }
         sending = true
         defer { sending = false }
+        // One key for the live attempt and any offline replay: replays forward
+        // the fully built (possibly E2EE-sealed) envelope verbatim and need no
+        // key-unlock state — same contract as the Android offline queue.
+        let idempotencyKey = UUID().uuidString
         do {
             let message = try await api.request(
                 CottageDTOs.ChatMessage.self, "POST", "/cottage/chat/messages",
-                body: body, headers: ["Idempotency-Key": UUID().uuidString]
+                body: body, headers: ["Idempotency-Key": idempotencyKey]
             )
             // Encrypted round-trips come back with content=null: backfill the
             // local plaintext so the sender sees their own words immediately.
             if message.isEncrypted { decrypted[message.mid] = trimmed }
             merge(message)
+        } catch let error as APIError where error.isTransport {
+            guard let payload = try? LoveAPIClient.encoder.encode(body) else {
+                showToast(Self.describe(error))
+                return
+            }
+            outbox.enqueue(
+                action: OutboxActions.chatSend,
+                payload: payload,
+                idempotencyKey: idempotencyKey
+            )
+            showToast(String(localized: "outbox.queued"))
         } catch {
             showToast(Self.describe(error))
         }
@@ -637,7 +654,7 @@ struct CottageChatView: View {
                 } else {
                     uid = nil
                 }
-                let viewModel = ChatViewModel(api: environment.api, selfUid: uid)
+                let viewModel = ChatViewModel(api: environment.api, selfUid: uid, outbox: environment.outbox)
                 model = viewModel
                 viewModel.start()
             }

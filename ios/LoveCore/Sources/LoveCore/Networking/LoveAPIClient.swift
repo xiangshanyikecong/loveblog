@@ -96,6 +96,19 @@ public final class LoveAPIClient {
         _ = try await perform(request, path: path)
     }
 
+    /// 2xx-or-throw request carrying an already-encoded JSON body. Used by
+    /// the offline outbox, whose queued payloads must be replayed verbatim
+    /// rather than re-encoded through a DTO round-trip.
+    public func requestVoid(
+        _ method: String,
+        _ path: String,
+        bodyData: Data,
+        headers: [String: String] = [:]
+    ) async throws {
+        let request = try buildRequest(method, path, query: [], bodyData: bodyData, headers: headers)
+        _ = try await perform(request, path: path)
+    }
+
     public func requestVoid<B: Encodable>(
         _ method: String,
         _ path: String,

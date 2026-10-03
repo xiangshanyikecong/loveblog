@@ -17,6 +17,7 @@
 
 import Observation
 import SwiftUI
+import WidgetKit
 
 import LoveCore
 
@@ -45,6 +46,10 @@ final class DashboardViewModel {
             error = nil
             clockBaseSeconds = clockSeconds(data.loveClock)
             clockFetchedAt = Date()
+            // Mirror the love clock into the app-group container for the home
+            // screen widget (a separate process without its own session).
+            WidgetSnapshot(baseSeconds: clockBaseSeconds, fetchedAt: clockFetchedAt).save()
+            WidgetCenter.shared.reloadAllTimelines()
             // On-this-day is best effort: failures just hide the card.
             onThisDay = try? await api.request(
                 ContentDTOs.OnThisDay.self, "GET", "/memories/on-this-day"

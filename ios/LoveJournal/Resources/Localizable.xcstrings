@@ -9835,6 +9835,28 @@
         }
       }
     },
+    "outbox.queued": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline — saved and will send automatically when back online"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オフライン — 保存済み、オンライン復帰後に自動送信します"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前离线，已保存，联网后自动发送"
+          }
+        }
+      }
+    },
     "placeholder.note %@": {
       "localizations": {
         "en": {

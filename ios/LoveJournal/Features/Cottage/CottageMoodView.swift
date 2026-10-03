@@ -38,9 +38,11 @@ final class MoodViewModel {
     var saving = false
 
     private let api: LoveAPIClient
+    private let outbox: OutboxSyncer
 
-    init(api: LoveAPIClient) {
+    init(api: LoveAPIClient, outbox: OutboxSyncer) {
         self.api = api
+        self.outbox = outbox
     }
 
     func refresh() async {
@@ -78,13 +80,25 @@ final class MoodViewModel {
             note: trimmed.isEmpty ? nil : trimmed,
             moodDate: Format.todayString()
         )
+        let idempotencyKey = UUID().uuidString
         do {
             _ = try await api.request(
                 CottageDTOs.Mood.self, "POST", "/cottage/mood",
-                body: body, headers: ["Idempotency-Key": UUID().uuidString]
+                body: body, headers: ["Idempotency-Key": idempotencyKey]
             )
             message = String(localized: "cottage.mood.recorded")
             await refresh()
+        } catch let error as APIError where error.isTransport {
+            guard let payload = try? LoveAPIClient.encoder.encode(body) else {
+                message = error.message
+                return
+            }
+            outbox.enqueue(
+                action: OutboxActions.moodUpsert,
+                payload: payload,
+                idempotencyKey: idempotencyKey
+            )
+            message = String(localized: "outbox.queued")
         } catch {
             message = (error as? APIError)?.message ?? String(localized: "cottage.mood.failed")
         }
@@ -125,7 +139,7 @@ struct CottageMoodView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if model == nil {
-                model = MoodViewModel(api: environment.api)
+                model = MoodViewModel(api: environment.api, outbox: environment.outbox)
                 Task { await model?.refresh() }
             }
         }

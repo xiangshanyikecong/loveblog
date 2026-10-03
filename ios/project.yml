@@ -15,6 +15,18 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
     SWIFT_TREAT_WARNINGS_AS_ERRORS: "NO"
+    # Newer Xcode build systems no longer imply this; without it every
+    # target's product collapses to an empty name (".app") and collides.
+    PRODUCT_NAME: "$(TARGET_NAME)"
+  configs:
+    # Standard Xcode template defaults that XcodeGen omits: without
+    # ONLY_ACTIVE_ARCH a single-arch simulator test build still tries to link
+    # universal products and fails on the missing arch of package
+    # dependencies; without ENABLE_TESTABILITY newer Xcode toolchains build
+    # the app module without -enable-testing and @testable imports fail.
+    Debug:
+      ONLY_ACTIVE_ARCH: YES
+      ENABLE_TESTABILITY: YES
 
 packages:
   LoveCore:
@@ -28,6 +40,8 @@ targets:
       - path: LoveJournal
     dependencies:
       - package: LoveCore
+      # Embeds the home-screen widget extension into the app bundle.
+      - target: LoveJournalWidget
     info:
       path: LoveJournal/Info.plist
       properties:
@@ -43,12 +57,47 @@ targets:
         # public domains remain HTTPS-only via ATS defaults.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+    entitlements:
+      # Shared with the widget extension: mirrors the love-days snapshot
+      # (and future shared state) into a common container. On the simulator
+      # app groups work with ad-hoc signing; devices need a team.
+      path: LoveJournal/LoveJournal.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.lovejournal.shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         GENERATE_INFOPLIST_FILE: "NO"
+
+  LoveJournalWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: LoveWidget
+    dependencies:
+      - package: LoveCore
+    info:
+      path: LoveWidget/Info.plist
+      properties:
+        CFBundleDisplayName: 恋爱记
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: LoveWidget/LoveJournalWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.lovejournal.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.widget
+        SKIP_INSTALL: "YES"
+        GENERATE_INFOPLIST_FILE: "NO"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
 
   LoveJournalTests:
     type: bundle.unit-test
@@ -61,6 +110,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lovejournal.app.ios.tests
         GENERATE_INFOPLIST_FILE: "YES"
+        # Lets the test bundle resolve app-module symbols from the test
+        # host binary at runtime instead of expecting them at link time.
+        BUNDLE_LOADER: "$(TEST_HOST)"
 
   LoveJournalUITests:
     type: bundle.ui-testing

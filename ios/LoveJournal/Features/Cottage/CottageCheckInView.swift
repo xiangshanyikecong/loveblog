@@ -39,9 +39,11 @@ final class CheckInViewModel {
     private var page = 1
     private let pageSize = 20
     private let api: LoveAPIClient
+    private let outbox: OutboxSyncer
 
-    init(api: LoveAPIClient) {
+    init(api: LoveAPIClient, outbox: OutboxSyncer) {
         self.api = api
+        self.outbox = outbox
     }
 
     func refresh() async {
@@ -123,14 +125,30 @@ final class CheckInViewModel {
             content: trimmed.isEmpty ? nil : trimmed,
             mediaUrls: draftMediaUrls
         )
+        // One key for the live attempt and any offline replay: if the write
+        // did land but the response timed out, the replay dedupes server-side.
+        let idempotencyKey = UUID().uuidString
         do {
             _ = try await api.requestVoid(
                 "POST", "/checkins",
-                body: body, headers: ["Idempotency-Key": UUID().uuidString]
+                body: body, headers: ["Idempotency-Key": idempotencyKey]
             )
             message = String(localized: "cottage.checkin.sent")
             resetDraft()
             await refresh()
+            return true
+        } catch let error as APIError where error.isTransport {
+            guard let payload = try? LoveAPIClient.encoder.encode(body) else {
+                message = error.message
+                return false
+            }
+            outbox.enqueue(
+                action: OutboxActions.checkinCreate,
+                payload: payload,
+                idempotencyKey: idempotencyKey
+            )
+            message = String(localized: "outbox.queued")
+            resetDraft()
             return true
         } catch {
             message = (error as? APIError)?.message ?? String(localized: "cottage.checkin.send.failed")
@@ -157,7 +175,13 @@ struct CottageCheckInView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if model == nil {
-                model = CheckInViewModel(api: environment.api)
+                model = CheckInViewModel(api: environment.api, outbox: environment.outbox)
+                Task { await model?.refresh() }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .outboxDidFlush)) { note in
+            let actions = note.userInfo?["actions"] as? [String] ?? []
+            if actions.contains(OutboxActions.checkinCreate) {
                 Task { await model?.refresh() }
             }
         }

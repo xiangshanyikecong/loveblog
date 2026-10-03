@@ -45,10 +45,12 @@ final class TimelineViewModel {
     var selfUid: String?
 
     private let api: LoveAPIClient
+    private let outbox: OutboxSyncer
 
-    init(api: LoveAPIClient, selfUid: String?) {
+    init(api: LoveAPIClient, selfUid: String?, outbox: OutboxSyncer) {
         self.api = api
         self.selfUid = selfUid
+        self.outbox = outbox
     }
 
     func refresh() async {
@@ -106,21 +108,36 @@ final class TimelineViewModel {
                 return (error as? APIError)?.message ?? M2L10n.value("timeline.upload.failed")
             }
         }
+        let body = ContentDTOs.MomentCreate(
+            content: text,
+            mediaUrls: mediaUrls,
+            visibility: visibility
+        )
+        // One key for the live attempt and any offline replay.
+        let idempotencyKey = UUID().uuidString
         do {
-            let key = UUID().uuidString
             let moment = try await api.request(
                 ContentDTOs.Moment.self,
                 "POST",
                 "/timeline",
-                body: ContentDTOs.MomentCreate(
-                    content: text,
-                    mediaUrls: mediaUrls,
-                    visibility: visibility
-                ),
-                headers: ["Idempotency-Key": key]
+                body: body,
+                headers: ["Idempotency-Key": idempotencyKey]
             )
             moments.insert(moment, at: 0)
             message = M2L10n.value("timeline.composer.posted")
+            return nil
+        } catch let error as APIError where error.isTransport {
+            // Media already made it to the server; only the moment row is
+            // missing — queue it with the same key the attempt used.
+            guard let payload = try? LoveAPIClient.encoder.encode(body) else {
+                return error.message
+            }
+            outbox.enqueue(
+                action: OutboxActions.momentCreate,
+                payload: payload,
+                idempotencyKey: idempotencyKey
+            )
+            message = String(localized: "outbox.queued")
             return nil
         } catch {
             return (error as? APIError)?.message ?? M2L10n.value("common.error.save")
@@ -186,7 +203,7 @@ struct TimelineScreenView: View {
                 } else {
                     uid = nil
                 }
-                model = TimelineViewModel(api: environment.api, selfUid: uid)
+                model = TimelineViewModel(api: environment.api, selfUid: uid, outbox: environment.outbox)
                 Task { await model?.refresh() }
             }
         }

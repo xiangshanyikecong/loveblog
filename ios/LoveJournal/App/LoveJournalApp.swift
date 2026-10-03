@@ -27,10 +27,12 @@ import LoveCore
 final class AppEnvironment {
     let api: LoveAPIClient
     let session: SessionStore
+    let outbox: OutboxSyncer
 
     init() {
         api = LoveAPIClient(baseURLProvider: { ServerSettings.apiBase })
         session = SessionStore(api: api)
+        outbox = OutboxSyncer(api: api)
         api.onSessionExpired = { [weak session] in
             Task { @MainActor in session?.markSessionExpired() }
         }
@@ -61,6 +63,9 @@ struct RootView: View {
             LoginView()
         case .loggedIn:
             MainTabView()
+                // Entering the main UI means a (fresh) session: replay
+                // anything the previous session left queued offline.
+                .onAppear { environment.outbox.drainIfNeeded() }
         }
     }
 }

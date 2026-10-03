@@ -12,13 +12,15 @@ ios/
       ServerAddress.swift      # 自托管地址归一化（1:1 移植 Android ServerAddress.kt）
       Networking/              # LoveAPIClient（Cookie 会话）+ APIError（FastAPI detail 双形态解析）
       DTOs/                    # /v1 契约 DTO（宽容解码：未知字段忽略）
+      Sync/                    # 离线 outbox 引擎 + 小组件快照（App Group 镜像）
     Tests/                     # swift test（macOS/Linux 均可跑，是 CI 的核心质量闸门）
   LoveJournal/                 # App target（SwiftUI，MVVM + Repository）
-    App/                       # 组合根、会话管理、Keychain、服务器设置
+    App/                       # 组合根、会话管理、Keychain、服务器设置、离线同步器
     DesignSystem/              # 设计 tokens（与 Android theme 1:1）与通用组件
     Features/                  # 按功能分组的 Screen + ViewModel
     Resources/                 # Localizable.xcstrings（zh-Hans/en/ja 三语）、Assets
   LoveJournalTests/            # App 层冒烟测试（模拟器）
+  LoveWidget/                  # 桌面小组件扩展（在一起天数，WidgetKit）
 ```
 
 ## 里程碑
@@ -26,12 +28,19 @@ ios/
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | M0 | 工程骨架、地址配置、登录（TOTP/冻结）、bootstrap、会话管理、主 Tab、CI | ✅ |
-| M1 | Dashboard、文章、相册、纪念日、留言板、时间线、搜索、通知中心 | 🚧 |
-| M2 | 写入：文章编辑（ETag/If-Match）、上传管线、评论、胶囊 | |
-| M3 | E2EE 悄悄话（PBKDF2 + AES-GCM，与 Web/Android 互通 KAT）、心情、报备、心愿、每日一问 | |
-| M4 | 一起听 / 一起看（WS 同步 + AVPlayer） | |
-| M5 | 五个小游戏、你画我猜、协作画板、兑换券、账本、提醒、计划 | |
-| M6 | 生理期、足迹地图、月报年报、保险箱、离线 outbox、回收站、隐私中心、安全设置、小组件 | |
+| M1 | Dashboard、文章、相册、纪念日、留言板、时间线、搜索、通知中心 | ✅ |
+| M2 | 写入：文章编辑（ETag/If-Match）、上传管线、评论、胶囊 | ✅ |
+| M3 | E2EE 悄悄话（PBKDF2 + AES-GCM，与 Web/Android 互通 KAT）、心情、报备、心愿、每日一问 | ✅ |
+| M4 | 一起听 / 一起看（WS 同步 + AVPlayer） | ✅ |
+| M5 | 五个小游戏、你画我猜、协作画板、兑换券、账本、提醒、计划 | ✅ |
+| M6 | 生理期、足迹地图、月报年报、保险箱、回收站、隐私中心、安全设置 | ✅ |
+| M6 收尾 | 离线 outbox、桌面小组件 | ✅ |
+| M7 | APNs 推送（依赖服务端 provider 与付费开发者账号） | 🚧 |
+
+## 已知差距（与 Android 对齐待办）
+
+- **App 图标与上架素材**：`AppIcon.appiconset` 目前只有占位 Contents.json（无实际
+  图），`CFBundleShortVersionString` 仍为 0.1.0，TestFlight / App Store 材料未备
 
 推送说明：服务端目前只有 FCM（data-only）与 Web Push，没有 APNs 支持，且 APNs
 需要付费 Apple 开发者账号——因此在服务端补充 APNs provider 之前，iOS 端使用前台

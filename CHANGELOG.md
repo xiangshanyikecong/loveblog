@@ -17,6 +17,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   401 全局会话失效处理、六 Tab 主框架、品牌设计 tokens 与三语 String Catalog）；
   CI 新增 `.github/workflows/ios.yml`（GitHub Actions macOS runner：
   LoveCore `swift test` + XcodeGen 生成工程 + 模拟器构建与单测）
+- iOS 客户端里程碑交付（M1–M6 屏幕层，对齐 Android 核心功能）：
+  - 内容：Dashboard、文章（编辑含 ETag / If-Match 并发控制）、相册、纪念日、
+    留言板、时间线、搜索、通知中心、评论、时间胶囊、上传管线
+  - 小屋：E2EE 悄悄话（PBKDF2 + AES-GCM，与 Web/Android 互通）、心情、报备、
+    心愿、每日一问、兑换券、情侣账本、提醒、计划
+  - 实时：一起听 / 一起看（WebSocket 同步 + AVPlayer）、五子棋 / 井字棋 /
+    黑白棋 / 记忆翻牌 / 连连看、你画我猜、协作画板
+  - 关怀与安全：生理期关怀、恋爱足迹、月报年报、客户端加密保险箱、回收站、
+    隐私中心、安全中心（TOTP / 登录设备 / 会话管理）
+  - LoveCore 增加与服务端 schema 对齐的契约回归测试（listen / games / watch /
+    draw / canvas DTO）与返回导航回归 UI 测试；修复一起听 / 一起玩解码契约
+    （`event_seq` snake_case 映射、对局快照扁平结构）导致的「服务器响应格式异常」
+  - 服务端：dashboard 消息载荷补充 `updated_at` 供 iOS 首页卡片使用
+  - 该里程碑交付时尚未实现（随后在同一未发布周期内补齐，见下方条目）：离线
+    outbox、桌面小组件；APNs 推送（依赖服务端 APNs provider）仍未实现
+- iOS 离线 outbox（M6 收尾，对齐 Android SyncEngine 契约）：
+  - LoveCore 新增 `OutboxStore`：写入操作在传输失败（离线 / 超时 / 不可达）时
+    以原始 JSON 载荷 + 同一 `Idempotency-Key` 落盘（原子写，崩溃安全），
+    FIFO 重放、单项失败不阻塞队列、用户变更永不静默丢弃
+  - 覆盖六类写入：报备、心愿创建、心情打卡、留言板、碎碎念、悄悄话
+    （聊天载荷在入队前完成 E2EE 封装，重放无需解锁状态）
+  - 触发时机：网络恢复（NWPathMonitor）、App 回到前台、入队后立即尝试、
+    登录进入主界面；补发成功后按 action 通知打开中的页面刷新
+  - LoveAPIClient 新增预编码 body 重放接口；`APIError.isTransport` 判定离线接管条件
+- iOS 桌面小组件（M6 收尾）：「在一起天数」WidgetKit 扩展（小 / 中尺寸，三语），
+  App Group（`group.com.lovejournal.shared`）镜像 Dashboard 恋爱秒数；时间线按
+  恋爱起点周年时刻（而非本地午夜）精确翻转天数，LoveCore `WidgetSnapshot`
+  承载计算并配单测
+- iOS 工程修复（Xcode 26 工具链 + XcodeGen 2.46 组合下无法构建的四个缺口）：
+  显式 `PRODUCT_NAME=$(TARGET_NAME)`（新版构建系统不再隐含，产物名坍缩为空导致
+  多命令冲突）、Debug `ONLY_ACTIVE_ARCH`（单架构模拟器测试不再强制链接通用
+  二进制）、Debug `ENABLE_TESTABILITY`（`@testable import` 失败）、单测 target
+  补 `BUNDLE_LOADER`（宿主符号改为运行时解析）
 
 ## [1.0.4-beta.5] - 2026-09-27
 

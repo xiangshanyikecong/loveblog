@@ -32,9 +32,11 @@ final class WishesViewModel {
     var saving = false
 
     private let api: LoveAPIClient
+    private let outbox: OutboxSyncer
 
-    init(api: LoveAPIClient) {
+    init(api: LoveAPIClient, outbox: OutboxSyncer) {
         self.api = api
+        self.outbox = outbox
     }
 
     func refresh() async {
@@ -100,10 +102,24 @@ final class WishesViewModel {
                 )
                 message = String(localized: "cottage.wishes.updated")
             } else {
-                _ = try await api.request(
-                    CottageDTOs.Wish.self, "POST", "/cottage/wishes", body: body
-                )
-                message = String(localized: "cottage.wishes.added")
+                // One key for the live attempt and any offline replay (the
+                // server dedupes if a timed-out write actually landed).
+                let idempotencyKey = UUID().uuidString
+                do {
+                    _ = try await api.request(
+                        CottageDTOs.Wish.self, "POST", "/cottage/wishes",
+                        body: body, headers: ["Idempotency-Key": idempotencyKey]
+                    )
+                    message = String(localized: "cottage.wishes.added")
+                } catch let error as APIError where error.isTransport {
+                    guard let payload = try? LoveAPIClient.encoder.encode(body) else { throw error }
+                    outbox.enqueue(
+                        action: OutboxActions.wishCreate,
+                        payload: payload,
+                        idempotencyKey: idempotencyKey
+                    )
+                    message = String(localized: "outbox.queued")
+                }
             }
             await refresh()
             return true
@@ -138,7 +154,13 @@ struct CottageWishesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if model == nil {
-                model = WishesViewModel(api: environment.api)
+                model = WishesViewModel(api: environment.api, outbox: environment.outbox)
+                Task { await model?.refresh() }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .outboxDidFlush)) { note in
+            let actions = note.userInfo?["actions"] as? [String] ?? []
+            if actions.contains(OutboxActions.wishCreate) {
                 Task { await model?.refresh() }
             }
         }
