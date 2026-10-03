@@ -571,6 +571,13 @@ rollback_deployment() {
 echo "🚀 启动服务..."
 $COMPOSE $PROD_COMPOSE_FILES up -d --remove-orphans
 
+# web/backend 容器重建会更换 IP，而开源 nginx 只在（重）加载配置时才解析
+# upstream 里的域名（upstream server web:80 属静态解析）。若 nginx 容器自身
+# 未重建，会继续用旧 IP 反代：症状是首页 308/502 死循环而 /health/ready 正常
+# （backend 未重建时依旧可达）。up 后 reload 一次，强制按当前容器 IP 重新
+# 解析全部 upstream；reload 对外零停机。
+docker exec love-nginx-prod nginx -s reload 2>/dev/null || true
+
 # 等待服务启动
 echo "⏳ 等待服务启动..."
 sleep 10
@@ -639,6 +646,24 @@ if [ "$PUB_VERIFY_OK" != "true" ]; then
     done
 fi
 
+# 公网直连失败时的回环兜底：多数云服务器（腾讯云/阿里云等）的 NAT 不支持从
+# 主机内部回环访问自身公网 IP（hairpin），会导致此处误报并错误触发回滚。
+# --resolve 让 curl 在本机 443 上完成完整的 SNI + 证书链 + 反向代理校验：
+# 若通过而公网直连不通，问题只可能在云厂商网络侧（hairpin 或安全组），
+# 服务本身是健康的，不应回滚。
+if [ "$PUB_VERIFY_OK" != "true" ] && [ "$PUB_CMD" = "curl" ]; then
+    echo -e "${YELLOW}⏳ 公网直连未通过，尝试本机回环校验（云服务器常无法回环访问自身公网 IP）...${NC}"
+    if curl --fail --silent --show-error --max-time 15 \
+        --resolve "${DOMAIN}:${HTTPS_PORT:-443}:127.0.0.1" \
+        "${PUBLIC_ORIGIN}/health/ready" >/dev/null 2>&1; then
+        PUB_VERIFY_OK=true
+        PUB_HAIRPIN_BYPASS=true
+        echo -e "${GREEN}✅ 本机 SNI/证书链校验通过，服务健康${NC}"
+        echo -e "${YELLOW}⚠️  公网直连失败大概率是云厂商 NAT 不支持回环或安全组限制，已跳过回滚${NC}"
+        echo -e "${YELLOW}   请从外部设备访问 ${PUBLIC_ORIGIN} 确认可达，并检查安全组已放行 ${HTTPS_PORT:-443} 端口${NC}"
+    fi
+fi
+
 if [ "$PUB_VERIFY_OK" != "true" ]; then
     echo -e "${RED}❌ 公网 HTTPS 验证失败${NC}"
     echo "  可能原因："
@@ -652,7 +677,9 @@ if [ "$PUB_VERIFY_OK" != "true" ]; then
     rollback_deployment
     exit 1
 fi
-echo -e "${GREEN}✅ 公网 HTTPS、DNS 与证书校验通过${NC}"
+if [ "${PUB_HAIRPIN_BYPASS:-}" != "true" ]; then
+    echo -e "${GREEN}✅ 公网 HTTPS、DNS 与证书校验通过${NC}"
+fi
 
 # 部署成功后清理悬空镜像层（不用 -a：刚被替换下来的旧版本镜像此刻是
 # dangling，正好清掉；不能误删仍在回滚窗口内有用的 tagged 镜像）。

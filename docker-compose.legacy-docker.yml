@@ -14,11 +14,20 @@
 # 不认识的条目会被跳过；运行时这些 syscall 号落到默认拒绝策略，一律返回
 # EPERM——连 root 都写不了 pid 文件。与 Docker 版本无关（Docker 26.1 实测复现）。
 #
-# 本文件对该 nginx 容器关闭 seccomp 过滤以恢复服务（略微降低纵深防御）。
+# 覆盖范围：nginx 与 web 两个容器。web 镜像（ghcr loveblog-web）与 nginx 使用
+# 同一基底 nginx:1.30.4-alpine3.24，会以完全相同的方式崩溃；若只豁免 nginx，
+# web 崩溃循环后 Docker 内嵌 DNS 会把 "web" 解析成 127.0.53.53（DNS 碰撞保留
+# 地址），nginx 的 proxy_pass 打回自身 80 端口的强制跳转，表现为整站
+# ERR_TOO_MANY_REDIRECTS 而 /health/ready 依旧 200。
+#
+# 本文件对这些容器关闭 seccomp 过滤以恢复服务（略微降低纵深防御）。
 # 根治方法是升级操作系统（如 Debian 12 / Rocky 9），新系统上探测不再触发、
 # 本文件自动不再生效。
 
 services:
   nginx:
+    security_opt:
+      - seccomp=unconfined
+  web:
     security_opt:
       - seccomp=unconfined
